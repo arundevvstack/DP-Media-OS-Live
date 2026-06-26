@@ -591,9 +591,35 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
         <Button variant="outline" onClick={handlePrev} disabled={activeStep === 0} className="rounded-xl font-bold px-6 h-12">
           <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Button>
-        <Button onClick={handleNext} disabled={activeStep === 3} className="rounded-xl font-bold px-8 h-12">
-          {activeStep === 2 ? "Finalize" : "Next Step"} <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
+        {activeStep === 3 ? (
+          <Button 
+            onClick={async () => {
+              const updated = { ...data, completeness_score: 100, status: 'approved' };
+              setData(updated);
+              setSaveStatus("saving");
+              try {
+                await fetch(`/api/v1/crm/prospect/${prospectId}/requirement`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(updated)
+                });
+                setLastSaved(new Date());
+                setSaveStatus("saved");
+                toast({ title: "Requirement Chart Completed!", description: "You can now proceed to Proposal Generation." });
+                setTimeout(() => setSaveStatus("idle"), 2000);
+              } catch (e: any) {
+                toast({ variant: "destructive", title: "Error Saving", description: e.message });
+              }
+            }} 
+            className="rounded-xl font-bold px-8 h-12 bg-emerald-600 hover:bg-emerald-700 text-white"
+          >
+            <CheckCircle2 className="w-4 h-4 mr-2" /> Save & Complete
+          </Button>
+        ) : (
+          <Button onClick={handleNext} className="rounded-xl font-bold px-8 h-12">
+            {activeStep === 2 ? "Finalize" : "Next Step"} <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        )}
       </div>
 
     </div>
