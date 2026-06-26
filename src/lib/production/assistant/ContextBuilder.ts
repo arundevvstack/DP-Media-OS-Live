@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { GraphEngine } from "./GraphEngine";
+import { GraphEngine } from "../intelligence/GraphEngine";
 
 export interface AssistantContextParams {
   projectId: string;
