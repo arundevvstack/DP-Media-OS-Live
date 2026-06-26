@@ -94,6 +94,7 @@ export async function POST(req: Request) {
       project_type,
       project_category,
       color,
+      lead_id,
     } = body;
 
     if (!company_id || !project_name || !project_type) {
@@ -129,12 +130,37 @@ export async function POST(req: Request) {
     );
     // ─────────────────────────────────────────────────────────────────────────
 
+    let pilotProjectId = null;
+    let requirementId = null;
+
+    if (lead_id) {
+      const prospect = await prisma.prospect.findUnique({
+        where: { id: lead_id },
+        include: {
+          requirements: {
+            orderBy: { created_at: 'desc' },
+            take: 1
+          }
+        }
+      });
+      if (prospect) {
+        const pilotDetails = prospect.pilot_details as any;
+        if (pilotDetails && pilotDetails.project_id) {
+          pilotProjectId = pilotDetails.project_id;
+        }
+        if (prospect.requirements && prospect.requirements.length > 0) {
+          requirementId = prospect.requirements[0].id;
+        }
+      }
+    }
+
     // Run all WRITES in a single transaction (no async sub-queries inside)
     const result = await prisma.$transaction(
       async (tx) => {
         // 1. Create the project
         const newProject = await tx.project.create({
           data: {
+            id: crypto.randomUUID(),
             company_id,
             client_id: client_id ?? null,
             client_name: client_name ?? null,
@@ -146,6 +172,9 @@ export async function POST(req: Request) {
             color: color ?? 'bg-accent',
             status: 'active',
             progress: 0,
+            pilot_project_id: pilotProjectId,
+            updated_at: new Date(),
+            requirements: requirementId ? { connect: { id: requirementId } } : undefined,
           },
         });
 
@@ -154,6 +183,7 @@ export async function POST(req: Request) {
         if (projectManagerId) {
           await tx.projectMember.create({
             data: {
+              id: crypto.randomUUID(),
               project_id: newProject.id,
               user_id: projectManagerId,
               role: 'Project Manager',
@@ -172,6 +202,7 @@ export async function POST(req: Request) {
           // Create stage
           const createdStage = await tx.projectStage.create({
             data: {
+              id: crypto.randomUUID(),
               project_id: newProject.id,
               name: stageDef.name,
               order: stageDef.order,
@@ -194,6 +225,7 @@ export async function POST(req: Request) {
 
             const createdObj = await tx.objective.create({
               data: {
+                id: crypto.randomUUID(),
                 project_id: newProject.id,
                 stage_id: createdStage.id,
                 title: objDef.title,
@@ -205,6 +237,7 @@ export async function POST(req: Request) {
                 status: 'Pending',
                 due_date: clampedDue,
                 assignee_id: assigneeId,
+                updated_at: new Date(),
               },
             });
 
@@ -230,6 +263,7 @@ export async function POST(req: Request) {
               try {
                 await tx.objectiveDependency.create({
                   data: {
+                    id: crypto.randomUUID(),
                     parent_id: parentId,
                     child_id: dep.childId,
                     type: 'blocking',
@@ -246,6 +280,7 @@ export async function POST(req: Request) {
         if (user_id) {
           await tx.auditLog.create({
             data: {
+              id: crypto.randomUUID(),
               company_id,
               user_id,
               action: 'PROJECT_CREATED',

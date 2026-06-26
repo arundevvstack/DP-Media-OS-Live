@@ -14,6 +14,10 @@ export class ContextBuilder {
     const project = await prisma.project.findUnique({
       where: { id: params.projectId },
       include: {
+        requirements: {
+          orderBy: { created_at: 'desc' },
+          take: 1
+        },
         objectives: true,
         creative_memories: true,
         storyboard: {
@@ -38,6 +42,16 @@ export class ContextBuilder {
     prompt += `Status: ${project.status}\n`;
     if (project.objectives && project.objectives.length > 0) {
       prompt += `Objectives: ${project.objectives.map((o: any) => o.title).join(', ')}\n`;
+    }
+    
+    if (project.requirements && project.requirements.length > 0) {
+      const req = project.requirements[0] as any;
+      prompt += `\n=== PROJECT REQUIREMENTS ===\n`;
+      prompt += `Objective: ${req.objective}\n`;
+      prompt += `Scope of Work: ${req.scope_of_work}\n`;
+      prompt += `Creative Requirements: ${JSON.stringify(req.creative_requirements)}\n`;
+      prompt += `Technical Specs: ${JSON.stringify(req.technical_specs)}\n`;
+      prompt += `Production Requirements: ${JSON.stringify(req.production_requirements)}\n`;
     }
 
     prompt += `\n=== CREATIVE INTELLIGENCE (GRAPH) ===\n`;

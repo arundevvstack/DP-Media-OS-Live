@@ -1,83 +1,95 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { createClient } from "@/utils/supabase/server";
 
-export async function POST(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id: prospectId } = await context.params;
-    const body = await req.json();
-    const { company_id, created_by } = body;
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (!prospectId || !company_id) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Find the prospect
+    const profile = await prisma.user.findUnique({
+      where: { id: user.id }
+    });
+
+    if (!profile?.company_id) {
+      return NextResponse.json({ error: "No company context found" }, { status: 400 });
+    }
+
+    const { id } = await params;
+    const body = await request.json().catch(() => ({}));
+    const { assignee_id } = body;
+
     const prospect = await prisma.prospect.findUnique({
-      where: { id: prospectId }
+      where: { id: id, company_id: profile.company_id },
+      include: {
+        requirements: {
+          orderBy: { created_at: 'desc' },
+          take: 1
+        }
+      }
     });
 
     if (!prospect) {
       return NextResponse.json({ error: "Prospect not found" }, { status: 404 });
     }
 
-    // Get the latest requirement chart
-    let requirement = await prisma.requirementChart.findFirst({
-      where: { prospect_id: prospectId },
-      orderBy: { created_at: 'desc' }
-    });
+    const requirement = prospect.requirements[0];
 
-    // Create the Project
-    const projectName = `${prospect.company_name} - Pilot Video`;
-    
+    // Check if pilot already exists
+    if (prospect.pilot_project_id) {
+      return NextResponse.json({ error: "Pilot project already exists" }, { status: 400 });
+    }
+
+    // Create Pilot Project
     const project = await prisma.project.create({
       data: {
-        company_id,
-        project_name: projectName,
+        id: crypto.randomUUID(),
+        company_id: profile.company_id,
+        project_name: `${prospect.company_name} - Pilot Video`,
+        type: "Pilot",
+        project_type: "Pilot Video",
+        status: "active",
         client_name: prospect.company_name,
-        project_type: 'Pilot Production',
-        project_category: 'Pilot Video',
-        status: 'In Production',
-        // Optional logic to assign project manager or created_by could be linked via Members
+        progress: 0,
+        budget: requirement?.project_details?.budget ? parseFloat(requirement.project_details.budget) : 0,
+        pilot_project_id: id,
+        updated_at: new Date(),
+        requirements: requirement ? {
+          connect: { id: requirement.id }
+        } : undefined,
+        ProjectMember: assignee_id ? {
+          create: {
+            id: crypto.randomUUID(),
+            user_id: assignee_id,
+            role: "lead",
+            company_id: profile.company_id
+          }
+        } : undefined
       }
     });
 
-    // Link the requirement chart to the project if it exists, or create a copy
-    if (requirement) {
-      await prisma.requirementChart.update({
-        where: { id: requirement.id },
-        data: { project_id: project.id }
-      });
-    }
-
-    // Update the prospect stage to pilot_video and clear any completed pilot details
-    await prisma.prospect.update({
-      where: { id: prospectId },
-      data: { 
-        stage: 'pilot_video',
-        pilot_details: { status: 'in_production', project_id: project.id }
+    // Update prospect with pilot details and move stage
+    const updatedProspect = await prisma.prospect.update({
+      where: { id: id },
+      data: {
+        stage: "pilot_video",
+        pilot_project_id: project.id,
+        pilot_status: "in_progress"
       }
     });
 
-    // Notifications can be triggered here if there's a notification queue/webhook
-    // Example: send to in-app notifications
-    if (created_by) {
-        await prisma.notification.create({
-            data: {
-                company_id,
-                user_id: created_by, // Send to the person who triggered it or a manager
-                title: 'Pilot Project Created',
-                message: `Pilot project ${projectName} has been created and is in production.`,
-                type: 'info'
-            }
-        });
-    }
+    return NextResponse.json({ 
+      success: true, 
+      project: project,
+      prospect: updatedProspect 
+    });
 
-    return NextResponse.json({ success: true, project });
   } catch (error: any) {
-    console.error("Error creating pilot project:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Error creating pilot:", error);
+    return NextResponse.json({ error: error.message || "Failed to create pilot project" }, { status: 500 });
   }
 }

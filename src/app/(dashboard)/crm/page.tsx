@@ -436,7 +436,7 @@ export default function CRMPage() {
     }
 
     if (targetStageId === 'pilot_video' && isMovingForward) {
-      const hasPilot = lead.pilot_details?.status || lead.pilot_details?.project_id;
+      const hasPilot = lead.pilot_status || lead.pilot_project_id;
       if (!hasPilot) {
         setLeadToPromoteToPilot(lead);
         setDraggedLeadId(null);
@@ -479,7 +479,8 @@ export default function CRMPage() {
       setLocalLeads(prev => prev.map(l => l.id === leadToPromoteToPilot.id ? { 
         ...l, 
         stage: 'pilot_video',
-        pilot_details: { status: 'in_production', project_id: data.project.id } 
+        pilot_status: 'in_progress',
+        pilot_project_id: data.project.id
       } : l));
       
       setLeadToPromoteToPilot(null);
@@ -1111,14 +1112,14 @@ export default function CRMPage() {
                                   {lead.sub_vertical}
                                 </span>
                               )}
-                              {lead.stage === 'pilot_video' && lead.pilot_details && (
+                              {lead.stage === 'pilot_video' && (lead.pilot_project_id || lead.pilot_status) && (
                                 <div className="mt-2 p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20 flex flex-col gap-1.5">
                                   <div className="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 uppercase tracking-wider">
                                     <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    Pilot {lead.pilot_details.status === 'completed' ? 'Completed' : 'In Production'}
+                                    Pilot {lead.pilot_status === 'completed' ? 'Completed' : 'In Production'}
                                   </div>
-                                  {lead.pilot_details.status === 'completed' && lead.pilot_details.project_id && (
-                                    <Link href={`/projects/${lead.pilot_details.project_id}`}>
+                                  {lead.pilot_status === 'completed' && lead.pilot_project_id && (
+                                    <Link href={`/projects/${lead.pilot_project_id}`}>
                                       <Button variant="outline" size="sm" className="w-full h-7 text-[10px] font-bold mt-1">
                                         View Pilot Project
                                       </Button>

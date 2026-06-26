@@ -140,7 +140,8 @@ export function CreateProjectWizard({ isOpen, onOpenChange, defaultValues, onSuc
           deadline: newProject.deadline,
           project_type: newProject.project_type,
           project_category: newProject.service_category,
-          color: randomColor
+          color: randomColor,
+          lead_id: selectedLeadId
         })
       });
 

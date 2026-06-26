@@ -11,88 +11,29 @@ import { toast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Check, Target, Sparkles, Bot, Briefcase, Palette, Video, Calendar, Upload, Settings, FileText, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
+import { Loader2, Save, Check, Target, Sparkles, Bot, Briefcase, Palette, Video, Calendar, Upload, Settings, FileText, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft, X } from "lucide-react";
 import { generateRequirementScope } from "@/ai/flows/generate-requirements";
 import { cn } from "@/lib/utils";
 
-const PRODUCTION_TYPES = [
-  { id: "ai", label: "🤖 AI Production" },
-  { id: "hybrid", label: "🎥 Hybrid Production (AI + Live Action)" },
-  { id: "live", label: "🎬 Live Production" },
-  { id: "photo", label: "🎨 Photography" },
-  { id: "post", label: "🎭 Post Production Only" },
-  { id: "social", label: "📱 Social Media Content" },
-  { id: "other", label: "📦 Other" }
+const PROJECT_CATEGORIES = [
+  "Advertisement", "Corporate", "Documentary", "Biography", "Fashion", "Product", 
+  "Real Estate", "Social Media", "Event", "Educational", "Music Video", "Short Film", 
+  "CGI", "Animation", "Photography", "Other"
 ];
 
-const DELIVERABLES_PRESETS = [
-  "Reel", "Brand Film", "Advertisement", "Corporate Video", "Documentary", "Photography", "Motion Graphics"
+const PRODUCTION_TYPES = [
+  { id: "ai", label: "🤖 AI Production" },
+  { id: "hybrid", label: "🎥 Hybrid Production (AI + Live)" },
+  { id: "live", label: "🎬 Live Production" },
+  { id: "photo", label: "🎨 Photography" },
+  { id: "post", label: "🎭 Post Production Only" }
 ];
 
 const ASPECT_RATIOS = ["16:9", "9:16", "1:1", "4:5"];
 
 const FINAL_DELIVERABLES = [
-  "Script", "Storyboard", "Final Video", "Source Files", "Social Versions", "Thumbnail", "Voice Over", "Project Files"
+  "Script", "Storyboard", "Voice Over", "Photography", "Video", "Social Media Versions", "Master Export", "Source Files", "Project Files", "Thumbnail"
 ];
-
-const SUGGESTIONS = {
-  objective: ["Awareness", "Sales", "Lead Gen", "Recruitment", "Product Launch", "Branding", "Education", "Cultural Impact", "Conversion"],
-};
-
-function MultiSuggestionInput({ values, onChange, suggestions, placeholder, label, asArray = false }: { values: string | string[], onChange: (v: any) => void, suggestions: string[], placeholder?: string, label?: string, asArray?: boolean }) {
-  const [customVal, setCustomVal] = useState("");
-  
-  const currentArray = asArray 
-    ? (Array.isArray(values) ? values : []) 
-    : (typeof values === 'string' && values ? values.split(',').map(s => s.trim()).filter(Boolean) : []);
-
-  const handleUpdate = (newArr: string[]) => {
-    if (asArray) onChange(newArr);
-    else onChange(newArr.join(', '));
-  };
-
-  const toggle = (s: string) => {
-    if (currentArray.includes(s)) handleUpdate(currentArray.filter(x => x !== s));
-    else handleUpdate([...currentArray, s]);
-  };
-
-  const addCustom = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (customVal.trim() && !currentArray.includes(customVal.trim())) {
-      handleUpdate([...currentArray, customVal.trim()]);
-    }
-    setCustomVal("");
-  };
-
-  return (
-    <div className="space-y-2">
-      {label && <Label>{label}</Label>}
-      <div className="flex flex-wrap gap-2 mb-2">
-        {suggestions.map((s: string) => {
-          const isSelected = currentArray.includes(s);
-          return (
-            <Badge key={s} variant={isSelected ? "default" : "outline"} className="cursor-pointer hover:opacity-80 transition-opacity rounded-md py-1 px-3 text-sm" onClick={() => toggle(s)}>
-              {s}
-            </Badge>
-          )
-        })}
-      </div>
-      <div className="flex gap-2">
-        <Input value={customVal} onChange={e => setCustomVal(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustom(e)} placeholder={placeholder || "Type custom value and press Enter"} className="rounded-xl" />
-        <Button variant="secondary" onClick={addCustom} className="rounded-xl font-bold h-10 px-4">Add</Button>
-      </div>
-      {currentArray.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2 p-3 border rounded-xl bg-slate-50/50 dark:bg-slate-900/50">
-          {currentArray.map(s => (
-            <Badge key={s} variant="default" className="rounded-md flex items-center gap-1 py-1 px-2">
-              {s} <span className="cursor-pointer ml-1 hover:text-red-300" onClick={() => toggle(s)}>&times;</span>
-            </Badge>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
 
 function CheckboxGroup({ options, selected, onChange }: { options: string[], selected: string[], onChange: (val: string[]) => void }) {
   const toggle = (opt: string) => {
@@ -104,7 +45,7 @@ function CheckboxGroup({ options, selected, onChange }: { options: string[], sel
       {options.map(opt => (
         <div key={opt} className="flex items-center space-x-2">
           <Checkbox id={opt} checked={selected.includes(opt)} onCheckedChange={() => toggle(opt)} />
-          <label htmlFor={opt} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{opt}</label>
+          <label htmlFor={opt} className="text-sm font-medium leading-none">{opt}</label>
         </div>
       ))}
     </div>
@@ -128,6 +69,50 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
   
   // WIZARD STATE
   const [activeStep, setActiveStep] = useState(0);
+
+  const renderDropdownWithCustom = (
+    label: string, 
+    value: string, 
+    options: string[], 
+    onChange: (val: string) => void
+  ) => {
+    const isCustom = value && !options.includes(value) && value !== "Custom" && value !== "";
+    const showCustom = isCustom || value === "Custom";
+    
+    return (
+      <div className="space-y-3">
+        <Label>{label}</Label>
+        {!showCustom ? (
+          <Select value={value || ""} onValueChange={v => {
+            if (v === "Custom") {
+              onChange("Custom"); 
+            } else {
+              onChange(v);
+            }
+          }}>
+            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+            <SelectContent>
+              {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+              <SelectItem value="Custom">Custom / Other</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Input 
+              value={value === "Custom" ? "" : value} 
+              onChange={e => onChange(e.target.value)} 
+              placeholder={`Enter custom ${label.toLowerCase()}...`}
+              autoFocus
+            />
+            <Button variant="ghost" size="icon" onClick={() => onChange("")} title="Back to presets">
+              <X className="w-4 h-4 text-slate-400 hover:text-red-500" />
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
 
   useEffect(() => {
     fetch(`/api/v1/crm/prospect/${prospectId}/requirement`)
@@ -185,55 +170,49 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
       let score = 0;
       let itemsChecked = 0;
       
-      const hasClient = updated.client_details?.client_name || updated.client_details?.company_name;
-      if (hasClient) { score += 20; itemsChecked++; }
+      if (updated.client_details?.client_name) { score += 10; itemsChecked++; }
+      if (updated.project_details?.project_name && updated.objective) { score += 10; itemsChecked++; }
+      if (updated.timeline?.delivery_date) { score += 10; itemsChecked++; }
+      if (updated.project_details?.project_category) { score += 10; itemsChecked++; }
+      if (updated.project_details?.production_type) { score += 10; itemsChecked++; }
+      if (updated.assets?.brand_guidelines || updated.assets?.reference_links) { score += 10; itemsChecked++; }
+      if (updated.universal_deliverables?.list?.length > 0) { score += 10; itemsChecked++; }
       
-      const hasProject = updated.project_details?.project_name && updated.objective;
-      if (hasProject) { score += 20; itemsChecked++; }
-      
-      const hasDeliverables = updated.deliverables?.length > 0;
-      if (hasDeliverables) { score += 20; itemsChecked++; }
-      
-      const hasDeadline = updated.timeline?.delivery_date;
-      if (hasDeadline) { score += 20; itemsChecked++; }
-      
-      const hasAssets = updated.assets?.reference_links || updated.assets?.brand_guidelines;
-      if (hasAssets) { score += 20; itemsChecked++; }
+      const prodType = updated.project_details?.production_type;
+      if (prodType === 'ai') {
+        if (updated.ai_style) score += 10;
+        if (updated.notes) score += 10; // Prompt notes
+        if (updated.production_requirements?.voice_over || updated.production_requirements?.ai_language) score += 10;
+      } else if (prodType === 'hybrid') {
+        if (updated.live_shoot_details?.locations) score += 15;
+        if (updated.hybrid_details?.ai_components?.length > 0) score += 15;
+      } else if (prodType === 'live') {
+        if (updated.live_shoot_details?.locations) score += 15;
+        if (updated.live_shoot_details?.crew) score += 15;
+      } else if (prodType === 'photo') {
+        if (updated.photography_details?.shoot_type) score += 15;
+        if (updated.photography_details?.number_of_photos) score += 15;
+      } else if (prodType === 'post') {
+        if (updated.post_production_details?.editing_style) score += 15;
+        if (updated.post_production_details?.motion_graphics || updated.post_production_details?.vfx) score += 15;
+      } else {
+        score += 30; // Fallback so score can reach 100 if prod type is missing
+      }
       
       updated.completeness_score = Math.min(100, score);
-      updated.items_checked = itemsChecked; 
+      updated.items_checked = itemsChecked;
       
       debouncedSave(updated);
       return updated;
     });
   };
 
-  const handleGenerateScope = async () => {
-    setGeneratingScope(true);
-    toast({ title: "AI Generating Scope", description: "Analyzing requirements..." });
-    try {
-      const res = await generateRequirementScope({
-        projectType: data?.project_details?.project_category,
-        objective: data?.objective,
-        budget: data?.project_details?.budget,
-        priority: data?.client_details?.priority,
-        notes: data?.notes
-      });
-      updateField('root', 'scope_of_work', res.scope_of_work);
-      toast({ title: "Success", description: "Scope generated successfully." });
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "Error", description: e.message });
-    } finally {
-      setGeneratingScope(false);
-    }
-  };
-
   const handleNext = () => {
-    if (activeStep === 0 && !data?.project_details?.production_type) {
-      toast({ variant: "destructive", title: "Selection Required", description: "Please select a Production Type to continue." });
+    if (activeStep === 0 && (!data?.project_details?.project_category || !data?.project_details?.production_type)) {
+      toast({ variant: "destructive", title: "Missing Info", description: "Select Category and Production Type to continue." });
       return;
     }
-    setActiveStep(prev => Math.min(prev + 1, 3));
+    setActiveStep(prev => Math.min(prev + 1, 2));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -242,90 +221,158 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (loading) return <div className="p-12 text-center flex flex-col items-center justify-center h-[50vh]"><Loader2 className="h-10 w-10 animate-spin mx-auto text-primary mb-4" /><p className="text-muted-foreground font-medium">Loading AI Intake Form...</p></div>;
+  if (loading) return <div className="p-12 text-center flex flex-col items-center justify-center h-[50vh]"><Loader2 className="h-10 w-10 animate-spin mx-auto text-primary mb-4" /></div>;
   if (!data) return <div>Failed to load requirement chart.</div>;
 
   const prodType = data.project_details?.production_type || "";
 
-  // Completeness Checks
-  const hasClient = !!(data.client_details?.client_name || data.client_details?.company_name);
-  const hasProject = !!(data.project_details?.project_name && data.objective);
-  const hasDeliverables = !!(data.deliverables?.length > 0);
-  const hasDeadline = !!data.timeline?.delivery_date;
-  const hasAssets = !!(data.assets?.reference_links || data.assets?.brand_guidelines);
-
   const steps = [
     { label: "Production Strategy", icon: Target },
     { label: "Core Details", icon: Briefcase },
-    { label: "Production Specs", icon: Video },
-    { label: "Finalization", icon: CheckCircle2 }
+    { label: "Production Specs", icon: Video }
   ];
 
+  const hasClient = !!(data.client_details?.client_name);
+  const hasProject = !!(data.project_details?.project_name);
+  const hasTimeline = !!(data.timeline?.delivery_date);
+  const hasAssets = !!(data.assets?.reference_links);
+
   return (
-    <div className="space-y-8 pb-32 max-w-5xl mx-auto px-4 md:px-8 pt-4">
+    <div className="space-y-10 pb-32 max-w-6xl mx-auto px-4 md:px-8 pt-8">
       {/* Top Header & Completeness (Always Visible) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 flex flex-col justify-center space-y-4 p-6 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold flex items-center gap-2"><Target className="h-5 w-5 text-primary" /> Requirement Completeness</h2>
-            <span className="text-3xl font-black text-primary drop-shadow-sm">{Math.round(data.completeness_score || 0)}%</span>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="md:col-span-3 flex flex-col justify-center space-y-5 p-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-800 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+          <div className="flex justify-between items-end">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2 text-slate-800 dark:text-slate-100">
+                {data.completeness_score >= 100 ? (
+                  <Sparkles className="h-6 w-6 text-emerald-500" />
+                ) : (
+                  <Target className="h-6 w-6 text-primary" /> 
+                )}
+                Requirement Analysis
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                {data.completeness_score >= 100 ? "All required information has been successfully provided." : "Complete all necessary information to proceed."}
+              </p>
+            </div>
+            <div className="flex flex-col items-end">
+              {data.completeness_score >= 100 ? (
+                <div className="px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-2xl border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 shadow-sm font-bold text-xl uppercase tracking-wider animate-in zoom-in duration-300">
+                  <CheckCircle2 className="h-5 w-5" /> Finished
+                </div>
+              ) : (
+                <span className="text-4xl font-black text-primary tracking-tighter drop-shadow-sm">{Math.round(data.completeness_score || 0)}%</span>
+              )}
+            </div>
           </div>
-          <Progress value={data.completeness_score || 0} className="h-3 rounded-full bg-slate-200 dark:bg-slate-800" />
-          <div className="flex flex-wrap gap-4 pt-2">
-            <div className={`flex items-center gap-2 text-sm font-medium ${hasClient ? 'text-emerald-600' : 'text-slate-400'}`}>{hasClient ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />} Client</div>
-            <div className={`flex items-center gap-2 text-sm font-medium ${hasProject ? 'text-emerald-600' : 'text-slate-400'}`}>{hasProject ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />} Project</div>
-            <div className={`flex items-center gap-2 text-sm font-medium ${hasDeliverables ? 'text-emerald-600' : 'text-slate-400'}`}>{hasDeliverables ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />} Deliverables</div>
-            <div className={`flex items-center gap-2 text-sm font-medium ${hasDeadline ? 'text-emerald-600' : 'text-slate-400'}`}>{hasDeadline ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />} Deadline</div>
-            <div className={`flex items-center gap-2 text-sm font-medium ${hasAssets ? 'text-emerald-600' : 'text-amber-500'}`}>{hasAssets ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />} Assets</div>
+          
+          <Progress value={data.completeness_score || 0} className="h-4 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/50" indicatorColor={data.completeness_score >= 100 ? "bg-emerald-500" : "bg-primary"} />
+          
+          <div className="flex flex-wrap gap-6 pt-2">
+            <div className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-300 ${hasClient ? 'text-emerald-600' : 'text-slate-400'}`}>
+              {hasClient ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />} Client
+            </div>
+            <div className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-300 ${hasProject ? 'text-emerald-600' : 'text-slate-400'}`}>
+              {hasProject ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />} Project
+            </div>
+            <div className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-300 ${hasTimeline ? 'text-emerald-600' : 'text-slate-400'}`}>
+              {hasTimeline ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />} Timeline
+            </div>
+            <div className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-300 ${hasAssets ? 'text-emerald-600' : 'text-amber-500'}`}>
+              {hasAssets ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />} {hasAssets ? 'Assets Provided' : 'Assets Missing'}
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col items-end justify-between p-6 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800">
-          <div className="text-right space-y-1">
-            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Auto-Save Status</h3>
-            <p className="text-sm font-medium text-muted-foreground flex items-center justify-end gap-2">
-              {saveStatus === "saving" && <><Loader2 className="h-4 w-4 animate-spin text-primary" /> Saving...</>}
-              {saveStatus === "saved" && <><Check className="h-4 w-4 text-emerald-500" /> Saved</>}
-              {saveStatus === "idle" && lastSaved && `Saved at ${lastSaved.toLocaleTimeString()}`}
-            </p>
+        <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-slate-900 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-800 h-full relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="text-center space-y-3 z-10">
+            <div className="mx-auto w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700 shadow-sm">
+              {saveStatus === "saving" ? (
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              ) : saveStatus === "saved" ? (
+                <Check className="h-5 w-5 text-emerald-500" />
+              ) : (
+                <Save className="h-5 w-5 text-slate-400" />
+              )}
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 uppercase tracking-wider">Sync Status</h3>
+              <p className="text-xs font-medium text-slate-500 mt-1">
+                {saveStatus === "saving" && "Saving changes..."}
+                {saveStatus === "saved" && "All changes saved"}
+                {saveStatus === "idle" && lastSaved && `Last saved ${lastSaved.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`}
+                {saveStatus === "idle" && !lastSaved && "Waiting to save"}
+              </p>
+            </div>
           </div>
-          <Button variant="outline" className="rounded-xl font-bold w-full mt-4" onClick={() => toast({ title: "Snapshot Saved", description: "Version locked in history." })}>Save Snapshot</Button>
         </div>
       </div>
 
-      {/* Stepper Navigation Indicator */}
-      <div className="flex items-center justify-between px-2 overflow-x-auto gap-4">
+      {/* Stepper */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-center px-4 py-8 gap-4 md:gap-6 w-full max-w-4xl mx-auto">
         {steps.map((step, idx) => {
           const isActive = idx === activeStep;
           const isPast = idx < activeStep;
           const Icon = step.icon;
           return (
-            <div key={idx} className="flex items-center">
+            <div key={idx} className="flex items-center w-full md:w-auto">
               <div className={cn(
-                "flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 shadow-sm shrink-0",
-                isActive ? "bg-primary text-white scale-110" : isPast ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-slate-100 text-slate-400 dark:bg-slate-800"
+                "flex items-center justify-center w-14 h-14 rounded-full transition-all duration-500 shrink-0",
+                isActive ? "bg-primary text-white scale-110 shadow-[0_0_20px_rgba(225,29,72,0.3)] ring-4 ring-primary/10" 
+                  : isPast ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
+                  : "bg-slate-50 text-slate-400 border border-slate-100"
               )}>
-                {isPast ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+                {isPast ? <Check className="w-6 h-6" /> : <Icon className={cn("w-6 h-6", isActive ? "animate-in zoom-in duration-300" : "")} />}
               </div>
               <span className={cn(
-                "ml-3 font-semibold text-sm whitespace-nowrap",
-                isActive ? "text-slate-800 dark:text-slate-100" : isPast ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 dark:text-slate-500"
+                "ml-5 font-bold text-base whitespace-nowrap transition-colors duration-300",
+                isActive ? "text-slate-900 dark:text-slate-50" : isPast ? "text-emerald-600" : "text-slate-400"
               )}>{step.label}</span>
-              {idx < steps.length - 1 && <div className={cn("h-1 w-12 md:w-24 mx-4 rounded-full transition-colors", isPast ? "bg-emerald-200 dark:bg-emerald-900/50" : "bg-slate-100 dark:bg-slate-800")} />}
+              {idx < steps.length - 1 && <div className={cn("hidden md:block h-[2px] w-12 lg:w-24 mx-6 lg:mx-8 transition-colors duration-500 rounded-full", isPast ? "bg-emerald-400" : "bg-slate-200 dark:bg-slate-800")} />}
             </div>
           )
         })}
       </div>
 
-      {/* WIZARD CONTENT AREA */}
-      <div className="min-h-[500px]">
-        {/* Step 0: Production Strategy */}
+      <div className="min-h-[500px] mt-6">
+        {/* Step 0: Classification */}
         {activeStep === 0 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <Card className="shadow-lg rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
-              <div className="bg-primary/5 p-6 border-b border-primary/10">
-                <h3 className="font-bold text-xl flex items-center gap-2 text-primary">Production Strategy</h3>
-                <p className="text-muted-foreground text-sm mt-1">What are you producing? Choose one to load relevant sections in Step 3.</p>
+              <div className="bg-gradient-to-r from-primary/5 to-transparent p-8 border-b border-primary/10">
+                <h3 className="font-bold text-2xl flex items-center gap-3 text-slate-800 dark:text-slate-100">
+                  <div className="p-2 bg-primary/10 rounded-xl"><Target className="h-6 w-6 text-primary" /></div>
+                  1. Project Category
+                </h3>
+                <p className="text-muted-foreground text-base mt-2 ml-14">Select the overarching vertical for this project.</p>
+              </div>
+              <div className="p-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+                {PROJECT_CATEGORIES.map(cat => (
+                  <div 
+                    key={cat} 
+                    onClick={() => updateField('project_details', 'project_category', cat)}
+                    className={cn(
+                      "p-3 text-center rounded-xl border-2 cursor-pointer transition-all font-semibold text-sm",
+                      data.project_details?.project_category === cat 
+                        ? "border-primary bg-primary/5 text-primary shadow-sm" 
+                        : "border-slate-200 hover:border-primary/30"
+                    )}
+                  >
+                    {cat}
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="shadow-lg rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
+              <div className="bg-gradient-to-r from-primary/5 to-transparent p-8 border-b border-primary/10">
+                <h3 className="font-bold text-2xl flex items-center gap-3 text-slate-800 dark:text-slate-100">
+                  <div className="p-2 bg-primary/10 rounded-xl"><Video className="h-6 w-6 text-primary" /></div>
+                  2. Production Workflow
+                </h3>
+                <p className="text-muted-foreground text-base mt-2 ml-14">This determines the dynamic fields you'll need to fill out.</p>
               </div>
               <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {PRODUCTION_TYPES.map(type => (
@@ -336,7 +383,7 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
                       "p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-3 font-semibold",
                       prodType === type.id 
                         ? "border-primary bg-primary/5 text-primary shadow-md scale-[1.02]" 
-                        : "border-slate-200 dark:border-slate-800 hover:border-primary/30 text-slate-600 dark:text-slate-300"
+                        : "border-slate-200 hover:border-primary/30"
                     )}
                   >
                     {type.label}
@@ -347,254 +394,210 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
           </div>
         )}
 
-        {/* Step 1: Core Details */}
+        {/* Step 1: Core Info & Deliverables */}
         {activeStep === 1 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-            <Card className="shadow-md rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
-              <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-6 border-r border-slate-100 dark:border-slate-800 md:pr-8">
-                  <h4 className="font-bold text-lg border-b pb-2">Client Details</h4>
-                  <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Client Name</Label><Input value={data.client_details?.client_name || ""} onChange={e => updateField('client_details', 'client_name', e.target.value)} className="rounded-xl" /></div>
-                  <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Contact Person</Label><Input value={data.client_details?.contact_person || ""} onChange={e => updateField('client_details', 'contact_person', e.target.value)} className="rounded-xl" /></div>
+            <Card className="shadow-md rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white p-8">
+              <h3 className="font-bold text-lg border-b pb-2 mb-6">Common Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3"><Label>Client Name</Label><Input value={data.client_details?.client_name || ""} onChange={e => updateField('client_details', 'client_name', e.target.value)} /></div>
+                <div className="space-y-3"><Label>Project Name</Label><Input value={data.project_details?.project_name || ""} onChange={e => updateField('project_details', 'project_name', e.target.value)} /></div>
+                <div className="space-y-3"><Label>Project Objective</Label><Input value={data.objective || ""} onChange={e => updateField('root', 'objective', e.target.value)} /></div>
+                <div className="space-y-3"><Label>Project Type (Sub-category)</Label><Input value={data.project_details?.project_type || ""} onChange={e => updateField('project_details', 'project_type', e.target.value)} /></div>
+                <div className="space-y-3"><Label>Duration</Label><Input value={data.timeline?.duration || ""} onChange={e => updateField('timeline', 'duration', e.target.value)} /></div>
+                <div className="space-y-3"><Label>Deadline</Label><Input type="date" value={data.timeline?.delivery_date || ""} onChange={e => updateField('timeline', 'delivery_date', e.target.value)} /></div>
+                <div className="space-y-3"><Label>Aspect Ratio</Label>
+                  <Select value={data.technical_specs?.aspect_ratio || ""} onValueChange={v => updateField('technical_specs', 'aspect_ratio', v)}>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>{ASPECT_RATIOS.map(ar => <SelectItem key={ar} value={ar}>{ar}</SelectItem>)}</SelectContent>
+                  </Select>
                 </div>
-                <div className="space-y-6">
-                  <h4 className="font-bold text-lg border-b pb-2">Project Overview</h4>
-                  <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Project Name</Label><Input value={data.project_details?.project_name || ""} onChange={e => updateField('project_details', 'project_name', e.target.value)} className="rounded-xl" /></div>
-                  <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Project Type</Label><Input value={data.project_details?.project_type || ""} onChange={e => updateField('project_details', 'project_type', e.target.value)} className="rounded-xl" /></div>
-                  <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Objective</Label>
-                    <Select value={data.objective || ""} onValueChange={v => updateField('root', 'objective', v)}>
-                      <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select Objective" /></SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        {SUGGESTIONS.objective.map(obj => <SelectItem key={obj} value={obj}>{obj}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                <div className="space-y-3"><Label>Reference Links</Label><Input value={data.assets?.reference_links || ""} onChange={e => updateField('assets', 'reference_links', e.target.value)} /></div>
+                <div className="space-y-3"><Label>Brand Guidelines</Label><Input value={data.assets?.brand_guidelines || ""} onChange={e => updateField('assets', 'brand_guidelines', e.target.value)} /></div>
+                <div className="space-y-3"><Label>Notes</Label><Textarea value={data.notes || ""} onChange={e => updateField('root', 'notes', e.target.value)} /></div>
               </div>
             </Card>
 
-            <Card className="shadow-md rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
-              <div className="p-8 grid grid-cols-1 gap-8">
+            <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
+              <h3 className="font-bold text-lg border-b pb-2 mb-6">Universal Deliverables</h3>
+              <CheckboxGroup options={FINAL_DELIVERABLES} selected={data.universal_deliverables?.list || []} onChange={v => updateField('universal_deliverables', 'list', v)} />
+            </Card>
+
+            <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
+              <h3 className="font-bold text-lg border-b pb-2 mb-6">Client Assets</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-3">
-                  <Label className="text-muted-foreground font-semibold">Deliverables</Label>
-                  <MultiSuggestionInput values={data.deliverables || []} asArray={true} onChange={v => updateField('root', 'deliverables', v)} suggestions={DELIVERABLES_PRESETS} placeholder="Add a deliverable..." />
+                  <Label>Asset Links (Google Drive, Dropbox, etc.)</Label>
+                  <Input 
+                    value={data.assets?.custom_asset_links || ""} 
+                    onChange={e => updateField('assets', 'custom_asset_links', e.target.value)} 
+                    placeholder="https://drive.google.com/..."
+                  />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Duration</Label>
-                    <Select value={data.technical_specs?.duration || ""} onValueChange={v => updateField('technical_specs', 'duration', v)}>
-                      <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select Duration" /></SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        <SelectItem value="10 seconds">10 seconds</SelectItem>
-                        <SelectItem value="15 seconds">15 seconds</SelectItem>
-                        <SelectItem value="30 seconds">30 seconds</SelectItem>
-                        <SelectItem value="60 seconds">60 seconds</SelectItem>
-                        <SelectItem value="90 seconds">90 seconds</SelectItem>
-                        <SelectItem value="2 minutes">2 minutes</SelectItem>
-                        <SelectItem value="Custom">Custom</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <div className="space-y-3">
+                  <Label>Upload Files</Label>
+                  <div 
+                    onClick={() => document.getElementById('asset-upload')?.click()} 
+                    className="border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors"
+                  >
+                    <Upload className="h-6 w-6 text-slate-400 mb-2" />
+                    <p className="text-sm font-medium text-slate-600">Click to select files</p>
+                    <input 
+                      id="asset-upload" 
+                      type="file" 
+                      multiple 
+                      className="hidden" 
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []).map(f => f.name);
+                        const existing = data.assets?.uploaded_files || [];
+                        updateField('assets', 'uploaded_files', [...existing, ...files]);
+                        toast({ title: "Files added", description: `${files.length} file(s) ready for upload.` });
+                      }}
+                    />
                   </div>
-                  <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Deadline</Label><Input type="date" value={data.timeline?.delivery_date || ""} onChange={e => updateField('timeline', 'delivery_date', e.target.value)} className="rounded-xl" /></div>
-                  <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Aspect Ratio</Label>
-                    <Select value={data.technical_specs?.aspect_ratio || ""} onValueChange={v => updateField('technical_specs', 'aspect_ratio', v)}>
-                      <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        {ASPECT_RATIOS.map(ar => <SelectItem key={ar} value={ar}>{ar}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="shadow-md rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
-              <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Reference (Link/URL)</Label><Input value={data.assets?.reference_links || ""} onChange={e => updateField('assets', 'reference_links', e.target.value)} className="rounded-xl" placeholder="https://" /></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Brand Guidelines</Label><Input value={data.assets?.brand_guidelines || ""} onChange={e => updateField('assets', 'brand_guidelines', e.target.value)} className="rounded-xl" placeholder="Link or Text" /></div>
-                <div className="space-y-3 md:col-span-2"><Label className="text-muted-foreground font-semibold">Notes</Label><Textarea value={data.notes || ""} onChange={e => updateField('root', 'notes', e.target.value)} className="rounded-xl min-h-[100px]" /></div>
-                <div className="space-y-3 md:col-span-2">
-                  <Label className="text-muted-foreground font-semibold">Client Assets</Label>
-                  <div onClick={() => document.getElementById('client-assets-upload')?.click()} className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                    <Upload className="h-8 w-8 text-slate-400 mb-2" />
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Click to upload Client Assets</p>
-                    <p className="text-xs text-slate-400">PDF, PNG, JPG, MP4 up to 50MB</p>
-                    <input id="client-assets-upload" type="file" multiple className="hidden" onChange={(e) => {
-                      const files = Array.from(e.target.files || []);
-                      if (files.length > 0) {
-                        toast({ title: "Files Selected", description: `${files.length} file(s) ready for upload.` });
-                      }
-                    }} />
-                  </div>
+                  {data.assets?.uploaded_files?.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <Label className="text-xs text-muted-foreground">Selected Files:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {data.assets.uploaded_files.map((file: string, idx: number) => (
+                          <Badge key={idx} variant="secondary" className="flex items-center gap-1">
+                            {file}
+                            <X 
+                              className="w-3 h-3 cursor-pointer hover:text-red-500" 
+                              onClick={() => {
+                                const updatedFiles = data.assets.uploaded_files.filter((_: any, i: number) => i !== idx);
+                                updateField('assets', 'uploaded_files', updatedFiles);
+                              }}
+                            />
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
           </div>
         )}
 
-        {/* Step 2: Production Specs (Conditional) */}
+        {/* Step 2: Dynamic Production Specs */}
         {activeStep === 2 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             {prodType === 'ai' && (
-              <Card className="shadow-md rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="md:col-span-2"><h3 className="font-bold text-xl flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> AI Production Specs</h3></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">AI Style</Label>
-                  <Select value={data.creative_requirements?.ai_style || ""} onValueChange={v => updateField('creative_requirements', 'ai_style', v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent className="rounded-xl"><SelectItem value="Realistic">Realistic</SelectItem><SelectItem value="Cinematic">Cinematic</SelectItem><SelectItem value="Stylized">Stylized</SelectItem><SelectItem value="Animation">Animation</SelectItem></SelectContent>
-                  </Select>
+              <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
+                <h3 className="font-bold text-xl flex items-center gap-2 mb-6"><Bot className="h-5 w-5 text-primary" /> AI Production</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3"><Label>AI Style</Label>
+                    <Select value={data.ai_style || ""} onValueChange={v => updateField('root', 'ai_style', v)}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent><SelectItem value="Realistic">Realistic</SelectItem><SelectItem value="Stylized">Stylized</SelectItem><SelectItem value="Animation">Animation</SelectItem><SelectItem value="Cinematic">Cinematic</SelectItem></SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-3 md:col-span-2"><Label>AI Assets Required</Label>
+                    <CheckboxGroup options={["Images", "Video", "Avatar", "Voice", "Music", "Motion Graphics"]} selected={data.ai_assets_required || []} onChange={v => updateField('root', 'ai_assets_required', v)} />
+                  </div>
+                  <div className="space-y-3 md:col-span-2"><Label>Prompt Notes</Label><Textarea value={data.notes || ""} onChange={e => updateField('root', 'notes', e.target.value)} /></div>
+                  
+                  {renderDropdownWithCustom(
+                    "Voice Over", 
+                    data.production_requirements?.voice_over || "", 
+                    ["AI Male", "AI Female", "Human Male", "Human Female", "None"], 
+                    v => updateField('production_requirements', 'voice_over', v)
+                  )}
+                  {renderDropdownWithCustom(
+                    "Subtitles", 
+                    data.production_requirements?.subtitles || "", 
+                    ["Yes (English)", "Yes (Multi-language)", "No"], 
+                    v => updateField('production_requirements', 'subtitles', v)
+                  )}
+                  {renderDropdownWithCustom(
+                    "AI Language", 
+                    data.production_requirements?.ai_language || "", 
+                    ["English (US)", "English (UK)", "Spanish", "French", "German"], 
+                    v => updateField('production_requirements', 'ai_language', v)
+                  )}
                 </div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Voice Over Required?</Label>
-                  <Select value={data.production_requirements?.voice_over_required || "No"} onValueChange={v => updateField('production_requirements', 'voice_over_required', v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent className="rounded-xl"><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-3 md:col-span-2"><Label className="text-muted-foreground font-semibold">AI Assets Required</Label>
-                  <CheckboxGroup options={["AI Images", "AI Video", "AI Avatar", "AI Voice", "AI Music", "AI Animation"]} selected={data.production_requirements?.ai_assets || []} onChange={v => updateField('production_requirements', 'ai_assets', v)} />
-                </div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Subtitles Required?</Label>
-                  <Select value={data.production_requirements?.subtitles || "No"} onValueChange={v => updateField('production_requirements', 'subtitles', v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent className="rounded-xl"><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-3 md:col-span-2"><Label className="text-muted-foreground font-semibold">Prompt Notes</Label><Textarea value={data.creative_requirements?.prompt_notes || ""} onChange={e => updateField('creative_requirements', 'prompt_notes', e.target.value)} className="rounded-xl min-h-[100px]" /></div>
               </Card>
             )}
 
             {prodType === 'hybrid' && (
-              <Card className="shadow-md rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="md:col-span-2"><h3 className="font-bold text-xl flex items-center gap-2"><Video className="h-5 w-5 text-primary" /> Hybrid Production Specs</h3></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Live Shoot Required?</Label>
-                  <Select value={data.production_requirements?.live_shoot || "Yes"} onValueChange={v => updateField('production_requirements', 'live_shoot', v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent className="rounded-xl"><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent>
-                  </Select>
+              <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
+                <h3 className="font-bold text-xl flex items-center gap-2 mb-6"><Video className="h-5 w-5 text-primary" /> Hybrid Production (Live Shoot)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3"><Label>Locations</Label><Input value={data.live_shoot_details?.locations || ""} onChange={e => updateField('live_shoot_details', 'locations', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Crew</Label><Input value={data.live_shoot_details?.crew || ""} onChange={e => updateField('live_shoot_details', 'crew', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Equipment</Label><Input value={data.live_shoot_details?.equipment || ""} onChange={e => updateField('live_shoot_details', 'equipment', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Shoot Days</Label><Input value={data.live_shoot_details?.shoot_days || ""} onChange={e => updateField('live_shoot_details', 'shoot_days', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Actors</Label><Input value={data.live_shoot_details?.actors || ""} onChange={e => updateField('live_shoot_details', 'actors', e.target.value)} /></div>
                 </div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Shoot Days</Label><Input type="number" value={data.production_requirements?.shoot_days || ""} onChange={e => updateField('production_requirements', 'shoot_days', e.target.value)} className="rounded-xl" /></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Location</Label><Input value={data.production_requirements?.location || ""} onChange={e => updateField('production_requirements', 'location', e.target.value)} className="rounded-xl" /></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Crew Required</Label>
-                  <Select value={data.production_requirements?.crew_size || ""} onValueChange={v => updateField('production_requirements', 'crew_size', v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent className="rounded-xl"><SelectItem value="Minimal (1-2)">Minimal (1-2)</SelectItem><SelectItem value="Standard (3-5)">Standard (3-5)</SelectItem><SelectItem value="Full Crew (6+)">Full Crew (6+)</SelectItem></SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Equipment Required</Label>
-                  <Select value={data.production_requirements?.equipment || ""} onValueChange={v => updateField('production_requirements', 'equipment', v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent className="rounded-xl"><SelectItem value="Basic">Basic</SelectItem><SelectItem value="Cinema Package">Cinema Package</SelectItem><SelectItem value="Advanced/Specialty">Advanced/Specialty</SelectItem></SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-3 md:col-span-2"><Label className="text-muted-foreground font-semibold">AI Components</Label>
-                  <CheckboxGroup options={["AI Video", "AI Cleanup", "AI VFX", "AI Voice", "AI Images"]} selected={data.production_requirements?.ai_components || []} onChange={v => updateField('production_requirements', 'ai_components', v)} />
-                </div>
+                <h3 className="font-bold text-xl flex items-center gap-2 mt-8 mb-6"><Bot className="h-5 w-5 text-primary" /> Hybrid Production (AI Components)</h3>
+                <CheckboxGroup options={["AI Cleanup", "AI Enhancement", "AI VFX", "AI Voice", "AI Background"]} selected={data.hybrid_details?.ai_components || []} onChange={v => updateField('hybrid_details', 'ai_components', v)} />
               </Card>
             )}
 
             {prodType === 'live' && (
-              <Card className="shadow-md rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="md:col-span-2"><h3 className="font-bold text-xl flex items-center gap-2"><Video className="h-5 w-5 text-primary" /> Live Production Specs</h3></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Shoot Days</Label><Input type="number" value={data.production_requirements?.shoot_days || ""} onChange={e => updateField('production_requirements', 'shoot_days', e.target.value)} className="rounded-xl" /></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Location</Label><Input value={data.production_requirements?.location || ""} onChange={e => updateField('production_requirements', 'location', e.target.value)} className="rounded-xl" /></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Crew Size</Label><Input value={data.production_requirements?.crew_size || ""} onChange={e => updateField('production_requirements', 'crew_size', e.target.value)} className="rounded-xl" /></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Equipment</Label><Input value={data.production_requirements?.equipment || ""} onChange={e => updateField('production_requirements', 'equipment', e.target.value)} className="rounded-xl" /></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Talent</Label><Input value={data.production_requirements?.talent_requirements || ""} onChange={e => updateField('production_requirements', 'talent_requirements', e.target.value)} className="rounded-xl" /></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Permissions Required</Label><Input value={data.production_requirements?.permissions || ""} onChange={e => updateField('production_requirements', 'permissions', e.target.value)} className="rounded-xl" /></div>
+              <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
+                <h3 className="font-bold text-xl flex items-center gap-2 mb-6"><Video className="h-5 w-5 text-primary" /> Live Production</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3"><Label>Shoot Days</Label><Input value={data.live_shoot_details?.shoot_days || ""} onChange={e => updateField('live_shoot_details', 'shoot_days', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Locations</Label><Input value={data.live_shoot_details?.locations || ""} onChange={e => updateField('live_shoot_details', 'locations', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Crew</Label><Input value={data.live_shoot_details?.crew || ""} onChange={e => updateField('live_shoot_details', 'crew', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Equipment</Label><Input value={data.live_shoot_details?.equipment || ""} onChange={e => updateField('live_shoot_details', 'equipment', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Lighting</Label><Input value={data.live_shoot_details?.lighting || ""} onChange={e => updateField('live_shoot_details', 'lighting', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Camera</Label><Input value={data.live_shoot_details?.camera || ""} onChange={e => updateField('live_shoot_details', 'camera', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Drone</Label><Input value={data.live_shoot_details?.drone || ""} onChange={e => updateField('live_shoot_details', 'drone', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Talent</Label><Input value={data.live_shoot_details?.talent || ""} onChange={e => updateField('live_shoot_details', 'talent', e.target.value)} /></div>
+                  <div className="space-y-3 md:col-span-2"><Label>Permissions</Label><Input value={data.live_shoot_details?.permissions || ""} onChange={e => updateField('live_shoot_details', 'permissions', e.target.value)} /></div>
+                </div>
               </Card>
             )}
 
             {prodType === 'photo' && (
-              <Card className="shadow-md rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="md:col-span-2"><h3 className="font-bold text-xl flex items-center gap-2"><Palette className="h-5 w-5 text-primary" /> Photography Specs</h3></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Shoot Type</Label>
-                  <Select value={data.production_requirements?.shoot_type || ""} onValueChange={v => updateField('production_requirements', 'shoot_type', v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent className="rounded-xl"><SelectItem value="Fashion">Fashion</SelectItem><SelectItem value="Product">Product</SelectItem><SelectItem value="Event">Event</SelectItem><SelectItem value="Corporate">Corporate</SelectItem></SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Number of Photos</Label><Input type="number" value={data.production_requirements?.number_of_photos || ""} onChange={e => updateField('production_requirements', 'number_of_photos', e.target.value)} className="rounded-xl" /></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Editing Required?</Label>
-                  <Select value={data.production_requirements?.editing_required || "Yes"} onValueChange={v => updateField('production_requirements', 'editing_required', v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent className="rounded-xl"><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent>
-                  </Select>
+              <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
+                <h3 className="font-bold text-xl flex items-center gap-2 mb-6"><Palette className="h-5 w-5 text-primary" /> Photography</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3"><Label>Shoot Type</Label>
+                    <Select value={data.photography_details?.shoot_type || ""} onValueChange={v => updateField('photography_details', 'shoot_type', v)}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent><SelectItem value="Product">Product</SelectItem><SelectItem value="Fashion">Fashion</SelectItem><SelectItem value="Corporate">Corporate</SelectItem><SelectItem value="Event">Event</SelectItem><SelectItem value="Food">Food</SelectItem></SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-3"><Label>Number of Photos</Label><Input type="number" value={data.photography_details?.number_of_photos || ""} onChange={e => updateField('photography_details', 'number_of_photos', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Retouching</Label><Input value={data.photography_details?.retouching || ""} onChange={e => updateField('photography_details', 'retouching', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Album Required</Label>
+                    <Select value={data.photography_details?.album || "No"} onValueChange={v => updateField('photography_details', 'album', v)}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </Card>
             )}
 
             {prodType === 'post' && (
-              <Card className="shadow-md rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="md:col-span-2"><h3 className="font-bold text-xl flex items-center gap-2"><Settings className="h-5 w-5 text-primary" /> Post Production Specs</h3></div>
-                <div className="space-y-3 md:col-span-2"><Label className="text-muted-foreground font-semibold">Client Footage Upload</Label>
-                  <div onClick={() => document.getElementById('client-footage-upload')?.click()} className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                    <Upload className="h-8 w-8 text-slate-400 mb-2" />
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Click to upload Footage</p>
-                    <input id="client-footage-upload" type="file" multiple accept="video/*" className="hidden" onChange={(e) => {
-                      const files = Array.from(e.target.files || []);
-                      if (files.length > 0) {
-                        toast({ title: "Footage Selected", description: `${files.length} video(s) ready for upload.` });
-                      }
-                    }} />
-                  </div>
-                </div>
-                <div className="space-y-3 md:col-span-2"><Label className="text-muted-foreground font-semibold">Editing Style</Label><Input value={data.creative_requirements?.editing_style || ""} onChange={e => updateField('creative_requirements', 'editing_style', e.target.value)} className="rounded-xl" /></div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Motion Graphics?</Label>
-                  <Select value={data.production_requirements?.motion_graphics || "No"} onValueChange={v => updateField('production_requirements', 'motion_graphics', v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent className="rounded-xl"><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">VFX?</Label>
-                  <Select value={data.production_requirements?.vfx || "No"} onValueChange={v => updateField('production_requirements', 'vfx', v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent className="rounded-xl"><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-3"><Label className="text-muted-foreground font-semibold">Color Grading?</Label>
-                  <Select value={data.production_requirements?.color_grading || "No"} onValueChange={v => updateField('production_requirements', 'color_grading', v)}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent className="rounded-xl"><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent>
-                  </Select>
+              <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
+                <h3 className="font-bold text-xl flex items-center gap-2 mb-6"><Settings className="h-5 w-5 text-primary" /> Post Production</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3"><Label>Editing Style</Label><Input value={data.post_production_details?.editing_style || ""} onChange={e => updateField('post_production_details', 'editing_style', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Motion Graphics</Label><Input value={data.post_production_details?.motion_graphics || ""} onChange={e => updateField('post_production_details', 'motion_graphics', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>VFX</Label><Input value={data.post_production_details?.vfx || ""} onChange={e => updateField('post_production_details', 'vfx', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Color Grade</Label><Input value={data.post_production_details?.color_grade || ""} onChange={e => updateField('post_production_details', 'color_grade', e.target.value)} /></div>
+                  <div className="space-y-3"><Label>Sound Design</Label><Input value={data.post_production_details?.sound_design || ""} onChange={e => updateField('post_production_details', 'sound_design', e.target.value)} /></div>
                 </div>
               </Card>
             )}
           </div>
         )}
-
-        {/* Step 3: Finalization */}
-        {activeStep === 3 && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-            <Card className="shadow-md rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden p-8">
-              <h3 className="font-bold text-xl flex items-center gap-2 mb-6"><FileText className="h-5 w-5 text-primary" /> Deliverables Master List</h3>
-              <CheckboxGroup options={FINAL_DELIVERABLES} selected={data.final_deliverables || []} onChange={v => updateField('root', 'final_deliverables', v)} />
-            </Card>
-
-            <Card className="shadow-md rounded-3xl border-slate-200/60 dark:border-slate-800 bg-primary/5 overflow-hidden p-8">
-              <h3 className="font-bold text-xl flex items-center gap-2 mb-6 text-primary"><Sparkles className="h-5 w-5 text-primary" /> AI Assistant Actions</h3>
-              <div className="flex flex-wrap gap-4">
-                <Button variant="outline" className="rounded-xl border-primary text-primary hover:bg-primary/10">Generate Proposal</Button>
-                <Button variant="outline" className="rounded-xl border-primary text-primary hover:bg-primary/10" onClick={handleGenerateScope} disabled={generatingScope}>
-                  {generatingScope ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Generate Scope of Work"}
-                </Button>
-                <Button variant="outline" className="rounded-xl border-primary text-primary hover:bg-primary/10">Generate Budget</Button>
-                <Button variant="outline" className="rounded-xl border-primary text-primary hover:bg-primary/10">Generate Timeline</Button>
-                <Button variant="outline" className="rounded-xl border-primary text-primary hover:bg-primary/10">Generate Task List</Button>
-                <Button className="rounded-xl bg-primary text-white">Create Pilot Video</Button>
-              </div>
-            </Card>
-          </div>
-        )}
       </div>
 
-      {/* Footer Navigation */}
       <div className="flex items-center justify-between pt-6 mt-8 border-t border-slate-200 dark:border-slate-800">
         <Button variant="outline" onClick={handlePrev} disabled={activeStep === 0} className="rounded-xl font-bold px-6 h-12">
           <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Button>
-        {activeStep === 3 ? (
+        {activeStep === 2 ? (
           <Button 
             onClick={async () => {
-              const updated = { ...data, completeness_score: 100, status: 'approved' };
+              const updated = { ...data, status: 'approved' };
               setData(updated);
               setSaveStatus("saving");
               try {
@@ -612,16 +615,16 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
               }
             }} 
             className="rounded-xl font-bold px-8 h-12 bg-emerald-600 hover:bg-emerald-700 text-white"
+            disabled={data.completeness_score < 100}
           >
-            <CheckCircle2 className="w-4 h-4 mr-2" /> Save & Complete
+            {data.completeness_score < 100 ? "Complete Required Fields" : <><CheckCircle2 className="w-4 h-4 mr-2" /> Save & Complete</>}
           </Button>
         ) : (
           <Button onClick={handleNext} className="rounded-xl font-bold px-8 h-12">
-            {activeStep === 2 ? "Finalize" : "Next Step"} <ArrowRight className="w-4 h-4 ml-2" />
+            Next Step <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         )}
       </div>
-
     </div>
   );
 }

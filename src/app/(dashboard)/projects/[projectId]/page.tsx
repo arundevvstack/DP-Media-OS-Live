@@ -62,6 +62,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { RequirementReferencePanel } from "@/components/projects/requirement-reference-panel";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -92,44 +93,6 @@ interface ReviewAnnotation {
   comment: string;
   author: string;
 }
-
-const renderRequirementValue = (value: any): React.ReactNode => {
-  if (value === null || value === undefined || value === '') return null;
-  if (typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://'))) {
-    return (
-      <a href={value} target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1">
-        <ExternalLink className="h-3 w-3" /> Link
-      </a>
-    );
-  }
-  if (Array.isArray(value)) {
-    return (
-      <div className="flex flex-wrap gap-1.5 mt-1">
-        {value.map((v, i) => <Badge key={i} variant="secondary" className="font-bold text-xs">{v}</Badge>)}
-      </div>
-    );
-  }
-  if (typeof value === 'object') {
-    return (
-      <div className="space-y-3 mt-2 pl-3 border-l-2 border-border/50">
-        {Object.entries(value).map(([k, v]) => {
-          if (v === null || v === '' || (Array.isArray(v) && v.length === 0)) return null;
-          return (
-            <div key={k} className="space-y-1">
-              <span className="text-[10px] font-black text-muted-foreground/80 uppercase tracking-wider block">
-                {k.replace(/_/g, ' ')}
-              </span>
-              <div className="text-sm font-medium text-foreground">
-                {renderRequirementValue(v)}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-  return <span className="whitespace-pre-wrap">{String(value)}</span>;
-};
 
 export default function ProjectWorkspacePage({ providedProjectId, onBack }: { providedProjectId?: string, onBack?: () => void }) {
   const params = useParams();
@@ -761,19 +724,53 @@ export default function ProjectWorkspacePage({ providedProjectId, onBack }: { pr
                     onClick={async () => {
                       setIsSubmitting(true);
                       try {
-                        const stages = [
-                          { name: 'Pre-Production', order: 1, status: 'active' },
-                          { name: 'Production', order: 2, status: 'pending' },
-                          { name: 'Post-Production', order: 3, status: 'pending' },
-                          { name: 'Release', order: 4, status: 'pending' }
+                        const isAIPipeline = project.project_type === 'AI Production' || project.project_type === 'Pilot Video' || project.type === 'Pilot';
+                        
+                        const aiStages = [
+                          { name: 'Script & Breakdown', order: 1, status: 'active', objectives: ['AI Script Breakdown', 'Storyboard Generation', 'Shot List Generation'] },
+                          { name: 'Prompting & Approval', order: 2, status: 'pending', objectives: ['Character Prompts Generation', 'Environment Prompts Generation', 'Product Prompts Generation', 'Camera Prompts Generation', 'Client Prompt Approval'] },
+                          { name: 'Asset Generation', order: 3, status: 'pending', objectives: ['Image Generation', 'Video Generation', 'Voice Generation', 'Music & SFX Generation', 'Asset Quality Verification'] },
+                          { name: 'Post-Production', order: 4, status: 'pending', objectives: ['Scene Assembly Timeline', 'Editing & Motion Graphics', 'Color Grade & Audio Mix'] },
+                          { name: 'Review & Revisions', order: 5, status: 'pending', objectives: ['Internal QA Review', 'Client Preview Version', 'AI Revision Queue'] },
+                          { name: 'Delivery', order: 6, status: 'pending', objectives: ['Final Export', 'Delivery Package', 'Campaign Archive'] }
                         ];
-                        for (const s of stages) {
-                          await supabase.from('ProjectStage').insert({
+
+                        const standardStages = [
+                          { name: 'Pre-Production', order: 1, status: 'active', objectives: [] },
+                          { name: 'Production', order: 2, status: 'pending', objectives: [] },
+                          { name: 'Post-Production', order: 3, status: 'pending', objectives: [] },
+                          { name: 'Release', order: 4, status: 'pending', objectives: [] }
+                        ];
+
+                        const stagesToCreate = isAIPipeline ? aiStages : standardStages;
+
+                        for (const s of stagesToCreate) {
+                          const stageId = crypto.randomUUID();
+                          const { error: stageError } = await supabase.from('ProjectStage').insert({
+                            id: stageId,
                             project_id: projectId,
-                            ...s
+                            name: s.name,
+                            order: s.order,
+                            status: s.status
                           });
+                          if (stageError) throw new Error(stageError.message);
+
+                          if (s.objectives.length > 0) {
+                            for (const objTitle of s.objectives) {
+                              const { error: objError } = await supabase.from('Objective').insert({
+                                id: crypto.randomUUID(),
+                                project_id: projectId,
+                                stage_id: stageId,
+                                title: objTitle,
+                                status: s.status === 'active' ? 'Active' : 'Pending',
+                                priority: 'Medium',
+                                updated_at: new Date().toISOString()
+                              });
+                              if (objError) throw new Error(objError.message);
+                            }
+                          }
                         }
-                        toast({ title: 'Pipeline Created', description: 'Standard production pipeline initialized.' });
+                        toast({ title: 'Pipeline Created', description: `${isAIPipeline ? 'AI' : 'Standard'} production pipeline initialized.` });
                         window.location.reload();
                       } catch (e: any) {
                         toast({ variant: 'destructive', title: 'Error', description: e.message });
@@ -784,7 +781,7 @@ export default function ProjectWorkspacePage({ providedProjectId, onBack }: { pr
                     disabled={isSubmitting}
                     className="h-10 px-6 font-black text-xs uppercase rounded-xl"
                   >
-                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Generate Standard Pipeline"}
+                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (project.project_type === 'AI Production' || project.project_type === 'Pilot Video' || project.type === 'Pilot' ? "Generate AI Pipeline" : "Generate Standard Pipeline")}
                   </Button>
                 </div>
               </div>
@@ -856,87 +853,7 @@ export default function ProjectWorkspacePage({ providedProjectId, onBack }: { pr
 
         {/* 📋 REQUIREMENT TAB */}
         <TabsContent value="requirement" className="p-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="max-w-4xl space-y-8">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-black tracking-tight">Requirement Reference</h2>
-              <p className="text-muted-foreground font-medium text-sm">
-                Approved Requirement Chart from the initial Proposal. 
-              </p>
-            </div>
-            
-            {requirement ? (
-              <div className="space-y-8">
-                {/* Primitive Values Section */}
-                {Object.entries(requirement).filter(([k, v]) => {
-                  if (v === null || v === '' || (Array.isArray(v) && v.length === 0) || (typeof v === 'object' && !Array.isArray(v))) return false;
-                  const ignoreKeys = ['id', 'project_id', 'prospect_id', 'company_id', 'created_at', 'updated_at', 'status'];
-                  return !ignoreKeys.includes(k);
-                }).length > 0 && (
-                  <div className="rounded-2xl border bg-card p-8 shadow-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                      {Object.entries(requirement)
-                        .filter(([k, v]) => {
-                          if (v === null || v === '' || (Array.isArray(v) && v.length === 0) || (typeof v === 'object' && !Array.isArray(v))) return false;
-                          const ignoreKeys = ['id', 'project_id', 'prospect_id', 'company_id', 'created_at', 'updated_at', 'status'];
-                          return !ignoreKeys.includes(k);
-                        })
-                        .sort(([a], [b]) => a.localeCompare(b))
-                        .map(([key, value]) => (
-                          <div key={key} className={cn("space-y-1.5", (typeof value === 'string' && value.length > 150) ? "md:col-span-2" : "")}>
-                            <h4 className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/80">
-                              {key.replace(/_/g, ' ')}
-                            </h4>
-                            <div className="text-sm font-medium text-foreground leading-relaxed">
-                              {renderRequirementValue(value)}
-                            </div>
-                          </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Nested Objects as Cards */}
-                <div className="grid grid-cols-1 gap-6">
-                  {Object.entries(requirement)
-                    .filter(([k, v]) => v !== null && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length > 0)
-                    .sort(([a], [b]) => a.localeCompare(b))
-                    .map(([key, value]) => (
-                      <div key={key} className="rounded-2xl border bg-card/50 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                        <div className="bg-muted/30 px-8 py-4 border-b border-border flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                            <Target className="h-4 w-4" />
-                          </div>
-                          <h3 className="text-sm font-black text-foreground uppercase tracking-widest">
-                            {key.replace(/_/g, ' ')}
-                          </h3>
-                        </div>
-                        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                          {Object.entries(value as object).map(([k, v]) => {
-                            if (v === null || v === '' || (Array.isArray(v) && v.length === 0)) return null;
-                            return (
-                              <div key={k} className={cn("space-y-1.5", (typeof v === 'string' && v.length > 150) ? "md:col-span-2" : "")}>
-                                <span className="text-[10px] font-black text-muted-foreground/80 uppercase tracking-wider block">
-                                  {k.replace(/_/g, ' ')}
-                                </span>
-                                <div className="text-sm font-medium text-foreground leading-relaxed">
-                                  {renderRequirementValue(v)}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-2xl border bg-card p-12 text-center shadow-sm">
-                <FileText className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-foreground">No Requirements Available</h3>
-                <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2">There is no requirement chart linked to this project workspace.</p>
-              </div>
-            )}
-          </div>
+          <RequirementReferencePanel requirement={requirement} />
         </TabsContent>
 
         {/* Tab Content: Dynamic Production Phases */}

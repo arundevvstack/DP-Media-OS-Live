@@ -28,18 +28,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!requirement) {
       const prospect = await prisma.prospect.findUnique({
         where: { id: id },
-        include: { client: true }
+        include: { Client: true }
       });
 
       const clientDetails = {
-        company_name: prospect?.company_name || prospect?.client?.name || "",
-        contact_person: prospect?.contact_person || prospect?.client?.contact_person || "",
-        email: prospect?.email || prospect?.client?.email || "",
-        phone: prospect?.phone || prospect?.client?.phone || "",
+        company_name: prospect?.company_name || prospect?.Client?.name || "",
+        contact_person: prospect?.contact_person || prospect?.Client?.contact_person || "",
+        email: prospect?.email || prospect?.Client?.email || "",
+        phone: prospect?.phone || prospect?.Client?.phone || "",
         whatsapp: prospect?.whatsapp || "",
-        industry: prospect?.industry || prospect?.client?.industry || "",
-        billing_address: prospect?.client?.billing_address || "",
-        gst_number: prospect?.client?.gstin || "",
+        industry: prospect?.industry || prospect?.Client?.industry || "",
+        billing_address: prospect?.Client?.billing_address || "",
+        gst_number: prospect?.Client?.gstin || "",
         priority: prospect?.priority || "Medium",
         closing_date: prospect?.next_follow_up ? prospect.next_follow_up.toISOString().split('T')[0] : ""
       };
@@ -58,10 +58,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           client_details: clientDetails as any,
           project_details: projectDetails as any,
           objective: "",
-          deliverables: [],
-          creative_requirements: {},
-          technical_specs: {},
-          production_requirements: {},
           assets: {},
           timeline: {},
           notes: prospect?.notes || "",
@@ -116,15 +112,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         client_details: body.client_details,
         project_details: body.project_details,
         objective: body.objective,
-        deliverables: body.deliverables,
-        creative_requirements: body.creative_requirements,
-        technical_specs: body.technical_specs,
-        production_requirements: body.production_requirements,
         assets: body.assets,
         timeline: body.timeline,
         notes: body.notes,
         scope_of_work: body.scope_of_work,
         deliverables_summary: body.deliverables_summary,
+        
+        production_type: body.production_type || "",
+        ai_style: body.ai_style,
+        ai_assets_required: body.ai_assets_required,
+        live_shoot_details: body.live_shoot_details,
+        hybrid_details: body.hybrid_details,
+        photography_details: body.photography_details,
+        post_production_details: body.post_production_details,
+        universal_deliverables: body.universal_deliverables,
+        items_checked: body.items_checked,
+
         status: body.completeness_score >= 80 ? 'approved' : 'draft',
         completeness_score: body.completeness_score
       }

@@ -281,6 +281,8 @@ model CommunicationLog {
 }
 
 model Company {
+  requirements RequirementChart[]
+
   id                           String                         @id
   name                         String
   onboardingStatus             String                         @default("pending")
@@ -1056,6 +1058,9 @@ model ProductionWorkflowTemplate {
 }
 
 model Project {
+  pilot_project_id String?
+  requirements RequirementChart[]
+
   id                       String                     @id
   company_id               String
   client_id                String?
@@ -1149,6 +1154,11 @@ model Proposal {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Prospect {
+  pilot_project_id String?
+  pilot_status     String?
+  requirement_status String?
+  requirements RequirementChart[]
+
   id                  String             @id
   company_id          String
   company_name        String
@@ -1299,6 +1309,9 @@ model TimeEntry {
 }
 
 model User {
+  requirement_versions RequirementVersion[]
+  requirement_changes RequirementChangeRequest[]
+
   id                                    String                  @id
   company_id                            String?
   role_id                               String?
@@ -1526,4 +1539,82 @@ model ProductionTimelineEvent {
 
   project         Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
   user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+
+// ==========================================
+// REQUIREMENT ANALYSIS MODULE
+// ==========================================
+
+model RequirementChart {
+  id                      String   @id @default(uuid())
+  company_id              String
+  prospect_id             String?
+  project_id              String?  @unique
+  status                  String   @default("draft") // draft, approved, completed
+  
+  // Base details
+  client_details          Json     @default("{}")
+  project_details         Json     @default("{}")
+  objective               String   @default("")
+  timeline                Json     @default("{}")
+  assets                  Json     @default("{}")
+  notes                   String   @default("")
+
+  // Dynamic Workflows
+  production_type         String   @default("") // AI, Hybrid, Live, Photography, Post
+  ai_style                Json?
+  ai_assets_required      Json?
+  live_shoot_details      Json?
+  hybrid_details          Json?
+  photography_details     Json?
+  post_production_details Json?
+  universal_deliverables  Json?
+
+  // Generated outputs
+  scope_of_work           String   @default("")
+  deliverables_summary    String   @default("")
+  completeness_score      Int      @default(0)
+  items_checked           Int      @default(0)
+  
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  company                 Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  prospect                Prospect? @relation(fields: [prospect_id], references: [id], onDelete: SetNull)
+  project                 Project? @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  
+  versions                RequirementVersion[]
+  change_requests         RequirementChangeRequest[]
+}
+
+model RequirementVersion {
+  id                   String   @id @default(uuid())
+  requirement_chart_id String
+  version_number       Int
+  changed_by           String
+  changed_fields       Json     @default("[]")
+  reason               String   @default("")
+  data_snapshot        Json
+  created_at           DateTime @default(now())
+  
+  requirement_chart    RequirementChart @relation(fields: [requirement_chart_id], references: [id], onDelete: Cascade)
+  user                 User             @relation(fields: [changed_by], references: [id], onDelete: Cascade)
+}
+
+model RequirementChangeRequest {
+  id                   String   @id @default(uuid())
+  requirement_chart_id String
+  requested_by         String
+  description          String
+  reason               String
+  impact               String   @default("")
+  budget_impact        Float    @default(0)
+  timeline_impact      String   @default("")
+  status               String   @default("pending") // pending, approved, rejected
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+  
+  requirement_chart    RequirementChart @relation(fields: [requirement_chart_id], references: [id], onDelete: Cascade)
+  user                 User             @relation(fields: [requested_by], references: [id], onDelete: Cascade)
 }

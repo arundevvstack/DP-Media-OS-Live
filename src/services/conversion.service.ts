@@ -175,7 +175,6 @@ export const conversionService = {
         where: { prospect_id: prospectId },
         data: {
           project_id: project.id,
-          client_id: client.id,
           status: 'approved'
         }
       });
