@@ -461,6 +461,61 @@ function ProjectCard({ project, view, index, onArchive, companyUsers, clients }:
   const client = clients?.find(c => c.id === project.client_id || c.name === project.client_name);
   const wallpaperUrl = client?.wallpaper_url;
 
+  const toggleCrewMember = async (userId: string) => {
+    try {
+      const isAssigned = project.ProjectMember?.some((m: any) => m.user_id === userId);
+      let error = null;
+      if (isAssigned) {
+        const res = await supabase.from('ProjectMember').delete().match({ project_id: project.id, user_id: userId });
+        error = res.error;
+      } else {
+        const res = await supabase.from('ProjectMember').insert({ 
+          id: crypto.randomUUID(),
+          project_id: project.id, 
+          user_id: userId, 
+          role: 'Member' 
+        });
+        error = res.error;
+      }
+      
+      if (error) throw error;
+      
+      broadcastTableUpdate('ProjectMember');
+      broadcastTableUpdate('Project');
+      toast({ title: "Crew Updated", description: "Successfully updated project crew." });
+    } catch (e: any) {
+      console.error("Crew update error:", e);
+      toast({ title: 'Error', description: e.message || 'Failed to update crew assignment', variant: 'destructive' });
+    }
+  };
+
+  const renderCrewDropdown = (children: React.ReactNode, key?: string) => (
+    <DropdownMenu key={key}>
+      <DropdownMenuTrigger asChild>
+        {children}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56 p-2 bg-white dark:bg-slate-900 rounded-[10px]">
+        <DropdownMenuLabel className="text-[9px] uppercase font-black tracking-[0.2em] text-muted-foreground">Assign Crew</DropdownMenuLabel>
+        <div className="max-h-64 overflow-y-auto mt-2">
+          {companyUsers?.map(user => {
+            const isAssigned = project.ProjectMember?.some((m: any) => m.user_id === user.id);
+            return (
+              <DropdownMenuCheckboxItem
+                key={user.id}
+                checked={isAssigned}
+                onCheckedChange={() => toggleCrewMember(user.id)}
+                className="rounded-xl m-1 text-xs font-bold cursor-pointer"
+              >
+                {user.fullName || user.full_name || user.email}
+              </DropdownMenuCheckboxItem>
+            );
+          })}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+
   if (view === 'grid') {
     return (
       <Card className="premium-card group border-none shadow-premium rounded-[10px] overflow-hidden transition-all duration-500 hover:-translate-y-2 relative">
@@ -540,7 +595,8 @@ function ProjectCard({ project, view, index, onArchive, companyUsers, clients }:
             </div>
             <div className="flex -space-x-3">
               <Avatar className="h-8 w-8 border-2 border-white dark:border-slate-800 shadow-xl ring-1 ring-border">
-                <AvatarFallback className="text-[8px] font-black bg-primary text-white">{(project.project_name || 'P').charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarImage src={client?.logo || project.client_logo} />
+                <AvatarFallback className="text-xs font-black bg-primary text-white">{(project.project_name || 'P').charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
             </div>
           </div>
@@ -706,23 +762,31 @@ function ProjectCard({ project, view, index, onArchive, companyUsers, clients }:
               
               <div className="hidden lg:flex flex-col space-y-2">
                 <span className="text-[9px] uppercase font-black text-muted-foreground tracking-normal">Assigned crew</span>
-                <div className="flex -space-x-3">
+                <div className="flex -space-x-3 items-center">
                   {project.ProjectMember && project.ProjectMember.length > 0 ? (
                     project.ProjectMember.map((member: any) => {
                       const user = companyUsers?.find(u => u.id === member.user_id);
                       const name = user?.fullName || user?.full_name || user?.email || 'Unknown';
-                      return (
-                        <Avatar key={member.id} className="h-8 w-8 border-2 border-white dark:border-slate-800 shadow-xl ring-1 ring-border transition-transform hover:scale-125 hover:z-20 cursor-pointer shrink-0" title={`${name} (${member.role})`}>
-                          <AvatarFallback className="text-[8px] font-black bg-primary text-white">
+                      return renderCrewDropdown(
+                        <Avatar className="h-8 w-8 border-2 border-white dark:border-slate-800 shadow-xl ring-1 ring-border transition-transform hover:scale-125 hover:z-20 cursor-pointer shrink-0" title={`${name} (${member.role})`}>
+                          <AvatarImage src={user?.avatar || user?.avatarUrl || user?.avatar_url} />
+                          <AvatarFallback className="text-xs font-black bg-primary text-white">
                             {name.charAt(0).toUpperCase()}
                           </AvatarFallback>
-                        </Avatar>
+                        </Avatar>,
+                        member.id
                       );
                     })
-                  ) : (
+                  ) : renderCrewDropdown(
                     <Avatar className="h-8 w-8 border-2 border-white dark:border-slate-800 shadow-xl ring-1 ring-border transition-transform hover:scale-125 hover:z-20 cursor-pointer shrink-0" title="Unassigned">
-                      <AvatarFallback className="text-[8px] font-black bg-secondary text-muted-foreground">?</AvatarFallback>
+                      <AvatarFallback className="text-xs font-black bg-secondary text-muted-foreground">?</AvatarFallback>
                     </Avatar>
+                  )}
+                  {project.ProjectMember && project.ProjectMember.length > 0 && renderCrewDropdown(
+                    <div className="h-7 w-7 rounded-full border border-dashed border-muted-foreground/30 flex items-center justify-center bg-transparent cursor-pointer hover:bg-muted/50 transition-colors shrink-0 z-10 ml-1" title="Assign Crew">
+                      <Plus className="h-3 w-3 text-muted-foreground" />
+                    </div>,
+                    "add-crew"
                   )}
                 </div>
               </div>
