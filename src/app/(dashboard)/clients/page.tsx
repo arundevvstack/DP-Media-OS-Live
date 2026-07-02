@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -139,43 +139,46 @@ export const INDUSTRIES = [
 
 export const CONTENT_VERTICALS = [
   { id: 'advertising', name: 'Advertising & Brand Films', icon: Megaphone, color: 'bg-accent', 
-    services: ['TV Commercials', 'Digital Ads', 'Brand Story Films', 'Product Launch Ads', 'Festival Campaign Ads', 'Luxury Brand Commercials'] 
+    services: ['TV Commercials', 'Digital Ads', 'Brand Story Films', 'Product Launch Ads', 'Festival Campaign Ads', 'Luxury Brand Commercials', 'UGC Video Ads', 'Vertical Video Ads (9:16)', 'CGI Ads', 'Performance Marketing Creatives'] 
   },
   { id: 'ecommerce', name: 'Product & E-commerce', icon: Package, color: 'bg-accent', 
-    services: ['Product Commercial Videos', 'Amazon Product Videos', 'Flipkart Listing Videos', 'Product Demo Videos', 'Unboxing Videos', 'Product Photography'] 
+    services: ['Product Commercial Videos', 'Amazon Product Videos', 'Flipkart Listing Videos', 'Product Demo Videos', 'Unboxing Videos', 'Product Photography', 'Shoppable Videos', 'TikTok Shop Creatives', '3D Product Rendering'] 
   },
   { id: 'social', name: 'Social Media Content', icon: Smartphone, color: 'bg-accent', 
-    services: ['Instagram Reels', 'YouTube Shorts', 'Influencer Content', 'Social Media Ad Creatives', 'Monthly Content Packages'] 
+    services: ['Instagram Reels', 'YouTube Shorts', 'TikTok Creatives', 'Social Media Vertical Ads', 'Social Media Explainer Videos', 'Influencer Content', 'Social Media Ad Creatives', 'Monthly Content Packages', 'Viral Content Formats', 'Personal Branding', 'UGC Ads (User Generated Content)'] 
   },
   { id: 'corporate', name: 'Corporate Videos', icon: Building2, color: 'bg-slate-700', 
-    services: ['Company Profile Video', 'Corporate Brand Film', 'Recruitment Video', 'Training Video', 'Investor Presentation Video', 'CEO Interview Video'] 
+    services: ['Company Profile Video', 'Corporate Brand Film', 'Recruitment Video', 'Training Video', 'Investor Presentation Video', 'CEO Interview Video', 'Company Culture Videos'] 
   },
   { id: 'realestate', name: 'Real Estate Videos', icon: Home, color: 'bg-emerald-600', 
-    services: ['Property Walkthrough Video', 'Luxury Property Ads', 'Drone Property Tour', 'Architecture Showcase', 'Construction Progress Video'] 
+    services: ['Property Walkthrough Video', 'Luxury Property Ads', 'Drone Property Tour', 'Architecture Showcase', 'Construction Progress Video', '3D Virtual Tours'] 
   },
   { id: 'events', name: 'Event Videos', icon: Ticket, color: 'bg-accent', 
-    services: ['Event Coverage', 'Conference Highlight Video', 'Event Aftermovie', 'Product Launch Event Video', 'Brand Activation Coverage'] 
+    services: ['Event Coverage', 'Conference Highlight Video', 'Event Aftermovie', 'Product Launch Event Video', 'Brand Activation Coverage', 'Live Streaming Setup'] 
   },
   { id: 'startups', name: 'Startup & App Videos', icon: Rocket, color: 'bg-accent', 
-    services: ['App Explainer Video', 'SaaS Product Demo', 'Startup Pitch Video', 'UI Demo Video', 'Animated Explainer Video'] 
+    services: ['App Explainer Video', 'SaaS Product Demo', 'Startup Pitch Video', 'UI Demo Video', 'Animated Explainer Video', 'Crowdfunding Campaign Video'] 
   },
   { id: 'entertainment', name: 'Entertainment Production', icon: Film, color: 'bg-accent', 
-    services: ['Music Video', 'Short Film', 'Fashion Film', 'Web Series', 'Creative Campaign Video'] 
+    services: ['Music Video', 'Short Film', 'Fashion Film', 'Web Series', 'Creative Campaign Video', 'Documentary'] 
   },
   { id: 'podcasts', name: 'Podcast & Interviews', icon: Mic, color: 'bg-accent', 
-    services: ['Video Podcast Production', 'Interview Video', 'Customer Testimonial Video', 'Founder Story Video'] 
+    services: ['Video Podcast Production', 'Interview Video', 'Customer Testimonial Video', 'Founder Story Video', 'Podcast Clips (Shorts)', 'Remote Recording Solutions'] 
   },
   { id: 'educational', name: 'Educational Content', icon: BookOpen, color: 'bg-lime-600', 
-    services: ['Online Course Video', 'Training Modules', 'Educational Explainer Video', 'Coaching Center Promo'] 
+    services: ['Online Course Video', 'Training Modules', 'Educational Explainer Video', 'Coaching Center Promo', 'Micro-Learning Videos'] 
   },
   { id: 'animation', name: 'Animation & Motion', icon: Play, color: 'bg-destructive', 
-    services: ['Motion Graphics Video', '2D Animation', '3D Animation', 'Infographic Animation'] 
+    services: ['Motion Graphics Video', '2D Animation', '3D Animation', 'Infographic Animation', 'Lottie Animations', 'Kinetic Typography'] 
   },
   { id: 'post', name: 'Post Production', icon: Scissors, color: 'bg-slate-500', 
-    services: ['Video Editing', 'Color Grading', 'Sound Design', 'Visual Effects (VFX)', 'Subtitles'] 
+    services: ['Video Editing', 'Color Grading', 'Sound Design', 'Visual Effects (VFX)', 'Subtitles', 'Format Versioning', 'Social Media Optimization', 'AI Upscaling'] 
   },
   { id: 'ai', name: 'AI Generated Content', icon: Sparkles, color: 'bg-accent', 
-    services: ['AI Commercials', 'AI Product Ads', 'AI Fashion Campaigns', 'AI Cinematic Videos', 'AI Social Media Ads'] 
+    services: ['AI Commercials', 'AI Product Ads', 'AI Fashion Campaigns', 'AI Cinematic Videos', 'AI Social Media Ads', 'AI Avatars', 'AI Voiceovers', 'Generative AI Concepts', 'AI Explainer Videos', 'AI Educational Videos', 'AI Video Dubbing & Translation'] 
+  },
+  { id: 'retainers', name: 'Agency Retainers & Bundles', icon: Layers, color: 'bg-slate-800', 
+    services: ['Full Marketing Bundle', 'Full Branding Bundle', 'Marketing & Branding Bundle', 'Monthly Retainership', 'Full Production Bundle', 'Social Media Retainer'] 
   },
 ];
 
@@ -190,8 +193,9 @@ export default function ClientsPage() {
   const [activeTab, setActiveTab] = useState<'directory' | 'pipeline' | 'intelligence_hub'>('directory');
   const [openWorkspaceId, setOpenWorkspaceId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<'grid-large' | 'grid-small' | 'list'>('grid-large');
-  const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'recent' | 'oldest'>('name-asc');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filterIndustry, setFilterIndustry] = useState<string>('all');
+  const [groupBy, setGroupBy] = useState<'none' | 'industry' | 'tier'>('none');
   const [clientToArchive, setClientToArchive] = useState<any>(null);
   const [clientToPermanentDelete, setClientToPermanentDelete] = useState<any>(null);
   
@@ -257,28 +261,40 @@ export default function ClientsPage() {
   // 1. Existing Clients List (from Client table)
   const existingClients = useMemo(() => {
     if (!clients) return [];
-    let filtered = clients.filter(c => 
-      (c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.industry || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.service_vertical || '').toLowerCase().includes(searchQuery.toLowerCase())
-    ).map(c => ({
+    let filtered = clients.filter(c => {
+      const matchesSearch = 
+        (c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.industry || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.service_vertical || '').toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesIndustry = filterIndustry === 'all' || c.industry === filterIndustry;
+      return matchesSearch && matchesIndustry;
+    }).map(c => ({
       ...c,
       company_name: c.name
     }));
 
-    switch (sortBy) {
-      case 'name-asc':
-        return filtered.sort((a, b) => (a.company_name || '').localeCompare(b.company_name || ''));
-      case 'name-desc':
-        return filtered.sort((a, b) => (b.company_name || '').localeCompare(a.company_name || ''));
-      case 'recent':
-        return filtered.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
-      case 'oldest':
-        return filtered.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
-      default:
-        return filtered;
-    }
-  }, [clients, searchQuery, sortBy]);
+    return filtered.sort((a, b) => (a.company_name || '').localeCompare(b.company_name || ''));
+  }, [clients, searchQuery, filterIndustry]);
+
+  const groupedClients = useMemo(() => {
+    if (groupBy === 'none') return { 'All Clients': existingClients };
+    
+    const groups: Record<string, any[]> = {};
+    existingClients.forEach(client => {
+      let key = 'Uncategorized';
+      if (groupBy === 'industry') {
+        key = client.industry || 'No Industry';
+      } else if (groupBy === 'tier') {
+        key = client.tier || 'Standard Tier';
+      }
+      
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(client);
+    });
+    
+    return groups;
+  }, [existingClients, groupBy]);
 
   // 2. Active Prospects List (stage: other pipeline stages)
   const prospectClients = useMemo(() => {
@@ -682,56 +698,65 @@ export default function ClientsPage() {
           ))}
         </div>
 
-        {activeTab === 'directory' && (
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <Select value={sortBy} onValueChange={(val: any) => setSortBy(val)}>
-              <SelectTrigger className="h-10 w-full md:w-40 rounded-xl bg-white dark:bg-slate-900 border-border text-[11px] font-bold shadow-sm">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="name-asc" className="text-[11px] font-bold">A-Z</SelectItem>
-                <SelectItem value="name-desc" className="text-[11px] font-bold">Z-A</SelectItem>
-                <SelectItem value="recent" className="text-[11px] font-bold">Newest First</SelectItem>
-                <SelectItem value="oldest" className="text-[11px] font-bold">Oldest First</SelectItem>
-              </SelectContent>
-            </Select>
+        {/* Original Toolbar removed from this flex container */}
+      </div>
 
-            <div className="flex items-center p-1.5 rounded-[10px] bg-secondary/50 border border-border/40 shadow-sm shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setViewMode('grid-large')}
-                className={cn("h-7 w-7 rounded-lg transition-all", viewMode === 'grid-large' ? 'bg-white dark:bg-slate-800 shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground')}
+      {activeTab === 'directory' && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-muted/20 p-2 rounded-xl border border-border/50 w-full mb-4">
+          <div className="flex items-center p-1 bg-muted rounded-lg border border-border/50">
+            {[
+              { id: 'list', icon: List, label: 'List' },
+              { id: 'grid', icon: LayoutGrid, label: 'Grid' }
+            ].map((mode) => (
+              <Button 
+                key={mode.id}
+                variant={viewMode === mode.id ? "default" : "ghost"} 
+                size="sm" 
+                onClick={() => setViewMode(mode.id as any)} 
+                className="h-8 shadow-none rounded-md px-3 text-xs font-bold"
               >
-                <LayoutGrid className="h-3.5 w-3.5" />
+                <mode.icon className="w-3.5 h-3.5 mr-1.5" /> {mode.label}
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setViewMode('grid-small')}
-                className={cn("h-7 w-7 rounded-lg transition-all", viewMode === 'grid-small' ? 'bg-white dark:bg-slate-800 shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground')}
-              >
-                <Grid className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setViewMode('list')}
-                className={cn("h-7 w-7 rounded-lg transition-all", viewMode === 'list' ? 'bg-white dark:bg-slate-800 shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground')}
-              >
-                <List className="h-3.5 w-3.5" />
-              </Button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+              <Select value={filterIndustry} onValueChange={setFilterIndustry}>
+                <SelectTrigger className="h-9 w-[160px] bg-white dark:bg-slate-900 border-border shadow-sm text-xs rounded-lg">
+                  <SelectValue placeholder="Filter Industry" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">All Industries</SelectItem>
+                  {INDUSTRIES.map(ind => (
+                    <SelectItem key={ind} value={ind} className="text-xs">{ind}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-2 border-l border-border pl-3">
+              <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
+              <Select value={groupBy} onValueChange={(val: any) => setGroupBy(val)}>
+                <SelectTrigger className="h-9 w-[160px] bg-white dark:bg-slate-900 border-border shadow-sm text-xs rounded-lg">
+                  <SelectValue placeholder="Group By" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none" className="text-xs">No Grouping</SelectItem>
+                  <SelectItem value="industry" className="text-xs">By Industry</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* TAB CONTENT: ACTIVE PARTNERS */}
       {activeTab === 'directory' && (
         <div className={cn(
           "animate-in fade-in slide-in-from-bottom-4 duration-300",
-          viewMode === 'grid-large' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" :
-          viewMode === 'grid-small' ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4" :
+          viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" :
           "flex flex-col gap-3"
         )}>
           {existingClients.length === 0 ? (
@@ -743,54 +768,63 @@ export default function ClientsPage() {
               )}
             </div>
           ) : (
-            existingClients.map((client) => {
-              const activeProj = projects?.filter(p => p.client_id === client.id && p.status === 'in_progress') || [];
-              const companyProposals = proposals?.filter(p => p.client_name === client.company_name) || [];              
-              const isList = viewMode === 'list';
-              const isSmall = viewMode === 'grid-small';
-
-              return (
-                <div key={client.id} className={cn(
-                  "group relative rounded-2xl overflow-hidden border bg-white dark:bg-slate-900 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-destructive/10 hover:border-destructive/30",
-                  isList ? "flex flex-col sm:flex-row sm:items-center p-4 gap-6" : "flex flex-col"
-                )}>
-                  {/* Premium Subtle Gradient BG */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent to-muted/30 pointer-events-none" />
-                  
-                  {/* Card Header Section */}
-                  <div className={cn("relative z-10", isList ? "flex-1 flex items-center gap-6" : "p-4 pb-3")}>
-                    <div className={cn("flex items-start", isList ? "flex-row items-center gap-4" : "justify-between mb-4")}>
-                      <div className={cn(
-                        "rounded-[14px] flex items-center justify-center shrink-0 border group-hover:scale-110 transition-transform duration-500",
-                        isList ? "h-14 w-14 bg-destructive/5 border-destructive/10 text-destructive" : "h-14 w-14 bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/10 text-destructive shadow-inner"
-                      )}>
-                        <Building2 className={isList ? "h-6 w-6" : "h-6 w-6"} />
-                      </div>
-                      {!isList && !isSmall && (
-                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground bg-secondary/80 border border-border/50 rounded-full px-3 py-1.5 shadow-sm">
-                          {client.industry || 'Media'}
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <h3 className={cn("font-black tracking-tight text-foreground group-hover:text-destructive transition-colors", isList ? "text-xl" : isSmall ? "text-lg mb-1 line-clamp-1" : "text-2xl mb-1")}>
-                        {client.company_name}
-                      </h3>
-                      <div className="flex items-center gap-1.5">
-                        <Zap className="h-3 w-3 text-destructive shrink-0" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-destructive/80 truncate">
-                          {client.service_vertical || 'Media Production'}
-                        </span>
-                      </div>
-                    </div>
+            Object.entries(groupedClients).map(([groupName, groupClients]: any) => (
+              <React.Fragment key={groupName}>
+                {groupBy !== 'none' && groupClients.length > 0 && (
+                  <div className={cn(
+                    "col-span-full border-b border-border pb-2 mb-4 mt-6"
+                  )}>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                      {groupName} <Badge variant="secondary" className="ml-2 bg-muted">{groupClients.length}</Badge>
+                    </h3>
                   </div>
-
-                  {/* Card Details Section */}
-                  <div className={cn("relative z-10 border-border/50", isList ? "flex-1 border-l pl-4" : "px-4 pb-4 pt-2 border-t flex-1")}>
-                    <div className={cn("grid gap-3", isList ? "grid-cols-2" : isSmall ? "grid-cols-1" : "grid-cols-1")}>
-                      {!isSmall && (
-                        <>
+                )}
+                {groupClients.map((client: any) => {
+                  const activeProj = projects?.filter(p => p.client_id === client.id && p.status === 'in_progress') || [];
+                  const companyProposals = proposals?.filter(p => p.client_name === client.company_name) || [];          
+      
+                  const isList = viewMode === 'list';
+    
+                  return (
+                    <div key={client.id} className={cn(
+                      "group relative rounded-2xl overflow-hidden border bg-white dark:bg-slate-900 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-destructive/10 hover:border-destructive/30",
+                      isList ? "flex flex-col sm:flex-row sm:items-center p-4 gap-6" : "flex flex-col"
+                    )}>
+                      {/* Premium Subtle Gradient BG */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-transparent to-muted/30 pointer-events-none" />
+                      
+                      {/* Card Header Section */}
+                      <div className={cn("relative z-10", isList ? "flex-1 flex items-center gap-6" : "p-4 pb-3")}>
+                        <div className={cn("flex items-start", isList ? "flex-row items-center gap-4" : "justify-between mb-4")}>
+                          <div className={cn(
+                            "rounded-[14px] flex items-center justify-center shrink-0 border group-hover:scale-110 transition-transform duration-500",
+                            isList ? "h-14 w-14 bg-destructive/5 border-destructive/10 text-destructive" : "h-14 w-14 bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/10 text-destructive shadow-inner"
+                          )}>
+                            <Building2 className={isList ? "h-6 w-6" : "h-6 w-6"} />
+                          </div>
+                          {!isList && (
+                            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground bg-secondary/80 border border-border/50 rounded-full px-3 py-1.5 shadow-sm">
+                              {client.industry || 'Media'}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <h3 className={cn("font-black tracking-tight text-foreground group-hover:text-destructive transition-colors", isList ? "text-xl" : "text-2xl mb-1")}>
+                            {client.company_name}
+                          </h3>
+                          <div className="flex items-center gap-1.5">
+                            <Zap className="h-3 w-3 text-destructive shrink-0" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-destructive/80 truncate">
+                              {client.service_vertical || 'Media Production'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+    
+                      {/* Card Details Section */}
+                      <div className={cn("relative z-10 border-border/50", isList ? "flex-1 border-l pl-4" : "px-4 pb-4 pt-2 border-t flex-1")}>
+                        <div className={cn("grid gap-3", isList ? "grid-cols-2" : "grid-cols-1")}>
                           <div className="flex items-center gap-3">
                             <div className="h-8 w-8 rounded-full bg-secondary/80 flex items-center justify-center shrink-0 border border-border/50">
                               <Mail className="h-3.5 w-3.5 text-muted-foreground" />
@@ -803,53 +837,53 @@ export default function ClientsPage() {
                             </div>
                             <span className="text-xs text-muted-foreground/90 font-medium truncate">PoC: <span className="font-bold text-foreground">{client.contact_person || 'Unassigned'}</span></span>
                           </div>
-                        </>
-                      )}
-                      
-                      <div className={cn("flex items-center gap-2", !isSmall && "mt-1")}>
-                        <Badge variant="outline" className="text-[9px] font-black text-destructive bg-destructive/5 border-destructive/20 rounded-md px-2 py-0.5">
-                          {activeProj.length} Projects
-                        </Badge>
-                        <Badge variant="outline" className="text-[9px] font-bold text-muted-foreground bg-secondary/50 border-border/50 rounded-md px-2 py-0.5">
-                          {companyProposals.length} Proposals
-                        </Badge>
+                          
+                          <div className={cn("flex items-center gap-2", "mt-1")}>
+                            <Badge variant="outline" className="text-[9px] font-black text-destructive bg-destructive/5 border-destructive/20 rounded-md px-2 py-0.5">
+                              {activeProj.length} Projects
+                            </Badge>
+                            <Badge variant="outline" className="text-[9px] font-bold text-muted-foreground bg-secondary/50 border-border/50 rounded-md px-2 py-0.5">
+                              {companyProposals.length} Proposals
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+    
+                      {/* Card Actions Section */}
+                      <div className={cn("relative z-10 flex items-center border-border/50 bg-secondary/20 gap-2", isList ? "border-l pl-4" : "border-t px-4 py-3")}>
+                        <button
+                          onClick={() => { setSelectedHubCompany(client.company_name); setActiveTab('intelligence_hub'); }}
+                          className="flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-destructive bg-destructive/5 hover:bg-destructive hover:text-white border border-destructive/10 rounded-xl h-9 px-2 transition-all flex-1"
+                        >
+                          <Sparkles className="h-3 w-3 shrink-0" /> Hub
+                        </button>
+                        <Link
+                          href={`/clients/${client.id}`}
+                          className="flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-foreground bg-white dark:bg-slate-800 hover:bg-muted border border-border/50 rounded-xl h-9 px-2 transition-all shadow-sm flex-1"
+                        >
+                          <ExternalLink className="h-3 w-3 shrink-0" /> Portfolio
+                        </Link>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl hover:bg-muted text-muted-foreground border-border/50 shrink-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="rounded-2xl w-48 p-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-border/50 text-foreground shadow-2xl">
+                            <DropdownMenuItem className="gap-3 text-muted-foreground rounded-xl hover:bg-secondary cursor-pointer py-2 font-medium text-xs" onClick={() => setClientToArchive(client)}>
+                              <Archive className="h-4 w-4" /> Archive Partner
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-3 text-destructive rounded-xl hover:bg-destructive/10 cursor-pointer font-bold py-2 text-xs" onClick={() => setClientToPermanentDelete(client)}>
+                              <Trash2 className="h-4 w-4" /> Delete Client
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Card Actions Section */}
-                  <div className={cn("relative z-10 flex items-center border-border/50 bg-secondary/20 gap-2", isList ? "border-l pl-4" : "border-t px-4 py-3")}>
-                    <button
-                      onClick={() => { setSelectedHubCompany(client.company_name); setActiveTab('intelligence_hub'); }}
-                      className="flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-destructive bg-destructive/5 hover:bg-destructive hover:text-white border border-destructive/10 rounded-xl h-9 px-2 transition-all flex-1"
-                    >
-                      <Sparkles className="h-3 w-3 shrink-0" /> {!isSmall && "Hub"}
-                    </button>
-                    <Link
-                      href={`/clients/${client.id}`}
-                      className="flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-foreground bg-white dark:bg-slate-800 hover:bg-muted border border-border/50 rounded-xl h-9 px-2 transition-all shadow-sm flex-1"
-                    >
-                      <ExternalLink className="h-3 w-3 shrink-0" /> {!isSmall && "Portfolio"}
-                    </Link>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl hover:bg-muted text-muted-foreground border-border/50 shrink-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="rounded-2xl w-48 p-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-border/50 text-foreground shadow-2xl">
-                        <DropdownMenuItem className="gap-3 text-muted-foreground rounded-xl hover:bg-secondary cursor-pointer py-2 font-medium text-xs" onClick={() => setClientToArchive(client)}>
-                          <Archive className="h-4 w-4" /> Archive Partner
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-3 text-destructive rounded-xl hover:bg-destructive/10 cursor-pointer font-bold py-2 text-xs" onClick={() => setClientToPermanentDelete(client)}>
-                          <Trash2 className="h-4 w-4" /> Delete Client
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              );
-            })
+                  );
+                })}
+              </React.Fragment>
+            ))
           )}
         </div>
       )}

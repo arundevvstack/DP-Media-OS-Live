@@ -1,7 +1,9 @@
 import prisma from '@/lib/prisma';
+import crypto from 'crypto';
 
 export const prospectService = {
   async create(data: {
+    id?: string;
     company_id: string;
     company_name: string;
     contact_person?: string;
@@ -15,9 +17,11 @@ export const prospectService = {
     stage?: string;
     notes?: string;
     assignee_id?: string;
+    project_type?: string;
   }) {
     return prisma.prospect.create({
       data: {
+        id: data.id || crypto.randomUUID(),
         company_id: data.company_id,
         company_name: data.company_name,
         contact_person: data.contact_person,
@@ -31,6 +35,8 @@ export const prospectService = {
         stage: data.stage ?? 'new_lead',
         notes: data.notes,
         assignee_id: data.assignee_id,
+        project_type: data.project_type ?? 'Normal Production',
+        updated_at: new Date(),
       },
     });
   },
@@ -48,12 +54,16 @@ export const prospectService = {
     stage: string;
     notes: string;
     assignee_id: string;
+    project_type: string;
     is_converted: boolean;
     converted_client_id: string;
   }>) {
     return prisma.prospect.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        updated_at: new Date(),
+      },
     });
   },
 
@@ -61,8 +71,8 @@ export const prospectService = {
     return prisma.prospect.findUnique({
       where: { id },
       include: {
-        client: true,
-        assignee: true,
+        Company: true,
+        User: true,
       },
     });
   },

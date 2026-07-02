@@ -22,7 +22,8 @@ import {
   Zap, 
   Edit3, 
   FileText,
-  ListTree
+  ListTree,
+  Upload
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTenant } from "@/hooks/use-tenant";
@@ -52,6 +53,7 @@ export default function ProspectDetailPage({ params }: { params: Promise<{ prosp
   
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [manualProposal, setManualProposal] = useState<File | null>(null);
   const [editForm, setEditForm] = useState({
     company_name: "",
     service_vertical: "",
@@ -425,9 +427,43 @@ export default function ProspectDetailPage({ params }: { params: Promise<{ prosp
             <CardContent className="p-0">
               {isProposalsLoading ? (
                 <div className="p-8 flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
+              ) : manualProposal ? (
+                <div className="divide-y">
+                  <div className="p-6 flex items-center justify-between hover:bg-muted transition-colors group">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm">{manualProposal.name}</p>
+                        <p className="text-[10px] text-muted-foreground font-medium uppercase">Manual Draft • Pending Review</p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" className="rounded-xl h-8 text-[10px] font-bold uppercase tracking-wider gap-2" onClick={() => document.getElementById('manual-proposal-upload')?.click()}>
+                      Replace <Upload className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <input type="file" id="manual-proposal-upload" className="hidden" onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setManualProposal(e.target.files[0]);
+                        toast({ title: "Draft Updated", description: "Your manual proposal draft has been replaced." });
+                      }
+                    }} 
+                  />
+                </div>
               ) : proposals?.length === 0 ? (
-                <div className="p-12 text-center text-muted-foreground italic text-xs">
-                  No proposals generated yet. Reach the "Meeting" stage to launch the AI Architect.
+                <div className="p-12 text-center flex flex-col items-center justify-center gap-4 border-2 border-dashed border-slate-200 dark:border-slate-800 m-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50">
+                  <p className="text-muted-foreground font-medium text-xs">No AI proposals generated yet.</p>
+                  <Button variant="outline" className="rounded-xl bg-white dark:bg-slate-900 text-xs font-bold uppercase tracking-wider" onClick={() => document.getElementById('manual-proposal-upload')?.click()}>
+                    <Upload className="h-4 w-4 mr-2" /> Upload Manual Draft
+                  </Button>
+                  <input type="file" id="manual-proposal-upload" className="hidden" onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setManualProposal(e.target.files[0]);
+                        toast({ title: "Draft Uploaded", description: "Your manual proposal draft has been saved." });
+                      }
+                    }} 
+                  />
                 </div>
               ) : (
                 <div className="divide-y">
@@ -508,7 +544,10 @@ export default function ProspectDetailPage({ params }: { params: Promise<{ prosp
           prospectId={prospectId} 
           companyName={prospect.company_name} 
           serviceVertical={prospect.service_vertical || ""}
+          subVertical={prospect.sub_vertical || ""}
           industry={prospect.industry || ""}
+          projectType={prospect.project_type || ""}
+          notes={prospect.notes || ""}
         />
       </TabsContent>
       </Tabs>

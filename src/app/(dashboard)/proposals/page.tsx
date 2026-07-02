@@ -28,6 +28,7 @@ import {
   Layers,
   ChevronRight,
   List,
+  Layout,
   Printer,
   FileDown,
   BarChart3,
@@ -57,8 +58,15 @@ import {
   Check,
   RefreshCw,
   FolderPlus,
-  Receipt
+  Receipt,
+  Maximize2,
+  Save,
+  ArrowUp,
+  ArrowDown,
+  Presentation
 } from "lucide-react";
+import { SlidePreview } from "@/components/proposals/SlidePreview";
+import { SlideEditor } from "@/components/proposals/SlideEditor";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useTenant } from "@/hooks/use-tenant";
@@ -193,6 +201,7 @@ interface ProposalContent {
   payment_terms: string;
   due_date: string;
   isPreview?: boolean;
+  slides?: any[];
 }
 
 // ----------------------------------------------------
@@ -286,16 +295,26 @@ function parseProposalContent(proposal: any): ProposalContent {
     parsed = {};
   }
 
+  let clientName = parsed.client || proposal.client_name || "Valued Enterprise Partner";
+  
+  if (Array.isArray(parsed)) {
+    const coverSlide = parsed.find((s: any) => s.type === 'cover');
+    if (coverSlide && coverSlide.clientName) {
+      clientName = coverSlide.clientName;
+    }
+  }
+
   // Ensure default structures exist with all standard fields
   return {
     proposal_title: parsed.proposal_title || proposal.title || "Premium Production Strategy",
-    client: parsed.client || proposal.client_name || "Valued Enterprise Partner",
+    client: clientName,
     proposal_type: parsed.proposal_type || "proposal",
     client_email: parsed.client_email || "",
     client_phone: parsed.client_phone || "",
     client_gstin: parsed.client_gstin || "",
     client_address: parsed.client_address || "",
     sections: parsed.sections || [],
+    slides: parsed.slides || [],
     current_version_name: parsed.current_version_name || "V1",
     version_history: parsed.version_history || [
       { version: 'V1', created_at: proposal.created_at || new Date().toISOString(), created_by: 'AI Architect', subtotal: 500000, total: 590000, description: 'AI generated default draft' }
@@ -342,6 +361,12 @@ function ProposalsContent() {
 
   // Dialog & Form States
   const [isAddOpen, setIsAddOpen] = useState(false);
+  
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'status' | 'insights' | 'comments'>('status');
+  const [isClassicFullscreen, setIsClassicFullscreen] = useState(false);
+  const [isSlideFullscreen, setIsSlideFullscreen] = useState(false);
+  const [draggedSlideIndex, setDraggedSlideIndex] = useState<number | null>(null);
+  const [isLiveEdit, setIsLiveEdit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSuggestingScope, setIsSuggestingScope] = useState(false);
@@ -349,6 +374,7 @@ function ProposalsContent() {
   
   // Builder Widescreen HUD States
   const [activeBuilderTab, setActiveBuilderTab] = useState<'editor' | 'pricing' | 'client_portal'>('editor');
+
   const [editingProposal, setEditingProposal] = useState<any>(null);
   const [activeSectionIdx, setActiveSectionIdx] = useState(0);
   const [proposalToDelete, setProposalToDelete] = useState<any>(null);
@@ -379,13 +405,31 @@ function ProposalsContent() {
     proposal_type: "proposal" as "proposal" | "quote"
   });
 
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+
   const [generatedDraft, setGeneratedDraft] = useState<GenerateProposalContentOutput | null>(null);
 
-  // Fetch Proposals from Supabase
-  // Table Proposal does not exist in schema yet
-  const proposals: any[] = [];
-  const isProposalsLoading = false;
-  const reloadProposals = () => {};
+  const [proposals, setProposals] = useState<any[]>([]);
+  const [isProposalsLoading, setIsProposalsLoading] = useState(true);
+
+  const reloadProposals = async () => {
+    setIsProposalsLoading(true);
+    try {
+      const res = await fetch('/api/v1/proposals');
+      const data = await res.json();
+      if (data.proposals) {
+        setProposals(data.proposals);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsProposalsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    reloadProposals();
+  }, []);
 
   // Fetch CRM Leads
   const { data: leads } = useSupabaseCollection('Prospect', {
@@ -539,17 +583,48 @@ function ProposalsContent() {
 
     const selectedLead = leads?.find(l => l.id === aiInputs.leadId);
 
+    // Extract title and client from slides if available
+    let extractedTitle = "Strategic AI Proposal";
+    let extractedClient = "Client";
+    
+    if (generatedDraft.slides && generatedDraft.slides.length > 0) {
+      const coverSlide = generatedDraft.slides.find((s: any) => s.type === 'cover');
+      if (coverSlide) {
+        if (coverSlide.title) extractedTitle = coverSlide.title;
+        if (coverSlide.clientName) extractedClient = coverSlide.clientName;
+      }
+    }
+
+    // Map slides to sections for the text editor fallback
+    const mappedSections = generatedDraft.slides ? generatedDraft.slides.map((s: any) => {
+      // Basic text extraction for the editor
+      let textContent = "";
+      if (s.overview) textContent += s.overview + "\n\n";
+      if (s.expectedOutcome) textContent += "Expected Outcome: " + s.expectedOutcome + "\n\n";
+      if (s.bulletPoints) textContent += s.bulletPoints.map((b: string) => "- " + b).join("\n") + "\n\n";
+      if (s.goals) textContent += s.goals.map((g: any) => "- " + g.title + ": " + g.description).join("\n") + "\n\n";
+      
+      // Fallback if no text extracted
+      if (!textContent) textContent = JSON.stringify(s, null, 2);
+
+      return {
+        title: s.title || s.type.replace('_', ' ').toUpperCase(),
+        content: textContent.trim()
+      };
+    }) : [];
+
     // Create base advanced JSON block
     const defaultAdvancedJSON: ProposalContent = {
-      proposal_title: generatedDraft.proposal_title,
-      client: generatedDraft.client,
+      proposal_title: extractedTitle,
+      client: extractedClient,
       proposal_type: aiInputs.proposal_type,
       lead_id: aiInputs.leadId || "",
       client_email: selectedLead?.email || "",
       client_phone: "",
       client_gstin: selectedLead?.gstin || "",
       client_address: selectedLead?.billing_address || "",
-      sections: generatedDraft.sections,
+      sections: mappedSections,
+      slides: generatedDraft.slides,
       isPreview: generatedDraft.isPreview || false,
       current_version_name: 'V1',
       version_history: [
@@ -601,13 +676,14 @@ function ProposalsContent() {
     const { data, error } = await supabase.from('Proposal').insert({
       id: newId,
       company_id: companyId,
-      title: generatedDraft.proposal_title,
+      title: extractedTitle,
       proposal_number: uniqueNumber,
       content: JSON.stringify(defaultAdvancedJSON), 
       status: 'draft',
     }).select().single();
 
     if (error) {
+      setIsSubmitting(false);
       toast({ variant: "destructive", title: "Database Sync Error", description: error.message });
     } else {
       // Create global activity log
@@ -1184,41 +1260,8 @@ function ProposalsContent() {
             </div>
           </div>
 
-          {/* Mode Pill Toggle (Apple Style) */}
+          {/* Global Header Actions */}
           <div className="flex items-center gap-3">
-            <div className="bg-muted p-1.5 rounded-2xl flex gap-1 shadow-inner border border-border/50">
-              <Button 
-                onClick={() => setActiveBuilderTab('editor')} 
-                variant="ghost" 
-                size="sm" 
-                className={cn("rounded-xl text-xs font-bold uppercase h-9 px-4 transition-all duration-200", 
-                  activeBuilderTab === 'editor' ? 'bg-white dark:bg-slate-900 text-foreground shadow-sm border border-border/40' : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <Edit3 className="h-3.5 w-3.5 mr-2 text-destructive" /> Proposal Builder
-              </Button>
-              <Button 
-                onClick={() => setActiveBuilderTab('pricing')} 
-                variant="ghost" 
-                size="sm" 
-                className={cn("rounded-xl text-xs font-bold uppercase h-9 px-4 transition-all duration-200", 
-                  activeBuilderTab === 'pricing' ? 'bg-white dark:bg-slate-900 text-foreground shadow-sm border border-border/40' : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <DollarSign className="h-3.5 w-3.5 mr-2 text-emerald-500" /> Pricing & Taxes
-              </Button>
-              <Button 
-                onClick={() => setActiveBuilderTab('client_portal')} 
-                variant="ghost" 
-                size="sm" 
-                className={cn("rounded-xl text-xs font-bold uppercase h-9 px-4 transition-all duration-200", 
-                  activeBuilderTab === 'client_portal' ? 'bg-white dark:bg-slate-900 text-foreground shadow-sm border border-border/40' : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <Eye className="h-3.5 w-3.5 mr-2 text-accent" /> Client View
-              </Button>
-            </div>
-
             <Button 
               onClick={() => saveEditingProposal(content)} 
               className="bg-primary border border-primary text-white hover:bg-primary rounded-xl h-10 px-5 font-black text-xs uppercase shadow-md shadow-zinc-200"
@@ -1228,13 +1271,23 @@ function ProposalsContent() {
           </div>
         </div>
 
-        {/* Triple Panel Apple-Style Layout */}
-        <div className="flex-1 grid grid-cols-1 xl:grid-cols-12 gap-6 min-h-0 relative items-stretch">
+        {/* Dual Panel Apple-Style Layout */}
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0 relative items-stretch">
           
           {/* ==========================================
-              LEFT PANEL: PIPELINE STATUS, APPROVALS, VERSION
+              RIGHT SIDEBAR: UNIFIED (STATUS, INSIGHTS, COMMENTS)
               ========================================== */}
-          <div className="xl:col-span-3 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="lg:col-span-1 order-2 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
+            
+            {/* Sidebar Tabs */}
+            <div className="bg-muted p-1.5 rounded-2xl flex gap-1 shadow-inner border border-border/50 shrink-0">
+              <Button onClick={() => setActiveSidebarTab('status')} variant="ghost" size="sm" className={cn("flex-1 rounded-xl text-[10px] font-bold uppercase h-9 px-2 transition-all duration-200", (!activeSidebarTab || activeSidebarTab === 'status') ? 'bg-white dark:bg-slate-900 text-foreground shadow-sm border border-border/40' : 'text-muted-foreground hover:text-foreground')}>Status</Button>
+              <Button onClick={() => setActiveSidebarTab('insights')} variant="ghost" size="sm" className={cn("flex-1 rounded-xl text-[10px] font-bold uppercase h-9 px-2 transition-all duration-200", activeSidebarTab === 'insights' ? 'bg-white dark:bg-slate-900 text-foreground shadow-sm border border-border/40' : 'text-muted-foreground hover:text-foreground')}>Insights</Button>
+              <Button onClick={() => setActiveSidebarTab('comments')} variant="ghost" size="sm" className={cn("flex-1 rounded-xl text-[10px] font-bold uppercase h-9 px-2 transition-all duration-200", activeSidebarTab === 'comments' ? 'bg-white dark:bg-slate-900 text-foreground shadow-sm border border-border/40' : 'text-muted-foreground hover:text-foreground')}>Comments</Button>
+            </div>
+
+            {(!activeSidebarTab || activeSidebarTab === 'status') && (
+              <div className="space-y-6 flex flex-col">
             
             {/* Stage Pipeline */}
             <Card className="bg-white dark:bg-slate-900 border border-border rounded-2xl shadow-sm text-zinc-850">
@@ -1358,12 +1411,207 @@ function ProposalsContent() {
               </CardContent>
             </Card>
           </div>
+        )}
+
 
           {/* ==========================================
-              CENTER WORKSPACE: EDITOR OR SERVICE ENGINE
+              RIGHT PANEL STUFF (NOW IN SIDEBAR)
               ========================================== */}
-          <div className="xl:col-span-6 bg-white dark:bg-slate-900 border border-border rounded-2xl p-6 md:p-8 overflow-y-auto custom-scrollbar flex flex-col min-h-[500px] shadow-sm">
+            {activeSidebarTab === 'insights' && (
+              <div className="space-y-6 flex flex-col">
             
+            {/* Real-time Profitability margin */}
+            <Card className="bg-white dark:bg-slate-900 border border-border rounded-2xl shadow-sm text-zinc-850 relative overflow-hidden">
+              <CardContent className="p-6 space-y-4">
+                <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" /> AI Analysis
+                </h3>
+
+                <div className="flex items-center justify-between pt-1">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Win Probability</span>
+                    <span className="text-xl font-black text-foreground">{winProbability}%</span>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Profit Margin</span>
+                    <span className={cn("text-xl font-black", 
+                      computedFinancials.margin >= 50 ? 'text-emerald-600' : 'text-accent'
+                    )}>{computedFinancials.margin}%</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className={cn("h-full rounded-full transition-all duration-500",
+                        computedFinancials.margin >= 50 ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.4)]' : 'bg-accent shadow-[0_0_6px_rgba(245,158,11,0.4)]'
+                      )}
+                      style={{ width: `${computedFinancials.margin}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground block pt-1">Minimum target profit is 50%</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Crew Estimator */}
+            <Card className="bg-white dark:bg-slate-900 border border-border rounded-2xl shadow-sm text-zinc-855">
+              <CardContent className="p-6 space-y-4">
+                <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" /> Estimated Crew
+                </h3>
+
+                <div className="space-y-2 pt-1">
+                  {activeStaffing.map((staff, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-xs py-2 border-b border-border">
+                      <span className="font-bold text-foreground/80">{staff.role} <strong className="text-muted-foreground">x{staff.count}</strong></span>
+                      <span className="font-black text-foreground">₹{staff.day_rate.toLocaleString()}/day</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Risk auditing */}
+            <Card className="bg-white dark:bg-slate-900 border border-border rounded-2xl shadow-sm text-zinc-850">
+              <CardContent className="p-6 space-y-4">
+                <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-muted-foreground" /> Risks & Suggestions
+                </h3>
+
+                <div className="space-y-3 pt-1">
+                  {activeRisks.map((risk, idx) => (
+                    <div key={idx} className="p-3 bg-muted border border-zinc-150 rounded-xl flex gap-2 items-start shadow-sm">
+                      <Lightbulb className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                      <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{risk}</p>
+                    </div>
+                  ))}
+                  <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex gap-2 items-start shadow-sm">
+                    <Sparkles className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <p className="text-xs text-emerald-800 font-semibold leading-relaxed">Upsell Suggestion: Add Cinema Atmos Mastering (+ ₹35,000).</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+              </div>
+            )}
+            
+            {activeSidebarTab === 'comments' && (
+              <div className="space-y-6 flex flex-col h-full">
+                {/* Comments Feed */}
+                <Card className="bg-white dark:bg-slate-900 border border-border rounded-2xl shadow-sm text-zinc-850 flex-1 flex flex-col min-h-[250px]">
+              <CardContent className="p-6 flex flex-col flex-1 h-full min-h-0">
+                <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2 shrink-0 mb-4">
+                  <MessageCircle className="h-4 w-4 text-muted-foreground" /> Comments
+                </h3>
+
+                <div className="flex-1 overflow-y-auto pr-1 space-y-3 min-h-0 custom-scrollbar mb-4">
+                  {content.comments.map((comm: ProposalComment) => (
+                    <div key={comm.id} className={cn("p-3 rounded-xl border text-xs leading-relaxed shadow-sm",
+                      comm.is_client ? 'bg-accent/10 border-accent/20' : 'bg-muted border-zinc-150'
+                    )}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={cn("font-black", comm.is_client ? 'text-accent' : 'text-foreground')}>{comm.user}</span>
+                        <span className="text-[10px] text-muted-foreground">{new Date(comm.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                      <p className="text-foreground/80 font-bold">{comm.text}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-2 shrink-0">
+                  <Input 
+                    placeholder="Type comments..." 
+                    value={newCommentText}
+                    onChange={(e) => setNewCommentText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') addComment(activeBuilderTab === 'client_portal');
+                    }}
+                    className="bg-muted border-border rounded-xl text-xs h-9 text-foreground focus-visible:ring-border"
+                  />
+                  <Button 
+                    onClick={() => addComment(activeBuilderTab === 'client_portal')}
+                    className="bg-primary hover:bg-primary text-white rounded-xl h-9 w-9 shrink-0 p-0 shadow-sm"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          )}
+          </div> {/* CLOSE RIGHT SIDEBAR */}
+
+          {/* ==========================================
+              MAIN WORKSPACE: EDITOR OR SERVICE ENGINE
+              ========================================== */}
+          <div className="lg:col-span-3 order-1 bg-white dark:bg-slate-900 border border-border rounded-2xl p-6 md:p-8 overflow-y-auto custom-scrollbar flex flex-col min-h-[500px] shadow-sm">
+            
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/80">
+              <h2 className="text-lg font-black text-foreground tracking-tight flex items-center gap-2">
+                {activeBuilderTab === 'editor' && <><Edit3 className="h-5 w-5 text-destructive" /> Proposal Builder</>}
+                {activeBuilderTab === 'pricing' && <><DollarSign className="h-5 w-5 text-emerald-500" /> Pricing & Taxes</>}
+                {activeBuilderTab === 'client_portal' && <><Eye className="h-5 w-5 text-accent" /> Client View</>}
+              </h2>
+              
+              {/* Mode Pill Toggle (Apple Style) - Moved from global header */}
+              <div className="flex gap-2 items-center">
+                {editingProposal?.parsedContent?.slides?.length > 0 ? (
+                  <Button 
+                    onClick={() => setIsSlideFullscreen(true)}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl text-xs font-bold uppercase tracking-wider h-9 border-border/50 shadow-sm bg-white dark:bg-slate-900 text-foreground hover:bg-muted"
+                  >
+                    <Presentation className="h-4 w-4 mr-2" />
+                    Slide Fullscreen
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={() => setIsClassicFullscreen(true)}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl text-xs font-bold uppercase tracking-wider h-9 border-border/50 shadow-sm bg-white dark:bg-slate-900 text-foreground hover:bg-muted"
+                  >
+                    <Maximize2 className="h-4 w-4 mr-2" />
+                    Classic Fullscreen
+                  </Button>
+                )}
+                <div className="bg-muted p-1.5 rounded-2xl flex gap-1 shadow-inner border border-border/50">
+                  <Button 
+                    onClick={() => setActiveBuilderTab('editor')} 
+                  variant="ghost" 
+                  size="sm" 
+                  className={cn("rounded-xl text-xs font-bold uppercase h-9 px-4 transition-all duration-200", 
+                    activeBuilderTab === 'editor' ? 'bg-white dark:bg-slate-900 text-foreground shadow-sm border border-border/40' : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Editor
+                </Button>
+                <Button 
+                  onClick={() => setActiveBuilderTab('pricing')} 
+                  variant="ghost" 
+                  size="sm" 
+                  className={cn("rounded-xl text-xs font-bold uppercase h-9 px-4 transition-all duration-200", 
+                    activeBuilderTab === 'pricing' ? 'bg-white dark:bg-slate-900 text-foreground shadow-sm border border-border/40' : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Pricing
+                </Button>
+                <Button 
+                  onClick={() => setActiveBuilderTab('client_portal')} 
+                  variant="ghost" 
+                  size="sm" 
+                  className={cn("rounded-xl text-xs font-bold uppercase h-9 px-4 transition-all duration-200", 
+                    activeBuilderTab === 'client_portal' ? 'bg-white dark:bg-slate-900 text-foreground shadow-sm border border-border/40' : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Client View
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             {activeBuilderTab === 'editor' && (
               <div className="space-y-6 flex-1">
                 {content.isPreview && (
@@ -1374,12 +1622,6 @@ function ProposalsContent() {
                     </span>
                   </div>
                 )}
-                <div className="flex items-center justify-between border-b border-border/80 pb-4">
-                  <h2 className="text-lg font-black text-foreground tracking-tight flex items-center gap-2">
-                    <Edit3 className="h-5 w-5 text-destructive" /> Proposal Builder
-                  </h2>
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Apple Whitespace layout</span>
-                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -1434,45 +1676,279 @@ function ProposalsContent() {
                 </div>
 
                 {/* Section Navigation */}
-                <div className="space-y-6 border-t border-border pt-6">
-                  <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-                    {content.sections.map((sec: { title: string; content: string }, idx: number) => (
-                      <button 
-                        key={idx}
-                        onClick={() => setActiveSectionIdx(idx)}
-                        className={cn("px-4 py-2 text-xs font-bold uppercase rounded-xl border tracking-wider transition shrink-0 shadow-sm h-9",
-                          activeSectionIdx === idx ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-slate-900 border-border text-muted-foreground/80 hover:text-foreground hover:bg-muted'
-                        )}
-                      >
-                        {idx + 1}. {sec.title.slice(0, 15)}...
-                      </button>
-                    ))}
-                  </div>
+                <div className={cn("space-y-6 pt-6", !isSlideFullscreen && "border-t border-border")}>
+                  {content.slides && content.slides.length > 0 && !isClassicFullscreen ? (
+                    <div className={cn(
+                      "flex flex-col flex-1",
+                      isSlideFullscreen && "fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                    )}>
+                      {isSlideFullscreen && (
+                        <div className="flex items-center justify-between p-4 border-b border-border/80 shrink-0 bg-white dark:bg-slate-950">
+                          <h2 className="text-xl font-black text-foreground tracking-tight flex items-center gap-2">
+                            <Presentation className="h-6 w-6 text-primary" /> Slide Builder: {editingProposal.proposal_number}
+                          </h2>
+                          <div className="flex items-center gap-3">
+                            <Button 
+                              onClick={() => {
+                                setIsSlideFullscreen(false);
+                                saveEditingProposal(editingProposal.parsedContent);
+                              }} 
+                              className="bg-primary hover:bg-primary text-white rounded-xl h-10 px-6 font-bold tracking-wider shadow-md"
+                            >
+                              <Save className="h-4 w-4 mr-2" /> Save & Close
+                            </Button>
+                          </div>
+                        </div>
+                      )}
 
-                  {content.sections[activeSectionIdx] && (
-                    <div className="space-y-4 bg-muted p-6 rounded-2xl border border-border/80 shadow-inner">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Section {activeSectionIdx + 1} Content</span>
-                        <Input 
-                          value={content.sections[activeSectionIdx].title}
-                          onChange={(e) => {
-                            const secs = [...content.sections];
-                            secs[activeSectionIdx].title = e.target.value;
-                            setEditingProposal({ ...editingProposal, parsedContent: { ...content, sections: secs } });
-                          }}
-                          className="bg-white dark:bg-slate-900 border-border rounded-lg text-sm font-bold text-foreground max-w-[200px] h-8 focus-visible:ring-border"
-                        />
+                      {!isSlideFullscreen ? (
+                        <>
+                          <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                            {content.slides.map((slide: any, idx: number) => (
+                              <button 
+                                key={idx}
+                                onClick={() => setActiveSectionIdx(idx)}
+                                className={cn("px-4 py-2 text-xs font-bold uppercase rounded-xl border tracking-wider transition shrink-0 shadow-sm h-9",
+                                  activeSectionIdx === idx ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-slate-900 border-border text-muted-foreground/80 hover:text-foreground hover:bg-muted'
+                                )}
+                              >
+                                {idx + 1}. {(slide.type || slide.title || '').replace('_', ' ').toUpperCase()}
+                              </button>
+                            ))}
+                          </div>
+
+                          {content.slides[activeSectionIdx] && (
+                            <div className="bg-muted p-6 rounded-2xl border border-border/80 shadow-inner flex items-center justify-center overflow-x-auto">
+                              <SlidePreview 
+                                slide={content.slides[activeSectionIdx]} 
+                                scale={0.4} 
+                                isLiveEdit={true}
+                                onChange={(updatedSlide: any) => {
+                                  const newSlides = [...content.slides!];
+                                  newSlides[activeSectionIdx] = updatedSlide;
+                                  setEditingProposal({ ...editingProposal, parsedContent: { ...content, slides: newSlides } });
+                                }}
+                              />
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex flex-1 overflow-hidden h-full">
+                          {/* Sidebar thumbnails */}
+                          <div className="w-64 border-r bg-slate-50 dark:bg-slate-900 flex flex-col shrink-0">
+                            <div className="p-4 border-b flex items-center justify-between">
+                              <span className="font-semibold text-sm">Slides</span>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                const newSlideId = `slide_${Date.now()}`;
+                                const newSlides = [...content.slides!, { id: newSlideId, type: 'custom_content', title: 'Custom Title', imageUrl: '', textContent: '' }];
+                                setEditingProposal({ ...editingProposal, parsedContent: { ...content, slides: newSlides } });
+                                setActiveSectionIdx(newSlides.length - 1);
+                              }}><Plus className="h-4 w-4" /></Button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                              {content.slides.map((s: any, idx: number) => (
+                                <div 
+                                  key={s.id}
+                                  draggable
+                                  onDragStart={(e) => {
+                                    setDraggedSlideIndex(idx);
+                                    e.dataTransfer.effectAllowed = "move";
+                                  }}
+                                  onDragOver={(e) => {
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = "move";
+                                  }}
+                                  onDrop={(e) => {
+                                    e.preventDefault();
+                                    if (draggedSlideIndex !== null && draggedSlideIndex !== idx) {
+                                      const newSlides = [...content.slides!];
+                                      const draggedSlide = newSlides[draggedSlideIndex];
+                                      newSlides.splice(draggedSlideIndex, 1);
+                                      newSlides.splice(idx, 0, draggedSlide);
+                                      setEditingProposal({ ...editingProposal, parsedContent: { ...content, slides: newSlides } });
+                                      setActiveSectionIdx(idx);
+                                    }
+                                    setDraggedSlideIndex(null);
+                                  }}
+                                  onDragEnd={() => setDraggedSlideIndex(null)}
+                                  onClick={() => setActiveSectionIdx(idx)}
+                                  className={`cursor-pointer border-2 rounded-md overflow-hidden transition-all ${activeSectionIdx === idx ? 'border-[#EE3F46] ring-2 ring-[#EE3F46]/20' : 'border-transparent hover:border-slate-300'} ${draggedSlideIndex === idx ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}
+                                >
+                                  <div className="bg-white pointer-events-none">
+                                    <SlidePreview slide={s} scale={0.12} />
+                                  </div>
+                                  <div className="p-1 text-xs text-center bg-slate-100 dark:bg-slate-800 font-medium text-slate-600 dark:text-slate-300 flex justify-between items-center px-2">
+                                    <span>{idx + 1}. {s.type}</span>
+                                    <div className="flex gap-1">
+                                      <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-slate-200" title="Duplicate Slide" onClick={(e) => {
+                                        e.stopPropagation();
+                                        const newSlides = [...content.slides!];
+                                        const duplicatedSlide = JSON.parse(JSON.stringify(content.slides![idx]));
+                                        duplicatedSlide.id = `slide_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+                                        newSlides.splice(idx + 1, 0, duplicatedSlide);
+                                        setEditingProposal({ ...editingProposal, parsedContent: { ...content, slides: newSlides } });
+                                        setActiveSectionIdx(idx + 1);
+                                      }}><Copy className="h-3 w-3" /></Button>
+                                      <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-slate-200" disabled={idx === 0} onClick={(e) => {
+                                        e.stopPropagation();
+                                        const newSlides = [...content.slides!];
+                                        [newSlides[idx - 1], newSlides[idx]] = [newSlides[idx], newSlides[idx - 1]];
+                                        setEditingProposal({ ...editingProposal, parsedContent: { ...content, slides: newSlides } });
+                                        setActiveSectionIdx(idx - 1);
+                                      }}><ArrowUp className="h-3 w-3" /></Button>
+                                      <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-slate-200" disabled={idx === content.slides.length - 1} onClick={(e) => {
+                                        e.stopPropagation();
+                                        const newSlides = [...content.slides!];
+                                        [newSlides[idx + 1], newSlides[idx]] = [newSlides[idx], newSlides[idx + 1]];
+                                        setEditingProposal({ ...editingProposal, parsedContent: { ...content, slides: newSlides } });
+                                        setActiveSectionIdx(idx + 1);
+                                      }}><ArrowDown className="h-3 w-3" /></Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                  
+                          {/* Main Editor Area */}
+                          <div className="flex-1 flex flex-col bg-slate-100 dark:bg-slate-900/50 overflow-hidden relative">
+                             <div className="absolute top-4 right-4 z-10">
+                               <Button 
+                                 variant={isLiveEdit ? "default" : "outline"} 
+                                 className={isLiveEdit ? "bg-[#EE3F46] hover:bg-[#EE3F46]/90 text-white" : "bg-white"}
+                                 onClick={() => setIsLiveEdit(!isLiveEdit)}
+                               >
+                                 {isLiveEdit ? "Exit Live Edit" : "Enable Live Edit"}
+                               </Button>
+                             </div>
+                             <div className="flex-1 flex items-center justify-center p-8 overflow-auto">
+                               {content.slides[activeSectionIdx] ? (
+                                 <div className="shadow-2xl ring-4 ring-transparent transition-all" style={isLiveEdit ? { boxShadow: "0 0 0 4px #EE3F4633, 0 25px 50px -12px rgba(0, 0, 0, 0.25)" } : {}}>
+                                   <SlidePreview 
+                                     slide={content.slides[activeSectionIdx]} 
+                                     scale={0.45} 
+                                     isLiveEdit={isLiveEdit} 
+                                     onChange={(updated) => {
+                                       const newSlides = [...content.slides!];
+                                       newSlides[activeSectionIdx] = updated;
+                                       setEditingProposal({ ...editingProposal, parsedContent: { ...content, slides: newSlides } });
+                                     }} 
+                                   />
+                                 </div>
+                               ) : (
+                                 <div className="text-slate-400 flex flex-col items-center">
+                                   <Layout className="h-12 w-12 mb-4 opacity-50" />
+                                   <p>Select a slide to edit</p>
+                                 </div>
+                               )}
+                             </div>
+                          </div>
+                  
+                          {/* Right Sidebar Form */}
+                          <div className="w-96 border-l bg-white dark:bg-slate-950 flex flex-col shrink-0">
+                            <div className="p-4 border-b flex items-center justify-between">
+                              <span className="font-semibold text-sm">Edit Slide</span>
+                              {content.slides[activeSectionIdx] && (
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => {
+                                  if (confirm("Are you sure you want to delete this slide?")) {
+                                    const newSlides = content.slides!.filter((_: any, i: number) => i !== activeSectionIdx);
+                                    setEditingProposal({ ...editingProposal, parsedContent: { ...content, slides: newSlides } });
+                                    setActiveSectionIdx(newSlides.length > 0 ? 0 : 0);
+                                  }
+                                }}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                              {content.slides[activeSectionIdx] ? (
+                                <SlideEditor 
+                                  slide={content.slides[activeSectionIdx]} 
+                                  onChange={(updated) => {
+                                    const newSlides = [...content.slides!];
+                                    newSlides[activeSectionIdx] = updated;
+                                    setEditingProposal({ ...editingProposal, parsedContent: { ...content, slides: newSlides } });
+                                  }}
+                                />
+                              ) : (
+                                <p className="text-sm text-muted-foreground text-center mt-10">No slide selected.</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className={cn(
+                      "flex flex-col flex-1",
+                      isClassicFullscreen && "fixed inset-0 z-[100] bg-background p-6 md:p-12 overflow-y-auto animate-in fade-in zoom-in-95 duration-200"
+                    )}>
+                      {isClassicFullscreen && (
+                        <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/80 shrink-0">
+                          <h2 className="text-xl font-black text-foreground tracking-tight flex items-center gap-2">
+                            <FileText className="h-6 w-6 text-primary" /> Classic Proposal Builder
+                          </h2>
+                          <div className="flex items-center gap-3">
+                            <Button 
+                              onClick={() => {
+                                setIsClassicFullscreen(false);
+                                saveEditingProposal(editingProposal.parsedContent);
+                              }} 
+                              className="bg-primary hover:bg-primary text-white rounded-xl h-10 px-6 font-bold tracking-wider shadow-md"
+                            >
+                              <Save className="h-4 w-4 mr-2" /> Save & Close
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              onClick={() => setIsClassicFullscreen(false)} 
+                              className="h-10 w-10 p-0 rounded-xl bg-muted hover:bg-muted/80 text-muted-foreground"
+                            >
+                              <X className="h-5 w-5" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className={cn("flex gap-2 overflow-x-auto pb-2 custom-scrollbar shrink-0", isClassicFullscreen && "mb-4")}>
+                        {content.sections.map((sec: { title: string; content: string }, idx: number) => (
+                          <button 
+                            key={idx}
+                            onClick={() => setActiveSectionIdx(idx)}
+                            className={cn("px-4 py-2 text-xs font-bold uppercase rounded-xl border tracking-wider transition shrink-0 shadow-sm h-9",
+                              activeSectionIdx === idx ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-slate-900 border-border text-muted-foreground/80 hover:text-foreground hover:bg-muted'
+                            )}
+                          >
+                            {idx + 1}. {sec.title.slice(0, 15)}...
+                          </button>
+                        ))}
                       </div>
 
-                      <Textarea 
-                        value={content.sections[activeSectionIdx].content}
-                        onChange={(e) => {
-                          const secs = [...content.sections];
-                          secs[activeSectionIdx].content = e.target.value;
-                          setEditingProposal({ ...editingProposal, parsedContent: { ...content, sections: secs } });
-                        }}
-                        className="bg-white dark:bg-slate-900 border-border rounded-xl min-h-[250px] text-foreground/80 font-medium leading-relaxed text-sm p-4 custom-scrollbar focus-visible:ring-border"
-                      />
+                      {content.sections[activeSectionIdx] && (
+                        <div className="space-y-4 bg-muted p-6 rounded-2xl border border-border/80 shadow-inner">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Section {activeSectionIdx + 1} Content</span>
+                            <Input 
+                              value={content.sections[activeSectionIdx].title}
+                              onChange={(e) => {
+                                const secs = [...content.sections];
+                                secs[activeSectionIdx].title = e.target.value;
+                                setEditingProposal({ ...editingProposal, parsedContent: { ...content, sections: secs } });
+                              }}
+                              className="bg-white dark:bg-slate-900 border-border rounded-lg text-sm font-bold text-foreground max-w-[200px] h-8 focus-visible:ring-border"
+                            />
+                          </div>
+
+                          <Textarea 
+                            value={content.sections[activeSectionIdx].content}
+                            onChange={(e) => {
+                              const secs = [...content.sections];
+                              secs[activeSectionIdx].content = e.target.value;
+                              setEditingProposal({ ...editingProposal, parsedContent: { ...content, sections: secs } });
+                            }}
+                            className="bg-white dark:bg-slate-900 border-border rounded-xl min-h-[250px] text-foreground/80 font-medium leading-relaxed text-sm p-4 custom-scrollbar focus-visible:ring-border"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1796,126 +2272,7 @@ function ProposalsContent() {
             )}
           </div>
 
-          {/* ==========================================
-              RIGHT PANEL: AI DEAL ANALYTICS
-              ========================================== */}
-          <div className="xl:col-span-3 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
-            
-            {/* Real-time Profitability margin */}
-            <Card className="bg-white dark:bg-slate-900 border border-border rounded-2xl shadow-sm text-zinc-850 relative overflow-hidden">
-              <CardContent className="p-6 space-y-4">
-                <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" /> AI Analysis
-                </h3>
 
-                <div className="flex items-center justify-between pt-1">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Win Probability</span>
-                    <span className="text-xl font-black text-foreground">{winProbability}%</span>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Profit Margin</span>
-                    <span className={cn("text-xl font-black", 
-                      computedFinancials.margin >= 50 ? 'text-emerald-600' : 'text-accent'
-                    )}>{computedFinancials.margin}%</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className={cn("h-full rounded-full transition-all duration-500",
-                        computedFinancials.margin >= 50 ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.4)]' : 'bg-accent shadow-[0_0_6px_rgba(245,158,11,0.4)]'
-                      )}
-                      style={{ width: `${computedFinancials.margin}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-muted-foreground block pt-1">Minimum target profit is 50%</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Crew Estimator */}
-            <Card className="bg-white dark:bg-slate-900 border border-border rounded-2xl shadow-sm text-zinc-855">
-              <CardContent className="p-6 space-y-4">
-                <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" /> Estimated Crew
-                </h3>
-
-                <div className="space-y-2 pt-1">
-                  {activeStaffing.map((staff, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-xs py-2 border-b border-border">
-                      <span className="font-bold text-foreground/80">{staff.role} <strong className="text-muted-foreground">x{staff.count}</strong></span>
-                      <span className="font-black text-foreground">₹{staff.day_rate.toLocaleString()}/day</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* AI Risk auditing */}
-            <Card className="bg-white dark:bg-slate-900 border border-border rounded-2xl shadow-sm text-zinc-850">
-              <CardContent className="p-6 space-y-4">
-                <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-muted-foreground" /> Risks & Suggestions
-                </h3>
-
-                <div className="space-y-3 pt-1">
-                  {activeRisks.map((risk, idx) => (
-                    <div key={idx} className="p-3 bg-muted border border-zinc-150 rounded-xl flex gap-2 items-start shadow-sm">
-                      <Lightbulb className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                      <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{risk}</p>
-                    </div>
-                  ))}
-                  <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex gap-2 items-start shadow-sm">
-                    <Sparkles className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <p className="text-xs text-emerald-800 font-semibold leading-relaxed">Upsell Suggestion: Add Cinema Atmos Mastering (+ ₹35,000).</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Comments Feed */}
-            <Card className="bg-white dark:bg-slate-900 border border-border rounded-2xl shadow-sm text-zinc-850 flex-1 flex flex-col min-h-[250px]">
-              <CardContent className="p-6 flex flex-col flex-1 h-full min-h-0">
-                <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2 shrink-0 mb-4">
-                  <MessageCircle className="h-4 w-4 text-muted-foreground" /> Comments
-                </h3>
-
-                <div className="flex-1 overflow-y-auto pr-1 space-y-3 min-h-0 custom-scrollbar mb-4">
-                  {content.comments.map((comm: ProposalComment) => (
-                    <div key={comm.id} className={cn("p-3 rounded-xl border text-xs leading-relaxed shadow-sm",
-                      comm.is_client ? 'bg-accent/10 border-accent/20' : 'bg-muted border-zinc-150'
-                    )}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={cn("font-black", comm.is_client ? 'text-accent' : 'text-foreground')}>{comm.user}</span>
-                        <span className="text-[10px] text-muted-foreground">{new Date(comm.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
-                      <p className="text-foreground/80 font-bold">{comm.text}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex gap-2 shrink-0">
-                  <Input 
-                    placeholder="Type comments..." 
-                    value={newCommentText}
-                    onChange={(e) => setNewCommentText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') addComment(activeBuilderTab === 'client_portal');
-                    }}
-                    className="bg-muted border-border rounded-xl text-xs h-9 text-foreground focus-visible:ring-border"
-                  />
-                  <Button 
-                    onClick={() => addComment(activeBuilderTab === 'client_portal')}
-                    className="bg-primary hover:bg-primary text-white rounded-xl h-9 w-9 shrink-0 p-0 shadow-sm"
-                  >
-                    <Send className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </div>
 
         {/* Dialog for creating a new version */}
@@ -2187,16 +2544,29 @@ function ProposalsContent() {
                       )}
                       <div className="flex flex-1 gap-8 min-h-0">
                         <aside className="w-64 space-y-4 shrink-0 overflow-y-auto pr-4 custom-scrollbar">
-                          <h3 className="text-xs font-bold uppercase text-destructive tracking-wider mb-4">Proposal Sections</h3>
-                          {generatedDraft?.sections.map((sec, idx) => (
+                          <h3 className="text-xs font-bold uppercase text-destructive tracking-wider mb-4">Generated Slides</h3>
+                          {generatedDraft?.slides?.map((slide, idx) => (
                             <button key={idx} onClick={() => setActiveSectionIdx(idx)} className={cn("w-full text-left px-4 py-3 rounded-xl text-xs font-bold border border-transparent transition-all", activeSectionIdx === idx ? "bg-destructive text-white shadow-lg" : "text-muted-foreground hover:bg-muted")}>
-                              {idx + 1}. {sec.title}
+                              {idx + 1}. {slide.type.replace('_', ' ').toUpperCase()}
                             </button>
                           ))}
                         </aside>
-                        <main className="flex-1 bg-muted/50 rounded-[10px] border border-border p-8 overflow-y-auto custom-scrollbar">
-                          <h2 className="text-2xl font-black text-foreground mb-6">{generatedDraft?.sections[activeSectionIdx]?.title}</h2>
-                          <div className="text-sm leading-relaxed text-muted-foreground/80 whitespace-pre-line font-medium leading-7">{generatedDraft?.sections[activeSectionIdx]?.content}</div>
+                        <main className="flex-1 bg-muted/50 rounded-[10px] border border-border p-6 overflow-y-auto custom-scrollbar flex items-center justify-center">
+                          {generatedDraft?.slides?.[activeSectionIdx] ? (
+                            <div className="w-full flex items-center justify-center">
+                              <SlidePreview 
+                                slide={generatedDraft.slides[activeSectionIdx]} 
+                                scale={0.4} 
+                                isLiveEdit={false}
+                              />
+                            </div>
+                          ) : (
+                            <div className="text-center space-y-4 max-w-md">
+                              <Sparkles className="h-12 w-12 text-muted-foreground/30 mx-auto" />
+                              <h2 className="text-xl font-black text-foreground">Content Generated</h2>
+                              <p className="text-sm text-muted-foreground font-medium">Content has been successfully generated by the AI strategy engine. Click "Save Proposal" below to open the full interactive editor.</p>
+                            </div>
+                          )}
                         </main>
                       </div>
                     </div>
@@ -2276,7 +2646,15 @@ function ProposalsContent() {
       </div>
 
       {/* Main Proposals Vault Listing */}
-      <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4 mt-8">
+        <h2 className="text-xl font-bold">Proposals Vault</h2>
+        <div className="flex bg-muted rounded-lg p-1 border border-border">
+          <Button variant={viewMode === 'list' ? "default" : "ghost"} size="sm" onClick={() => setViewMode('list')} className="h-8 shadow-none"><List className="w-4 h-4 mr-2" /> List</Button>
+          <Button variant={viewMode === 'grid' ? "default" : "ghost"} size="sm" onClick={() => setViewMode('grid')} className="h-8 shadow-none"><Layout className="w-4 h-4 mr-2" /> Grid</Button>
+        </div>
+      </div>
+
+      <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
         {filteredProposals.length === 0 ? (
           <Card className="border-2 border-dashed border-border p-24 text-center rounded-[10px] bg-white dark:bg-slate-900 shadow-sm">
             <BrainCircuit className="h-16 w-16 mx-auto mb-6 opacity-10 text-foreground" />
@@ -2292,33 +2670,33 @@ function ProposalsContent() {
             const total = taxableSubtotal + tax;
 
             return (
-              <Card key={prop.id} className="hover:shadow-lg hover:bg-white dark:bg-slate-900 transition-all duration-300 border border-border bg-white dark:bg-slate-900 group rounded-2xl overflow-hidden">
-                <CardContent className="p-0 flex flex-col md:flex-row md:items-center">
+              <Card key={prop.id} className="hover:shadow-lg hover:bg-white dark:bg-slate-900 transition-all duration-300 border border-border bg-white dark:bg-slate-900 group rounded-2xl overflow-hidden flex flex-col">
+                <CardContent className={cn("p-0 flex flex-col flex-1", viewMode === 'list' ? "md:flex-row md:items-center" : "")}>
                   <div className="p-8 flex-1">
                     <div className="flex items-center gap-4">
-                      <div className="h-14 w-14 rounded-2xl bg-destructive/10 border border-red-100 flex items-center justify-center text-destructive group-hover:bg-destructive group-hover:text-white transition-all duration-500">
+                      <div className="h-14 w-14 rounded-2xl bg-destructive/10 border border-red-100 flex items-center justify-center text-destructive group-hover:bg-destructive group-hover:text-white transition-all duration-500 shrink-0">
                         <FileText className="h-7 w-7" />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <h3 className="font-bold text-xl group-hover:text-destructive transition-colors text-foreground">{prop.title}</h3>
-                          <Badge className={cn("px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm",
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <h3 className="font-bold text-xl group-hover:text-destructive transition-colors text-foreground truncate">{prop.title}</h3>
+                          <Badge className={cn("px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm shrink-0",
                             prop.status === 'signed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                             prop.status === 'sent' ? 'bg-accent/10 text-accent border-accent/20' : 'bg-destructive/10 text-destructive border-red-200'
                           )}>
                             {prop.status}
                           </Badge>
                         </div>
-                        <div className="text-xs text-muted-foreground font-bold mt-1.5 flex items-center gap-2">
+                        <div className="text-xs text-muted-foreground font-bold mt-1.5 flex flex-wrap items-center gap-2">
                           <span>{prop.proposal_number}</span> • 
-                          <span>Client: {prop.client_name}</span> • 
-                          <span>Total: ₹{total.toLocaleString()}</span>
-                          {prop.lead_id && <Badge className="bg-accent/10 text-accent border border-accent/20 text-[10px] font-bold uppercase px-2 shadow-sm">Linked to CRM</Badge>}
+                          <span className="truncate max-w-[150px]">{prop.client_name || parsed.client}</span> • 
+                          <span>₹{total.toLocaleString()}</span>
+                          {prop.lead_id && <Badge className="bg-accent/10 text-accent border border-accent/20 text-[10px] font-bold uppercase px-2 shadow-sm shrink-0">Linked to CRM</Badge>}
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="p-8 md:w-80 bg-muted border-l border-zinc-150 flex flex-col gap-3">
+                  <div className={cn("p-8 bg-muted flex flex-col gap-3 shrink-0", viewMode === 'list' ? "md:w-80 border-l border-zinc-150" : "border-t border-zinc-150 mt-auto")}>
                     <Button className="w-full bg-primary border border-primary text-white hover:bg-primary rounded-xl h-11 font-bold gap-2" onClick={() => handleEditProposal(prop)}>
                       <ExternalLink className="h-4 w-4 text-destructive" /> Open Proposal
                     </Button>

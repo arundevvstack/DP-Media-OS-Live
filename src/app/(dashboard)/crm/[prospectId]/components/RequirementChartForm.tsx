@@ -16,9 +16,21 @@ import { generateRequirementScope } from "@/ai/flows/generate-requirements";
 import { cn } from "@/lib/utils";
 
 const PROJECT_CATEGORIES = [
-  "Advertisement", "Corporate", "Documentary", "Biography", "Fashion", "Product", 
-  "Real Estate", "Social Media", "Event", "Educational", "Music Video", "Short Film", 
-  "CGI", "Animation", "Photography", "Other"
+  "Advertising & Brand Films",
+  "Product & E-commerce",
+  "Social Media Content",
+  "Corporate Videos",
+  "Music & Entertainment",
+  "Events & Live Streaming",
+  "Real Estate & Architecture",
+  "Documentary & Non-Fiction",
+  "Fashion & Lifestyle",
+  "Podcast & Interviews",
+  "Educational Content",
+  "Animation & Motion",
+  "Post Production",
+  "AI Generated Content",
+  "Agency Retainers & Bundles"
 ];
 
 const PRODUCTION_TYPES = [
@@ -57,9 +69,12 @@ interface RequirementChartFormProps {
   companyName: string;
   serviceVertical: string;
   industry: string;
+  subVertical?: string;
+  projectType?: string;
+  notes?: string;
 }
 
-export function RequirementChartForm({ prospectId, companyName, serviceVertical, industry }: RequirementChartFormProps) {
+export function RequirementChartForm({ prospectId, companyName, serviceVertical, industry, subVertical, projectType, notes }: RequirementChartFormProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -118,14 +133,40 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
     fetch(`/api/v1/crm/prospect/${prospectId}/requirement`)
       .then(res => res.json())
       .then((resData) => {
-        if (resData.requirement) setData(resData.requirement);
+        const dbReq = resData.requirement || {};
+        
+        let mappedProdType = "";
+        const pt = projectType?.toLowerCase() || "";
+        if (pt.includes("ai")) mappedProdType = "ai";
+        else if (pt.includes("hybrid")) mappedProdType = "hybrid";
+        else if (pt.includes("normal") || pt.includes("standard") || pt.includes("production")) mappedProdType = "live";
+        
+        const mergedData = {
+          ...dbReq,
+          client_details: {
+            ...dbReq.client_details,
+            client_name: dbReq.client_details?.client_name || companyName
+          },
+          project_details: {
+            ...dbReq.project_details,
+            project_category: dbReq.project_details?.project_category || serviceVertical,
+            project_type: dbReq.project_details?.project_type || subVertical,
+            production_type: dbReq.project_details?.production_type || mappedProdType
+          },
+          objective: dbReq.objective || notes,
+          notes: dbReq.notes || notes,
+          completeness_score: dbReq.completeness_score || 0,
+          items_checked: dbReq.items_checked || 0
+        };
+
+        setData(mergedData);
         setLoading(false);
       })
       .catch(err => {
         console.error(err);
         setLoading(false);
       });
-  }, [prospectId]);
+  }, [prospectId, companyName, serviceVertical, subVertical, projectType, notes]);
 
   const debouncedSave = useCallback(
     (() => {
@@ -175,7 +216,7 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
       if (updated.timeline?.delivery_date) { score += 10; itemsChecked++; }
       if (updated.project_details?.project_category) { score += 10; itemsChecked++; }
       if (updated.project_details?.production_type) { score += 10; itemsChecked++; }
-      if (updated.assets?.brand_guidelines || updated.assets?.reference_links) { score += 10; itemsChecked++; }
+      if (updated.assets?.brand_guidelines || updated.assets?.reference_links || updated.assets?.custom_asset_links || updated.assets?.none_required) { score += 10; itemsChecked++; }
       if (updated.universal_deliverables?.list?.length > 0) { score += 10; itemsChecked++; }
       
       const prodType = updated.project_details?.production_type;
@@ -235,7 +276,9 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
   const hasClient = !!(data.client_details?.client_name);
   const hasProject = !!(data.project_details?.project_name);
   const hasTimeline = !!(data.timeline?.delivery_date);
-  const hasAssets = !!(data.assets?.reference_links);
+  const hasAssets = !!(data.assets?.reference_links || data.assets?.brand_guidelines || data.assets?.custom_asset_links || (data.assets?.uploaded_files?.length > 0));
+  const assetsNotRequired = !!data.assets?.none_required;
+  const assetsStatusOk = hasAssets || assetsNotRequired;
 
   return (
     <div className="space-y-10 pb-32 max-w-6xl mx-auto px-4 md:px-8 pt-8">
@@ -279,8 +322,8 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
             <div className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-300 ${hasTimeline ? 'text-emerald-600' : 'text-slate-400'}`}>
               {hasTimeline ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />} Timeline
             </div>
-            <div className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-300 ${hasAssets ? 'text-emerald-600' : 'text-amber-500'}`}>
-              {hasAssets ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />} {hasAssets ? 'Assets Provided' : 'Assets Missing'}
+            <div className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-300 ${assetsStatusOk ? 'text-emerald-600' : 'text-amber-500'}`}>
+              {assetsStatusOk ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />} {assetsNotRequired ? 'Assets Not Required' : hasAssets ? 'Assets Provided' : 'Assets Missing'}
             </div>
           </div>
         </div>
@@ -424,7 +467,17 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
             </Card>
 
             <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
-              <h3 className="font-bold text-lg border-b pb-2 mb-6">Client Assets</h3>
+              <div className="flex justify-between items-center border-b pb-2 mb-6">
+                <h3 className="font-bold text-lg">Client Assets</h3>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="no-assets" 
+                    checked={data.assets?.none_required || false}
+                    onCheckedChange={(c) => updateField('assets', 'none_required', c)}
+                  />
+                  <Label htmlFor="no-assets" className="text-sm font-semibold cursor-pointer">Not Required / None</Label>
+                </div>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-3">
                   <Label>Asset Links (Google Drive, Dropbox, etc.)</Label>

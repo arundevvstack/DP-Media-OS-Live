@@ -11,13 +11,12 @@ export async function POST(req: NextRequest) {
 
     const proposal = await prisma.proposal.create({
       data: {
+        id: crypto.randomUUID(),
         company_id: company_id,
         title: body.title,
         proposal_number: body.proposal_number,
         content: body.content,
-        status: body.status || "draft",
-        prospect_id: body.prospect_id || null,
-        requirement_id: body.requirement_id || null
+        status: body.status || "draft"
       }
     });
 

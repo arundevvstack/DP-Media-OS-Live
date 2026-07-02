@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -96,9 +96,10 @@ export default function ProjectsPage() {
   const { profile, isLoading: isTenantLoading, companyId } = useTenant();
   
   // UI State
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'timeline' | 'board'>('board');
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [groupBy, setGroupBy] = useState<'none' | 'status' | 'client' | 'department'>('none');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -164,6 +165,27 @@ export default function ProjectsPage() {
       return matchesSearch && matchesStatus;
     });
   }, [projects, searchQuery, statusFilter]);
+
+  const groupedProjects = useMemo(() => {
+    if (groupBy === 'none') return { 'All Projects': filteredProjects };
+    
+    const groups: Record<string, any[]> = {};
+    filteredProjects.forEach(project => {
+      let key = 'Uncategorized';
+      if (groupBy === 'status') {
+        key = project.status || 'No Status';
+      } else if (groupBy === 'client') {
+        key = project.client_name || 'No Client';
+      } else if (groupBy === 'department') {
+        key = project.project_category || 'No Department';
+      }
+      
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(project);
+    });
+    
+    return groups;
+  }, [filteredProjects, groupBy]);
 
   const handleLeadImport = (leadId: string) => {
     const lead = leads?.find(l => l.id === leadId);
@@ -347,57 +369,58 @@ export default function ProjectsPage() {
         </div>
       </div>
 
-      {/* Toolbar Section */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-2 rounded-[10px] border border-white/60 dark:border-slate-700/60 shadow-premium gap-4 mx-2">
-        <div className="flex items-center gap-1.5 p-1 bg-muted/50 rounded-[10px] overflow-x-auto w-full sm:w-auto">
+      {/* View & Filter Controls */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-muted/20 p-2 rounded-xl border border-border/50 mx-2">
+        <div className="flex items-center p-1 bg-muted rounded-lg border border-border/50">
           {[
-            { id: 'grid', icon: LayoutGrid, label: 'Grid' },
+            { id: 'board', icon: LayoutGrid, label: 'Board' },
             { id: 'list', icon: ListIcon, label: 'List' },
+            { id: 'grid', icon: LayoutGrid, label: 'Grid' },
             { id: 'timeline', icon: Calendar, label: 'Timeline' }
           ].map((mode) => (
             <Button 
               key={mode.id}
-              variant="ghost" 
+              variant={viewMode === mode.id ? "default" : "ghost"} 
               size="sm" 
-              onClick={() => setViewMode(mode.id as ViewMode)}
-              className={cn(
-                "h-9 px-6 gap-2 rounded-xl transition-all duration-500", 
-                viewMode === mode.id ? "bg-white dark:bg-slate-900 shadow-md text-foreground font-black" : "text-muted-foreground font-bold hover:bg-white/5 dark:bg-slate-900/50 dark:bg-slate-900/50"
-              )}
+              onClick={() => setViewMode(mode.id as ViewMode)} 
+              className="h-8 shadow-none rounded-md px-3 text-xs font-bold"
             >
-              <mode.icon className="h-4 w-4" /> 
-              <span className="text-[10px] uppercase tracking-widest">{mode.label}</span>
+              <mode.icon className="w-3.5 h-3.5 mr-1.5" /> {mode.label}
             </Button>
           ))}
         </div>
-        
-        <div className="flex items-center gap-3 pr-2">
-          {statusFilter !== 'all' && (
-            <Badge variant="secondary" className="h-10 rounded-xl px-4 bg-primary/10 text-foreground border-none font-black text-[10px] uppercase tracking-widest flex gap-2">
-              Status: {statusFilter.replace('_', ' ')}
-              <X className="h-3 w-3 cursor-pointer" onClick={() => setStatusFilter('all')} />
-            </Badge>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-10 px-5 gap-2 rounded-xl border-border bg-white/5 dark:bg-slate-900/50 dark:bg-slate-900/50 font-black text-[10px] uppercase tracking-widest hover:bg-white dark:bg-slate-900 transition-all">
-                <Filter className="h-4 w-4" /> Filter
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-[10px] w-64 bg-white dark:bg-slate-900 border-border p-2 shadow-xl z-50">
-              <DropdownMenuLabel className="text-[9px] font-black uppercase tracking-[0.25em] text-muted-foreground px-4 py-3">Status</DropdownMenuLabel>
-              {['all', 'in_progress', 'completed', 'on_hold'].map((status) => (
-                <DropdownMenuCheckboxItem 
-                  key={status}
-                  checked={statusFilter === status} 
-                  onCheckedChange={() => setStatusFilter(status)}
-                  className="rounded-xl m-1 font-bold text-xs capitalize py-2.5"
-                >
-                  {status.replace('_', ' ')}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-9 w-[160px] bg-white dark:bg-slate-900 border-border shadow-sm text-xs rounded-lg">
+                <SelectValue placeholder="Filter Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">All Statuses</SelectItem>
+                <SelectItem value="planning" className="text-xs">Planning</SelectItem>
+                <SelectItem value="in_progress" className="text-xs">In Progress</SelectItem>
+                <SelectItem value="on_hold" className="text-xs">On Hold</SelectItem>
+                <SelectItem value="completed" className="text-xs">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-2 border-l border-border pl-3">
+            <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
+            <Select value={groupBy} onValueChange={(val: any) => setGroupBy(val)}>
+              <SelectTrigger className="h-9 w-[160px] bg-white dark:bg-slate-900 border-border shadow-sm text-xs rounded-lg">
+                <SelectValue placeholder="Group By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none" className="text-xs">No Grouping</SelectItem>
+                <SelectItem value="status" className="text-xs">By Status</SelectItem>
+                <SelectItem value="client" className="text-xs">By Client</SelectItem>
+                <SelectItem value="department" className="text-xs">By Department</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -412,24 +435,75 @@ export default function ProjectsPage() {
             <Button variant="link" className="mt-4 text-foreground font-black uppercase tracking-widest text-[10px]" onClick={() => setIsCreateOpen(true)}>Initialize Primary Protocol</Button>
           </div>
         ) : (
-          <div className={cn(
-            "animate-in fade-in slide-in-from-bottom-8 duration-1000",
-            viewMode === 'grid' && "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8",
-            viewMode === 'list' && "space-y-6",
-            viewMode === 'timeline' && "relative before:absolute before:left-6 md:before:left-[50%] before:top-0 before:bottom-0 before:w-[2px] before:bg-gradient-to-b before:from-primary/20 before:via-primary/5 before:to-transparent pt-8 pb-16"
-          )}>
-            {filteredProjects.map((proj, idx) => (
-              <ProjectCard 
-                key={proj.id} 
-                project={proj} 
-                view={viewMode} 
-                index={idx}
-                onArchive={(p) => setProjectToArchive(p)}
-                companyUsers={companyUsers}
-                clients={clients}
-              />
-            ))}
-          </div>
+          <>
+            {viewMode === 'board' ? (
+              <div className="flex-1 min-h-[600px] relative w-full overflow-hidden mt-4">
+                <div className="absolute inset-0 overflow-x-auto overflow-y-hidden custom-scrollbar pb-6">
+                  <div className="flex h-full gap-6 w-max min-w-full pr-8">
+                    {['planning', 'in_progress', 'on_hold', 'completed'].map(status => {
+                      const colProjects = filteredProjects.filter(p => p.status === status);
+                      return (
+                        <div key={status} className="flex flex-col gap-4 w-[320px] shrink-0 h-full bg-muted/50 rounded-[10px] p-3 border border-border/50">
+                          <div className="flex items-center justify-between px-3 shrink-0 py-2">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold text-xs uppercase tracking-widest text-muted-foreground/80">{status.replace('_', ' ')}</h3>
+                              <Badge variant="secondary" className="h-5 px-1.5 text-[9px] font-black bg-white dark:bg-slate-900 border border-border shadow-sm">{colProjects.length}</Badge>
+                            </div>
+                          </div>
+                          <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-4 pb-4">
+                            {colProjects.map((proj, idx) => (
+                              <ProjectCard 
+                                key={proj.id} 
+                                project={proj} 
+                                view="grid" 
+                                index={idx}
+                                onArchive={(p) => setProjectToArchive(p)}
+                                companyUsers={companyUsers}
+                                clients={clients}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className={cn(
+                "animate-in fade-in slide-in-from-bottom-8 duration-1000",
+                viewMode === 'grid' && "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8",
+                viewMode === 'list' && "space-y-6",
+                viewMode === 'timeline' && "relative before:absolute before:left-6 md:before:left-[50%] before:top-0 before:bottom-0 before:w-[2px] before:bg-gradient-to-b before:from-primary/20 before:via-primary/5 before:to-transparent pt-8 pb-16"
+              )}>
+                {Object.entries(groupedProjects).map(([groupName, groupProjects]: any) => (
+                  <React.Fragment key={groupName}>
+                    {groupBy !== 'none' && groupProjects.length > 0 && (
+                      <div className={cn(
+                        "col-span-full border-b border-border pb-2 mb-4 mt-6",
+                        viewMode === 'timeline' && "pl-12"
+                      )}>
+                        <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                          {groupName} <Badge variant="secondary" className="ml-2 bg-muted">{groupProjects.length}</Badge>
+                        </h3>
+                      </div>
+                    )}
+                    {groupProjects.map((proj: any, idx: number) => (
+                      <ProjectCard 
+                        key={proj.id} 
+                        project={proj} 
+                        view={viewMode} 
+                        index={idx}
+                        onArchive={(p: any) => setProjectToArchive(p)}
+                        companyUsers={companyUsers}
+                        clients={clients}
+                      />
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 

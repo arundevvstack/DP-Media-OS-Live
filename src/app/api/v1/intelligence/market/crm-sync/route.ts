@@ -50,6 +50,7 @@ export async function POST(request: Request) {
     // 5. Create Prospect in CRM
     const newProspect = await prisma.prospect.create({
       data: {
+        id: crypto.randomUUID(),
         company_id: companyId,
         company_name: lead.company_name,
         contact_person: "TBD", // Requires enrichment or manual entry later

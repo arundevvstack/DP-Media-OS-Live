@@ -45,7 +45,7 @@ export async function GET() {
       }),
       prisma.marketLead.findMany({
         where: { company_id: companyId },
-        include: { scores: true },
+        include: { LeadScore: true },
         orderBy: { opportunity_score: 'desc' },
         take: 20,
       }),

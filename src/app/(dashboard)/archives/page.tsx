@@ -70,8 +70,15 @@ export default function ArchivesPage() {
       // 1. Text Search Filter
       const matchesSearch = (item.company_name || item.project_name || "").toLowerCase().includes(searchQuery.toLowerCase());
       
-      // 2. User Permission Filter (Super Admins see all, others see only their own assigned items)
-      if (isSuperAdmin) return matchesSearch;
+      // 2. User Permission Filter (Super Admins/Admins/Managers see all, Sales sees CRM items, others see only their assigned items)
+      const roleId = profile?.role_id;
+      const isPrivileged = isSuperAdmin || ['SUPER_ADMIN', 'ADMIN', 'OWNER', 'MANAGER'].includes(roleId);
+      
+      if (isPrivileged) return matchesSearch;
+      
+      if (roleId === 'MARKETING_SALES' && ['prospect', 'lead', 'client'].includes(item.archive_type)) {
+        return matchesSearch;
+      }
       
       const userId = profile?.id;
       const isOwner = 

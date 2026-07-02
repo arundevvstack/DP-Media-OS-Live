@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { ProjectTemplate } from '@/lib/workflow/template-engine';
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
 // Initialize Supabase Admin client using service role key
 const supabaseAdmin = createSupabaseAdmin(
@@ -21,6 +22,7 @@ export const clientService = {
   }) {
     return prisma.client.create({
       data: {
+        id: crypto.randomUUID(),
         company_id: data.company_id,
         name: data.name,
         contact_person: data.contact_person,
@@ -52,6 +54,7 @@ export const clientService = {
       // 1. Create Client record
       const client = await tx.client.create({
         data: {
+          id: crypto.randomUUID(),
           company_id: data.company_id,
           name: data.name,
           contact_person: data.contact_person,
@@ -177,6 +180,7 @@ export const clientService = {
       const bankAccountName = `${data.name} Ledger Account`;
       await tx.bankAccount.create({
         data: {
+          id: crypto.randomUUID(),
           company_id: data.company_id,
           name: bankAccountName,
           type: 'Bank',
@@ -199,6 +203,7 @@ export const clientService = {
       // But for direct client, we log client onboarded.
       await tx.activityLog.createMany({
         data: logs.map(log => ({
+          id: crypto.randomUUID(),
           company_id: data.company_id,
           user_id: logUser,
           user_name: logUserName,
@@ -210,6 +215,7 @@ export const clientService = {
       // 8. Send onboarding notification
       await tx.notification.create({
         data: {
+          id: crypto.randomUUID(),
           company_id: data.company_id,
           user_id: logUser,
           title: 'Client Onboarded',

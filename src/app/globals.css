@@ -201,3 +201,5 @@
   background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
   @apply shadow-[0_15px_40px_-10px_rgba(0,176,155,0.3)] text-white;
 }
+.scrollbar-hide::-webkit-scrollbar { display: none; } 
+ .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

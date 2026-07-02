@@ -25,8 +25,10 @@ import {
   ArrowRight,
   ChevronRight,
   Zap,
-  Info
+  Info,
+  Loader2
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -76,8 +78,10 @@ const CONTENT_VERTICALS = [
 
 export default function ServiceBuilderPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [selectedVerticalId, setSelectedVerticalId] = useState<string | null>(null);
   const [selectedServices, setSelectedServices] = useState<Record<string, string[]>>({});
+  const [isLaunching, setIsLaunching] = useState(false);
 
   const activeVertical = useMemo(() => 
     CONTENT_VERTICALS.find(v => v.id === selectedVerticalId), 
@@ -104,12 +108,46 @@ export default function ServiceBuilderPage() {
     Object.values(selectedServices).flat().length, 
   [selectedServices]);
 
-  const handleLaunchProject = () => {
+  const handleLaunchProject = async () => {
     if (totalSelectedCount === 0) {
       toast({ variant: "destructive", title: "Scope Empty", description: "Please select at least one service to continue." });
       return;
     }
-    toast({ title: "Brief Architecture Complete", description: "Sending your production requirements to the workspace." });
+    
+    setIsLaunching(true);
+    try {
+      const allServices = Object.values(selectedServices).flat();
+      const content = `
+# Project Scope
+**Services Requested**:
+${allServices.map(s => `- ${s}`).join('\n')}
+
+# Overview
+This is an automatically generated proposal draft from the Service Builder based on your configured deliverables.
+
+# Next Steps
+Please fill out the remaining details for the client and finalize the pricing before publishing this proposal.
+      `.trim();
+
+      const res = await fetch("/api/v1/proposals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Service Builder Draft",
+          proposal_number: `PRP-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`,
+          content: content,
+          status: "draft"
+        })
+      });
+
+      if (!res.ok) throw new Error("Failed to create proposal");
+      
+      toast({ title: "Brief Architecture Complete", description: "Your AI-powered proposal has been drafted." });
+      router.push("/proposals");
+    } catch (err) {
+      toast({ variant: "destructive", title: "Launch Failed", description: "There was an error creating the proposal draft." });
+      setIsLaunching(false);
+    }
   };
 
   return (
@@ -278,8 +316,13 @@ export default function ServiceBuilderPage() {
                 <Button 
                   className="w-full h-14 rounded-[10px] bg-white dark:bg-slate-900 text-foreground hover:bg-muted font-black uppercase text-xs tracking-widest gap-3 shadow-xl"
                   onClick={handleLaunchProject}
+                  disabled={isLaunching}
                 >
-                  Confirm Brief & Launch <ChevronRight className="h-4 w-4" />
+                  {isLaunching ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Drafting Proposal...</>
+                  ) : (
+                    <>Confirm Brief & Launch <ChevronRight className="h-4 w-4" /></>
+                  )}
                 </Button>
               </div>
             </CardContent>

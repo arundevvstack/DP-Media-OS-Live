@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -29,8 +29,21 @@ import {
   PieChart,
   ArrowUpRight,
   Activity,
-  Trash2
+  Trash2,
+  Filter,
+  ArrowDownUp,
+  Columns,
+  Grid,
+  TableProperties
 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useTenant } from "@/hooks/use-tenant";
@@ -92,7 +105,13 @@ export default function CRMPage() {
   const [leadToPermanentDelete, setLeadToPermanentDelete] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [companySearchOpen, setCompanySearchOpen] = useState(false);
   
+  // New Views State
+  const [viewMode, setViewMode] = useState<'board' | 'list' | 'grid'>('board');
+  const [filterStage, setFilterStage] = useState<string>('all');
+  const [groupBy, setGroupBy] = useState<'none' | 'stage' | 'service_vertical' | 'industry'>('none');
+
   // Drag and Drop State
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
   
@@ -121,7 +140,8 @@ export default function CRMPage() {
     notes: "",
     billing_address: "",
     gstin: "",
-    template: "Brand Identity"
+    template: "Brand Identity",
+    project_type: "Normal Production",
   });
 
   // Fetch Prospects from Supabase
@@ -172,14 +192,42 @@ export default function CRMPage() {
     });
 
     // Exclude converted prospects, direct clients, and won from active pipeline board columns
-    return normalizedLeads.filter(l => 
+    let result = normalizedLeads.filter(l => 
       !l.is_converted && !['won', 'client'].includes(l.stage || '') && (
         (l.company_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (l.service_vertical || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (l.sub_vertical || '').toLowerCase().includes(searchQuery.toLowerCase())
       )
     );
-  }, [localLeads, searchQuery]);
+    
+    if (filterStage !== 'all') {
+      result = result.filter(l => l.stage === filterStage);
+    }
+    
+    return result;
+  }, [localLeads, searchQuery, filterStage]);
+
+  const groupedLeads = useMemo(() => {
+    if (groupBy === 'none') return { 'All Leads': filteredLeads };
+    
+    const groups: Record<string, any[]> = {};
+    filteredLeads.forEach(lead => {
+      let key = 'Uncategorized';
+      if (groupBy === 'stage') {
+        const stageObj = PIPELINE_STAGES.find(s => s.id === lead.stage);
+        key = stageObj ? stageObj.title : 'Other';
+      } else if (groupBy === 'service_vertical') {
+        key = lead.service_vertical || 'General';
+      } else if (groupBy === 'industry') {
+        key = lead.industry || 'Other';
+      }
+      
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(lead);
+    });
+    
+    return groups;
+  }, [filteredLeads, groupBy]);
 
   const handleSelectUnified = (cData: any) => {
     setNewLead(prev => ({
@@ -258,6 +306,7 @@ export default function CRMPage() {
             deal_value: newLead.deal_value,
             stage: newLead.stage,
             notes: newLead.notes,
+            project_type: newLead.project_type,
           }),
         });
 
@@ -290,7 +339,8 @@ export default function CRMPage() {
           notes: "",
           billing_address: "",
           gstin: "",
-          template: "Brand Identity"
+          template: "Brand Identity",
+          project_type: "Normal Production",
         });
         setIsAddOpen(false);
       }
@@ -608,37 +658,68 @@ export default function CRMPage() {
                   <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">
                     Company Name
                   </Label>
-                  <Input 
-                    list="company-names"
-                    placeholder="e.g. Nike Global" 
-                    value={newLead.company_name}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setNewLead(prev => ({...prev, company_name: val}));
-                      
-                      // Auto-fill other fields if it matches an existing lead/client
-                      const existing = localLeads.find(l => l.company_name === val);
-                      if (existing) {
-                        setNewLead(prev => ({
-                          ...prev,
-                          contact_person: prev.contact_person || existing.contact_person || "",
-                          email: prev.email || existing.email || "",
-                          phone: prev.phone || existing.phone || existing.whatsapp || "",
-                          whatsapp: prev.whatsapp || existing.whatsapp || existing.phone || "",
-                          industry: existing.industry || prev.industry,
-                          service_vertical: existing.service_vertical || prev.service_vertical,
-                          sub_vertical: existing.sub_vertical || prev.sub_vertical
-                        }));
-                      }
-                    }}
-                    className="rounded-[10px] h-11 bg-muted border-border text-foreground placeholder:text-muted-foreground shadow-sm"
-                    required
-                  />
-                  <datalist id="company-names">
-                    {Array.from(new Set(localLeads.map(l => l.company_name).filter(Boolean))).map((name, i) => (
-                      <option key={i} value={name as string} />
-                    ))}
-                  </datalist>
+                  <div className="relative">
+                    <Input 
+                      placeholder="e.g. Nike Global" 
+                      value={newLead.company_name}
+                      onFocus={() => setCompanySearchOpen(true)}
+                      onBlur={() => setTimeout(() => setCompanySearchOpen(false), 200)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewLead(prev => ({...prev, company_name: val}));
+                        setCompanySearchOpen(true);
+                        
+                        // Auto-fill other fields if it matches an existing lead/client
+                        const existing = localLeads.find(l => l.company_name === val);
+                        if (existing) {
+                          setNewLead(prev => ({
+                            ...prev,
+                            contact_person: prev.contact_person || existing.contact_person || "",
+                            email: prev.email || existing.email || "",
+                            phone: prev.phone || existing.phone || existing.whatsapp || "",
+                            whatsapp: prev.whatsapp || existing.whatsapp || existing.phone || "",
+                            industry: existing.industry || prev.industry,
+                            service_vertical: existing.service_vertical || prev.service_vertical,
+                            sub_vertical: existing.sub_vertical || prev.sub_vertical
+                          }));
+                        }
+                      }}
+                      className="rounded-[10px] h-11 bg-muted border-border text-foreground placeholder:text-muted-foreground shadow-sm"
+                      required
+                    />
+                    
+                    {companySearchOpen && (
+                      <div className="absolute top-[calc(100%+4px)] left-0 w-full z-[100] bg-white dark:bg-slate-900 border border-border rounded-[10px] shadow-xl max-h-[200px] overflow-y-auto">
+                        {Array.from(new Set(localLeads.map(l => l.company_name).filter(Boolean)))
+                          .filter((name: any) => name.toLowerCase().includes(newLead.company_name.toLowerCase()))
+                          .map((name: any, i) => (
+                            <div 
+                              key={i} 
+                              className="text-xs p-3 hover:bg-muted cursor-pointer transition-colors border-b border-border/50 last:border-0"
+                              onClick={() => {
+                                setNewLead(prev => ({...prev, company_name: name}));
+                                const existing = localLeads.find(l => l.company_name === name);
+                                if (existing) {
+                                  setNewLead(prev => ({
+                                    ...prev,
+                                    contact_person: prev.contact_person || existing.contact_person || "",
+                                    email: prev.email || existing.email || "",
+                                    phone: prev.phone || existing.phone || existing.whatsapp || "",
+                                    whatsapp: prev.whatsapp || existing.whatsapp || existing.phone || "",
+                                    industry: existing.industry || prev.industry,
+                                    service_vertical: existing.service_vertical || prev.service_vertical,
+                                    sub_vertical: existing.sub_vertical || prev.sub_vertical
+                                  }));
+                                }
+                                setCompanySearchOpen(false);
+                              }}
+                            >
+                              {name}
+                            </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -739,9 +820,23 @@ export default function CRMPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Notes</Label>
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Pipeline Type</Label>
+                      <Select onValueChange={(val) => setNewLead(prev => ({...prev, project_type: val}))} value={newLead.project_type}>
+                        <SelectTrigger className="rounded-[10px] h-11 bg-muted border-border text-foreground shadow-sm">
+                          <SelectValue placeholder="Select Pipeline Type" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white dark:bg-slate-900 border-border text-foreground rounded-[10px] shadow-xl">
+                          <SelectItem value="Normal Production" className="text-xs focus:bg-destructive/10 focus:text-destructive rounded-xl cursor-pointer">Standard Production</SelectItem>
+                          <SelectItem value="Hybrid Production" className="text-xs focus:bg-destructive/10 focus:text-destructive rounded-xl cursor-pointer">Hybrid Production</SelectItem>
+                          <SelectItem value="AI Production" className="text-xs focus:bg-destructive/10 focus:text-destructive rounded-xl cursor-pointer">AI Pipeline</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Requirement / Opportunity</Label>
                       <Textarea 
-                        placeholder="Enter Prospect Details..." 
+                        placeholder="Enter Requirement or Opportunity Details..." 
                         value={newLead.notes}
                         onChange={(e) => setNewLead(prev => ({...prev, notes: e.target.value}))}
                         className="rounded-[10px] bg-muted border-border text-foreground text-sm shadow-sm"
@@ -831,6 +926,68 @@ export default function CRMPage() {
             <BarChart3 className="h-4 w-4 text-destructive" /> 
             {showAnalytics ? "Hide Insights" : "Pipeline Insights"}
           </Button>
+        </div>
+      </div>
+
+      {/* View & Filter Controls */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-muted/20 p-2 rounded-xl border border-border/50">
+        <div className="flex items-center p-1 bg-muted rounded-lg border border-border/50">
+          <Button 
+            variant={viewMode === 'board' ? "default" : "ghost"} 
+            size="sm" 
+            onClick={() => setViewMode('board')} 
+            className="h-8 shadow-none rounded-md px-3 text-xs font-bold"
+          >
+            <Columns className="w-3.5 h-3.5 mr-1.5" /> Board
+          </Button>
+          <Button 
+            variant={viewMode === 'list' ? "default" : "ghost"} 
+            size="sm" 
+            onClick={() => setViewMode('list')} 
+            className="h-8 shadow-none rounded-md px-3 text-xs font-bold"
+          >
+            <TableProperties className="w-3.5 h-3.5 mr-1.5" /> List
+          </Button>
+          <Button 
+            variant={viewMode === 'grid' ? "default" : "ghost"} 
+            size="sm" 
+            onClick={() => setViewMode('grid')} 
+            className="h-8 shadow-none rounded-md px-3 text-xs font-bold"
+          >
+            <Grid className="w-3.5 h-3.5 mr-1.5" /> Grid
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+            <Select value={filterStage} onValueChange={setFilterStage}>
+              <SelectTrigger className="h-9 w-[160px] bg-white dark:bg-slate-900 border-border shadow-sm text-xs rounded-lg">
+                <SelectValue placeholder="Filter Stage" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">All Stages</SelectItem>
+                {PIPELINE_STAGES.map(s => (
+                  <SelectItem key={s.id} value={s.id} className="text-xs">{s.title || s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-2 border-l border-border pl-3">
+            <ArrowDownUp className="w-3.5 h-3.5 text-muted-foreground" />
+            <Select value={groupBy} onValueChange={(val: any) => setGroupBy(val)}>
+              <SelectTrigger className="h-9 w-[160px] bg-white dark:bg-slate-900 border-border shadow-sm text-xs rounded-lg">
+                <SelectValue placeholder="Group By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none" className="text-xs">No Grouping</SelectItem>
+                <SelectItem value="stage" className="text-xs">By Stage</SelectItem>
+                <SelectItem value="service_vertical" className="text-xs">By Vertical</SelectItem>
+                <SelectItem value="industry" className="text-xs">By Industry</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -1027,7 +1184,9 @@ export default function CRMPage() {
         </Card>
       </div>
 
-      <div className="flex-1 min-h-[600px] relative w-full overflow-hidden">
+      
+      {viewMode === 'board' && (
+        <div className="flex-1 min-h-[600px] relative w-full overflow-hidden">
         <div className="absolute inset-0 overflow-x-auto overflow-y-hidden custom-scrollbar pb-6">
           <div className="flex h-full gap-6 w-max min-w-full pr-8">
             {PIPELINE_STAGES.filter(s => s.id !== 'won').map((stage) => {
@@ -1090,11 +1249,7 @@ export default function CRMPage() {
                                   </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator className="bg-muted" />
-                                <DropdownMenuItem className="rounded-lg m-1 py-2 cursor-pointer text-muted-foreground/80 focus:text-foreground/80 focus:bg-muted" onClick={() => setLeadToArchive(lead)}>
-                                  <Archive className="h-3.5 w-3.5" /> Archive Lead
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator className="bg-muted" />
-                                <DropdownMenuItem className="rounded-lg m-1 py-2 cursor-pointer text-accent font-bold focus:text-accent focus:bg-accent/10 force-cache-bust-1" onClick={() => setLeadToPermanentDelete(lead)}>
+                                <DropdownMenuItem className="rounded-lg m-1 py-2 cursor-pointer text-accent font-bold focus:text-accent focus:bg-accent/10 force-cache-bust-1" onClick={() => setLeadToArchive(lead)}>
                                   <Trash2 className="h-3.5 w-3.5" /> Delete Lead
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -1110,6 +1265,11 @@ export default function CRMPage() {
                               {lead.sub_vertical && (
                                 <span className="text-[9px] text-muted-foreground font-bold uppercase pl-5 border-l border-border ml-1.5 mt-0.5">
                                   {lead.sub_vertical}
+                                </span>
+                              )}
+                              {lead.notes && (
+                                <span className="text-[10px] text-muted-foreground/80 font-medium line-clamp-2 mt-1 italic pl-1 border-l-2 border-muted">
+                                  {lead.notes}
                                 </span>
                               )}
                               {lead.stage === 'pilot_video' && (lead.pilot_project_id || lead.pilot_status) && (
@@ -1204,6 +1364,166 @@ export default function CRMPage() {
           </div>
         </div>
       </div>
+      )}
+
+      {viewMode === 'list' && (
+        <div className="bg-white dark:bg-slate-900 rounded-[10px] border border-border overflow-hidden shadow-sm">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead className="w-[250px] font-bold text-xs uppercase tracking-widest">Company</TableHead>
+                <TableHead className="font-bold text-xs uppercase tracking-widest">Stage</TableHead>
+                <TableHead className="font-bold text-xs uppercase tracking-widest">Value</TableHead>
+                <TableHead className="font-bold text-xs uppercase tracking-widest">Vertical</TableHead>
+                <TableHead className="text-right font-bold text-xs uppercase tracking-widest">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.entries(groupedLeads).map(([groupName, leads]) => (
+                <React.Fragment key={groupName}>
+                  {groupBy !== 'none' && leads.length > 0 && (
+                    <TableRow className="bg-muted/30 hover:bg-muted/30">
+                      <TableCell colSpan={5} className="py-2 px-4 text-xs font-black uppercase tracking-widest text-muted-foreground bg-muted/30 border-y border-border">
+                        {groupName} ({leads.length})
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {leads.map((lead: any) => (
+                    <TableRow key={lead.id} className="group">
+                      <TableCell className="font-medium">
+                        <div className="flex flex-col gap-1">
+                          <Link href={`/crm/${lead.id}`} className="font-bold hover:text-primary transition-colors">{lead.company_name}</Link>
+                          <span className="text-[10px] text-muted-foreground">{lead.contact_person} • {lead.email}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider bg-muted/50">
+                          {PIPELINE_STAGES.find(s => s.id === lead.stage)?.name || lead.stage}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 text-xs font-black">
+                          <IndianRupee className="h-3 w-3 text-muted-foreground" />
+                          {(lead.deal_value || 0).toLocaleString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          <Zap className="h-3 w-3 text-accent" />
+                          {lead.service_vertical || 'General'}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-muted">
+                              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="rounded-xl w-48">
+                            <DropdownMenuItem asChild className="cursor-pointer">
+                              <Link href={`/crm/${lead.id}`}><Target className="h-4 w-4 mr-2" /> View Lead</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-emerald-600 font-bold" onClick={() => handleMarkAsWon(lead)}>
+                              <CheckCircle2 className="h-4 w-4 mr-2" /> Convert to Project
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="cursor-pointer text-destructive font-bold" onClick={() => setLeadToArchive(lead)}>
+                              <Trash2 className="h-4 w-4 mr-2" /> Delete Lead
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </React.Fragment>
+              ))}
+              {filteredLeads.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                    No leads found matching your criteria.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {viewMode === 'grid' && (
+        <div className="space-y-6">
+          {Object.entries(groupedLeads).map(([groupName, leads]) => {
+            if (leads.length === 0) return null;
+            return (
+              <div key={groupName} className="space-y-4">
+                {groupBy !== 'none' && (
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground border-b border-border pb-2">
+                    {groupName} <Badge variant="secondary" className="ml-2 bg-muted">{leads.length}</Badge>
+                  </h3>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {leads.map((lead: any) => (
+                    <Card key={lead.id} className="hover:ring-2 hover:ring-primary/10 transition-all border-border shadow-sm group bg-white dark:bg-slate-900 rounded-[10px]">
+                      <CardContent className="p-5 space-y-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <Link href={`/crm/${lead.id}`} className="flex-1">
+                            <span className="text-sm font-bold leading-tight group-hover:text-foreground transition-colors block line-clamp-2">{lead.company_name}</span>
+                          </Link>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 rounded-lg hover:bg-muted">
+                                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="rounded-xl w-48">
+                              <DropdownMenuItem asChild className="cursor-pointer">
+                                <Link href={`/crm/${lead.id}`}><Target className="h-4 w-4 mr-2" /> View Lead</Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="cursor-pointer text-emerald-600 font-bold" onClick={() => handleMarkAsWon(lead)}>
+                                <CheckCircle2 className="h-4 w-4 mr-2" /> Convert
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2 text-[10px] text-foreground font-black uppercase tracking-tighter">
+                              <Zap className="h-3.5 w-3.5 text-accent" />
+                              <span className="truncate">{lead.service_vertical || 'General Production'}</span>
+                            </div>
+                            <Badge variant="outline" className="w-fit text-[9px] font-bold uppercase tracking-wider bg-muted/50 mt-1">
+                              {PIPELINE_STAGES.find(s => s.id === lead.stage)?.name || lead.stage}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                          <div className="flex items-center gap-1 text-foreground font-black text-xs bg-primary/5 px-2 py-1 rounded-lg">
+                            <IndianRupee className="h-3 w-3" />
+                            <span>{(lead.deal_value || 0).toLocaleString()}</span>
+                          </div>
+                          <Link href={`/crm/${lead.id}`}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10 group/btn transition-colors">
+                              <ArrowRight className="h-4 w-4 text-slate-300 group-hover/btn:text-foreground" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+          {filteredLeads.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-border rounded-[10px]">
+              No leads found matching your criteria.
+            </div>
+          )}
+        </div>
+      )}
+
 
       <AlertDialog open={!!leadToArchive} onOpenChange={(open) => !open && setLeadToArchive(null)}>
         <AlertDialogContent className="rounded-[10px] p-8">
@@ -1324,7 +1644,7 @@ export default function CRMPage() {
                   supabase.from('Prospect').update({ stage: 'proposal_draft' }).eq('id', leadToPromoteToProposal.id).then();
                   setLeadToPromoteToProposal(null);
                 }
-              }}>Move Only</AlertDialogCancel>
+              }}>Upload Manually</AlertDialogCancel>
               <Button onClick={() => {
                 if (leadToPromoteToProposal && companyId) {
                   setLocalLeads(prev => prev.map(l => l.id === leadToPromoteToProposal.id ? { ...l, stage: 'proposal_draft' } : l));

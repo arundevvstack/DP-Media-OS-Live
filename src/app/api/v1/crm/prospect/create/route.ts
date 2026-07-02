@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     const prospect = await prospectService.create({
+      id: crypto.randomUUID(),
       company_id: profile.company_id,
       company_name: body.company_name,
       contact_person: body.contact_person,
@@ -51,7 +52,8 @@ export async function POST(req: NextRequest) {
       stage: body.stage || 'new_lead',
       notes: body.notes,
       assignee_id: body.assignee_id,
-    });
+      project_type: body.project_type,
+    } as any);
 
     return NextResponse.json({ data: prospect }, { status: 201 });
   } catch (error: any) {

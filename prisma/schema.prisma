@@ -1184,6 +1184,7 @@ model Prospect {
   converted_client_id String?
   is_converted        Boolean            @default(false)
   phone               String?
+  project_type        String             @default("Normal Production")
   Comment             Comment[]
   CommunicationLog    CommunicationLog[]
   Meeting             Meeting[]

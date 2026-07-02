@@ -96,6 +96,8 @@ export function useTenant() {
     // Fallback to strict Enterprise RBAC Permission Matrix
     switch (roleId) {
       case 'SUPER_ADMIN':
+      case 'OWNER':
+      case 'ADMIN':
         return true;
 
       case 'MANAGER':

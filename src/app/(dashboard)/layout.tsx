@@ -93,7 +93,7 @@ export default function DashboardLayout({
                     <span className="font-black text-sm tracking-tight text-foreground">Media<span className="text-foreground">OS</span></span>
                 </div>
             </header>
-            <main className="flex-1 p-4 md:p-8 lg:p-12 overflow-y-auto custom-scrollbar relative z-0">
+            <main className="flex-1 p-4 md:p-8 lg:p-12 overflow-y-auto custom-scrollbar">
                 <div className="max-w-[1600px] mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {children}
                 </div>
