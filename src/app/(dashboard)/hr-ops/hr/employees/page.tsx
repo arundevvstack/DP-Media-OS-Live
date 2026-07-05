@@ -6,6 +6,8 @@ import { Search, Filter, UserPlus, MoreVertical, Building2, UserCircle, Mail, Br
 import Link from 'next/link';
 import { OrganizationUnit } from '@prisma/client';
 import { ClientAvatar } from './client-avatar';
+import { getUserDetails } from "@/lib/auth";
+import { redirect } from 'next/navigation';
 
 const STATUS_CONFIG: Record<string, { label: string; dot: string; bg: string; text: string; icon: any }> = {
   PRESENT:  { label: 'Present',  dot: 'bg-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-500', icon: CheckCircle2 },
@@ -22,7 +24,7 @@ function initials(name: string) {
   return name.split(' ').slice(0,2).map(n => n[0]).join('').toUpperCase();
 }
 
-async function getEmployeesData(companyId: string, searchParams: any) {
+async function getEmployeesData(companyId: string, userId: string, isEmployee: boolean, searchParams: any) {
   const query = (await searchParams).q || '';
   const departmentId = (await searchParams).department || '';
   const status = (await searchParams).status || '';
@@ -31,6 +33,10 @@ async function getEmployeesData(companyId: string, searchParams: any) {
     company_id: companyId,
     role_id: { notIn: ['CLIENT', 'TALENT'] },
   };
+
+  if (isEmployee) {
+    where.id = userId;
+  }
 
   if (query) {
     where.OR = [
@@ -79,13 +85,11 @@ async function getEmployeesData(companyId: string, searchParams: any) {
 }
 
 export default async function EmployeeDirectoryPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
-  // Hardcoded for now until session is integrated properly
-  const defaultCompany = await prisma.company.findFirst();
-  if (!defaultCompany) {
-    return <div className="p-8">Please configure a company first.</div>;
-  }
+  const { userId, companyId, roleId } = await getUserDetails();
+  if (!userId || !companyId) redirect('/login');
 
-  const { employees, depts, attMap } = await getEmployeesData(defaultCompany.id, searchParams);
+  const isEmployee = roleId === 'EMPLOYEE';
+  const { employees, depts, attMap } = await getEmployeesData(companyId, userId, isEmployee, searchParams);
 
   return (
     <div className="p-8 space-y-6 h-full flex flex-col">

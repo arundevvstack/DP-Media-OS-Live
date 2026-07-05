@@ -20,20 +20,23 @@ export default async function AttendanceDashboardPage({ searchParams }: {
   const nextDay = new Date(dateObj); nextDay.setDate(nextDay.getDate() + 1);
 
   // Auth
-  const { userId, companyId } = await getUserDetails();
+  const { userId, companyId, roleId } = await getUserDetails();
   if (!userId || !companyId) redirect('/login');
   const company_id = companyId;
+
+  const isEmployee = roleId === 'EMPLOYEE';
+  const userFilter = isEmployee ? { id: userId } : {};
 
   // Parallel data fetch
   const [employees, attendanceRecords, trend] = await Promise.all([
     prisma.user.findMany({
-      where: { company_id, role_id: { notIn: ['CLIENT', 'TALENT'] } },
+      where: { company_id, role_id: { notIn: ['CLIENT', 'TALENT'] }, ...userFilter },
       select: { id: true, fullName: true, department: true, avatar: true },
       orderBy: { fullName: 'asc' },
     }),
 
     prisma.employeeAttendance.findMany({
-      where: { company_id, date: { gte: dateObj, lt: nextDay } },
+      where: { company_id, date: { gte: dateObj, lt: nextDay }, user_id: isEmployee ? userId : undefined },
       select: { id: true, user_id: true, status: true, check_in: true, check_out: true, location: true },
     }),
 
