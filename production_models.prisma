@@ -1,0 +1,407 @@
+// ==========================================
+// MODULE 8 & 9: MEDIA RESOURCE PLANNING & PRODUCTION EXECUTION
+// ==========================================
+
+model Production {
+  id         String    @id @default(uuid())
+  company_id String
+  project_id String    @unique
+  name       String
+  status     String    @default("PLANNING")
+  start_date DateTime?
+  end_date   DateTime?
+  budget     Float?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+
+  Company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  Project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+
+  Phases              ProductionPhase[]
+  CallSheets          CallSheet[]
+  CrewAssignments     CrewAssignment[]
+  Schedules           ProductionSchedule[]
+  ResourceAllocations ResourceAllocation[]
+  Milestones          ProductionMilestone[]
+  Storyboards         Storyboard[]
+  ShotLists           ShotList[]
+  AIAssets            AIAsset[]
+  DailyProductionLogs DailyProductionLog[]
+  ReviewRounds        ReviewRound[]
+  ApprovalCheckpoints ApprovalCheckpoint[]
+  ProductionVersions  ProductionVersion[]
+  RenderJobs          RenderJob[]
+  ExportJobs          ExportJob[]
+  DeliveryPackages    DeliveryPackage[]
+  ProductionChecklists ProductionChecklist[]
+}
+
+model ProductionPhase {
+  id            String   @id @default(uuid())
+  production_id String
+  name          String
+  start_date    DateTime
+  end_date      DateTime
+  status        String   @default("PENDING")
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+}
+
+model ShootDay {
+  id            String   @id @default(uuid())
+  production_id String
+  date          DateTime
+  location_id   String?
+  call_time     DateTime
+  wrap_time     DateTime
+  status        String   @default("SCHEDULED")
+
+  CallSheet       CallSheet?
+  Scenes          Scene[]
+  CrewAssignments CrewAssignment[]
+}
+
+model CallSheet {
+  id            String   @id @default(uuid())
+  shoot_day_id  String   @unique
+  production_id String
+  version       Int      @default(1)
+  status        String   @default("DRAFT")
+  special_notes String?
+  weather_notes String?
+  created_at    DateTime @default(now())
+
+  ShootDay   ShootDay   @relation(fields: [shoot_day_id], references: [id], onDelete: Cascade)
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+}
+
+model CrewAssignment {
+  id            String  @id @default(uuid())
+  production_id String
+  user_id       String
+  role          String
+  shoot_day_id  String?
+  status        String  @default("CONFIRMED")
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+  User       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  ShootDay   ShootDay?  @relation(fields: [shoot_day_id], references: [id], onDelete: SetNull)
+}
+
+model ProductionSchedule {
+  id            String   @id @default(uuid())
+  production_id String
+  title         String
+  start_time    DateTime
+  end_time      DateTime
+  type          String
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+}
+
+model Scene {
+  id           String  @id @default(uuid())
+  shoot_day_id String
+  scene_number String
+  description  String?
+  setting      String?
+  time_of_day  String?
+  pages        Float?
+  status       String  @default("PENDING")
+
+  ShootDay ShootDay @relation(fields: [shoot_day_id], references: [id], onDelete: Cascade)
+  Shots    Shot[]
+  Versions SceneVersion[]
+}
+
+model Shot {
+  id          String  @id @default(uuid())
+  scene_id    String
+  shot_number String
+  shot_type   String
+  angle       String?
+  movement    String?
+  lens        String?
+  status      String  @default("PENDING")
+  shot_list_id String?
+
+  Scene Scene @relation(fields: [scene_id], references: [id], onDelete: Cascade)
+  ShotList ShotList? @relation(fields: [shot_list_id], references: [id])
+}
+
+model ResourceAllocation {
+  id            String   @id @default(uuid())
+  production_id String
+  equipment_id  String?
+  start_date    DateTime
+  end_date      DateTime
+  status        String   @default("ALLOCATED")
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+  Equipment  Equipment? @relation(fields: [equipment_id], references: [id])
+}
+
+model ProductionMilestone {
+  id             String    @id @default(uuid())
+  production_id  String
+  name           String
+  target_date    DateTime
+  completed_date DateTime?
+  status         String    @default("PENDING")
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+}
+
+model ConflictLog {
+  id             String   @id @default(uuid())
+  company_id     String
+  resource_type  String
+  resource_id    String
+  conflict_start DateTime
+  conflict_end   DateTime
+  details        String
+  resolved       Boolean  @default(false)
+  created_at     DateTime @default(now())
+}
+
+model Storyboard {
+  id            String   @id @default(uuid())
+  production_id String
+  name          String
+  version       Int      @default(1)
+  status        String   @default("DRAFT")
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  Production Production        @relation(fields: [production_id], references: [id], onDelete: Cascade)
+  Frames     StoryboardFrame[]
+}
+
+model StoryboardFrame {
+  id             String  @id @default(uuid())
+  storyboard_id  String
+  frame_number   Int
+  image_url      String?
+  camera_notes   String?
+  lens           String?
+  lighting       String?
+  movement       String?
+  transitions    String?
+  scene_ref      String?
+
+  Storyboard Storyboard @relation(fields: [storyboard_id], references: [id], onDelete: Cascade)
+}
+
+model ShotList {
+  id            String   @id @default(uuid())
+  production_id String
+  name          String
+  status        String   @default("DRAFT")
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+  Shots      Shot[]
+}
+
+model SceneVersion {
+  id          String   @id @default(uuid())
+  scene_id    String
+  version     Int      @default(1)
+  content     Json?
+  created_at  DateTime @default(now())
+
+  Scene Scene @relation(fields: [scene_id], references: [id], onDelete: Cascade)
+}
+
+model PromptLibrary {
+  id          String   @id @default(uuid())
+  company_id  String
+  category    String
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+
+  Templates PromptTemplate[]
+}
+
+model PromptTemplate {
+  id                String   @id @default(uuid())
+  prompt_library_id String
+  name              String
+  template_text     String
+  variables         Json?
+  negative_prompts  String?
+  reference_images  String[]
+  ai_provider       String?
+  model             String?
+  version           Int      @default(1)
+  created_at        DateTime @default(now())
+
+  PromptLibrary PromptLibrary @relation(fields: [prompt_library_id], references: [id], onDelete: Cascade)
+  Executions    PromptExecution[]
+}
+
+model PromptExecution {
+  id                 String   @id @default(uuid())
+  prompt_template_id String
+  executed_by_id     String
+  result_asset_id    String?
+  execution_time_ms  Int?
+  status             String   @default("SUCCESS")
+  created_at         DateTime @default(now())
+
+  PromptTemplate PromptTemplate @relation(fields: [prompt_template_id], references: [id], onDelete: Cascade)
+  User           User           @relation(fields: [executed_by_id], references: [id])
+}
+
+model AIAsset {
+  id            String   @id @default(uuid())
+  production_id String
+  name          String
+  asset_type    String
+  url           String
+  metadata      Json?
+  prompt_link   String?
+  status        String   @default("GENERATED")
+  created_at    DateTime @default(now())
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+  Versions   AssetVersion[]
+}
+
+model AssetVersion {
+  id          String   @id @default(uuid())
+  ai_asset_id String
+  version     Int      @default(1)
+  url         String
+  changes     String?
+  created_at  DateTime @default(now())
+
+  AIAsset AIAsset @relation(fields: [ai_asset_id], references: [id], onDelete: Cascade)
+}
+
+model DailyProductionLog {
+  id               String   @id @default(uuid())
+  production_id    String
+  date             DateTime
+  crew_attendance  Json?
+  equipment_usage  Json?
+  incidents        String?
+  risks            String?
+  budget_notes     String?
+  completion_pct   Float    @default(0)
+  created_at       DateTime @default(now())
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+  DirectorNotes DirectorNote[]
+}
+
+model DirectorNote {
+  id            String   @id @default(uuid())
+  daily_log_id  String
+  note          String
+  created_at    DateTime @default(now())
+
+  DailyProductionLog DailyProductionLog @relation(fields: [daily_log_id], references: [id], onDelete: Cascade)
+}
+
+model ReviewRound {
+  id            String   @id @default(uuid())
+  production_id String
+  name          String
+  status        String   @default("OPEN")
+  created_at    DateTime @default(now())
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+  Feedback   ClientFeedback[]
+  Revisions  Revision[]
+}
+
+model ClientFeedback {
+  id              String   @id @default(uuid())
+  review_round_id String
+  client_id       String?
+  comments        String
+  frame_reference String?
+  status          String   @default("PENDING")
+  created_at      DateTime @default(now())
+
+  ReviewRound ReviewRound @relation(fields: [review_round_id], references: [id], onDelete: Cascade)
+}
+
+model Revision {
+  id              String   @id @default(uuid())
+  review_round_id String
+  description     String
+  status          String   @default("PENDING")
+  created_at      DateTime @default(now())
+
+  ReviewRound ReviewRound @relation(fields: [review_round_id], references: [id], onDelete: Cascade)
+}
+
+model ApprovalCheckpoint {
+  id            String   @id @default(uuid())
+  production_id String
+  name          String
+  status        String   @default("PENDING")
+  approved_by   String?
+  created_at    DateTime @default(now())
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+}
+
+model ProductionVersion {
+  id            String   @id @default(uuid())
+  production_id String
+  version       Int      @default(1)
+  details       Json?
+  status        String   @default("DRAFT")
+  created_at    DateTime @default(now())
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+}
+
+model RenderJob {
+  id            String   @id @default(uuid())
+  production_id String
+  status        String   @default("QUEUED")
+  progress      Float    @default(0)
+  output_url    String?
+  created_at    DateTime @default(now())
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+}
+
+model ExportJob {
+  id            String   @id @default(uuid())
+  production_id String
+  format        String
+  status        String   @default("QUEUED")
+  url           String?
+  created_at    DateTime @default(now())
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+}
+
+model DeliveryPackage {
+  id            String   @id @default(uuid())
+  production_id String
+  name          String
+  status        String   @default("PREPARING")
+  assets        Json?
+  created_at    DateTime @default(now())
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+}
+
+model ProductionChecklist {
+  id            String   @id @default(uuid())
+  production_id String
+  name          String
+  tasks         Json?
+  status        String   @default("PENDING")
+  created_at    DateTime @default(now())
+
+  Production Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+}

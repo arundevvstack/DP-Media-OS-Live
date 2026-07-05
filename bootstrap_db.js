@@ -8,7 +8,17 @@ async function main() {
   
   console.log('=== SEEDING ROLES & USERS ===\n');
 
-  const companyRes = await client.query('SELECT id FROM public."Company" LIMIT 1');
+  let companyRes = await client.query('SELECT id FROM public."Company" LIMIT 1');
+  
+  if (companyRes.rows.length === 0) {
+    console.log('No Company found, creating default Workspace...');
+    companyRes = await client.query(`
+      INSERT INTO public."Company" (id, name, "updatedAt")
+      VALUES (gen_random_uuid(), 'Default Workspace', NOW())
+      RETURNING id;
+    `);
+  }
+  
   const companyId = companyRes.rows[0]?.id;
   console.log('Company ID:', companyId);
 
@@ -55,7 +65,7 @@ async function main() {
     const isSuperAdmin = au.email === 'arundevv.com@gmail.com';
     
     const roleName = isSuperAdmin ? 'SUPER_ADMIN' : (meta.role || 'EMPLOYEE');
-    const roleId = roleIdMap[roleName] || roleIdMap['EMPLOYEE'];
+    const roleId = roleName;
     
     await client.query(`
       INSERT INTO public."User" (id, email, "fullName", company_id, role_id, status, department, onboarding_status)
@@ -79,8 +89,8 @@ async function main() {
 
   // 3. Create SuperAdmin entry
   await client.query(`
-    INSERT INTO public."SuperAdmin" (id, email, "createdAt")
-    VALUES ('77f2603b-a1a5-459d-bf95-c07d905be9fc', 'arundevv.com@gmail.com', NOW())
+    INSERT INTO public."SuperAdmin" (id, email)
+    VALUES ('77f2603b-a1a5-459d-bf95-c07d905be9fc', 'arundevv.com@gmail.com')
     ON CONFLICT (id) DO NOTHING;
   `);
   console.log('✓ SuperAdmin entry');

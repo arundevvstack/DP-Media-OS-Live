@@ -1,0 +1,12 @@
+{
+  "AllowMultiple": false,
+  "Description": "Changing production_requirements to universal_deliverables in Form",
+  "EndLine": 363,
+  "Instruction": "Replace production_requirements with universal_deliverables since production_requirements was removed from the schema.",
+  "ReplacementContent": "                  <div className=\"space-y-3\"><Label>Voice Over</Label><Input value={data.universal_deliverables?.voice_over || \"\"} onChange={e => updateField('universal_deliverables', 'voice_over', e.target.value)} /></div>\n                  <div className=\"space-y-3\"><Label>Subtitles</Label><Input value={data.universal_deliverables?.subtitles || \"\"} onChange={e => updateField('universal_deliverables', 'subtitles', e.target.value)} /></div>\n                  <div className=\"space-y-3\"><Label>AI Language</Label><Input value={data.universal_deliverables?.ai_language || \"\"} onChange={e => updateField('universal_deliverables', 'ai_language', e.target.value)} /></div>",
+  "StartLine": 361,
+  "TargetContent": "                  <div className=\"space-y-3\"><Label>Voice Over</Label><Input value={data.production_requirements?.voice_over || \"\"} onChange={e => updateField('production_requirements', 'voice_over', e.target.value)} /></div>\n                  <div className=\"space-y-3\"><Label>Subtitles</Label><Input value={data.production_requirements?.subtitles || \"\"} onChange={e => updateField('production_requirements', 'subtitles', e.target.value)} /></div>\n                  <div className=\"space-y-3\"><Label>AI Language</Label><Input value={data.production_requirements?.ai_language || \"\"} onChange={e => updateField('production_requirements', 'ai_language', e.target.value)} /></div>",
+  "TargetFile": "d:\\Workstation DP-2\\DP Clients\\WEB DEVELOPMENT\\Media OS V.1\\src\\app\\(dashboard)\\crm\\[prospectId]\\components\\RequirementChartForm.tsx",
+  "toolAction": "Updating form fields",
+  "toolSummary": "File edit"
+}

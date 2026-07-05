@@ -15,9 +15,9 @@ export interface UseSupabaseCollectionResult<T> {
  * all useSupabaseCollection hooks listening to that table.
  * Usage: broadcastTableUpdate('Prospect')
  */
-export function broadcastTableUpdate(table: string) {
+export function broadcastTableUpdate(table: string, optimisticData?: any) {
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('dp:table-update', { detail: { table } }));
+    window.dispatchEvent(new CustomEvent('dp:table-update', { detail: { table, optimisticData } }));
   }
 }
 
@@ -152,6 +152,21 @@ export function useSupabaseCollection<T = any>(
     const handleBroadcast = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail?.table === table && active) {
+        if (detail.optimisticData) {
+          setData(prev => {
+            if (!prev) return prev;
+            // Support updating a single row based on ID
+            if (detail.optimisticData.id) {
+              const exists = prev.some(item => (item as any).id === detail.optimisticData.id);
+              if (exists) {
+                return prev.map(item => (item as any).id === detail.optimisticData.id ? { ...item, ...detail.optimisticData } : item);
+              } else {
+                return [...prev, detail.optimisticData] as any;
+              }
+            }
+            return prev;
+          });
+        }
         fetchData();
       }
     };

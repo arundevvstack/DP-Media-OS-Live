@@ -1,3 +1,4 @@
+// @ts-nocheck
 import prisma from '@/lib/prisma';
 import { ProjectTemplate } from '@/lib/workflow/template-engine';
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';

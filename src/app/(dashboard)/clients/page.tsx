@@ -476,14 +476,9 @@ export default function ClientsPage() {
     // Archive the client lead record — let Supabase auto-generate id
     const { error: archiveError } = await supabase.from('Archive').insert({
       company_id: companyId,
-      company_name: client.company_name,
       archive_type: 'client',
       archived_at: new Date().toISOString(),
-      industry: client.industry,
-      email: client.email,
-      contact_person: client.contact_person,
-      service_vertical: client.service_vertical,
-      sub_vertical: client.sub_vertical,
+      data: client
     });
 
     if (archiveError) {
@@ -504,12 +499,9 @@ export default function ClientsPage() {
         for (const project of projectsToArchive) {
           await supabase.from('Archive').insert({
             company_id: companyId,
-            project_name: project.project_name,
             archive_type: 'project',
             archived_at: new Date().toISOString(),
-            budget: project.budget,
-            status: project.status,
-            deadline: project.deadline,
+            data: project
           });
           await supabase.from('Project').delete().eq('id', project.id);
         }

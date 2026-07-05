@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
+import { EtimeofficeSettingsCard } from "@/components/integrations/etimeoffice-settings-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -286,6 +287,13 @@ function AccountCenterContent() {
       desc: "Manage bank accounts and company liquidity",
       icon: Wallet,
     },
+    {
+      id: "hr_ops",
+      name: "HRM",
+      desc: "Human Resource Management",
+      icon: Users,
+      isCore: true,
+    },
   ];
 
   const handleTabChange = (value: string) => {
@@ -384,7 +392,14 @@ function AccountCenterContent() {
   };
 
   const handleToggleModule = async (moduleId: string, enabled: boolean) => {
-    if (!companyId) return;
+    if (!companyId) {
+      toast({
+        variant: "destructive",
+        title: "Configuration Error",
+        description: "Your user account is not linked to a workspace/company yet.",
+      });
+      return;
+    }
     const currentModules = settings?.modules_enabled || [
       "dashboard",
       "projects",
@@ -396,13 +411,15 @@ function AccountCenterContent() {
       updatedModules = currentModules.filter((id: string) => id !== moduleId);
     }
 
+    const newSettings = {
+      id: settings?.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36)),
+      company_id: companyId,
+      modules_enabled: updatedModules,
+      updated_at: new Date().toISOString(),
+    };
+
     const { error } = await supabase.from("CompanySettings").upsert(
-      {
-        id: settings?.id || crypto.randomUUID(),
-        company_id: companyId,
-        modules_enabled: updatedModules,
-        updated_at: new Date().toISOString(),
-      },
+      newSettings,
       { onConflict: "company_id" },
     );
 
@@ -413,7 +430,8 @@ function AccountCenterContent() {
         description: error.message,
       });
     } else {
-      broadcastTableUpdate("CompanySettings");
+      broadcastTableUpdate("CompanySettings", newSettings);
+      router.refresh();
       toast({ title: enabled ? "Module Enabled" : "Module Disabled" });
     }
   };
@@ -579,6 +597,12 @@ function AccountCenterContent() {
                 className="rounded-xl px-4 py-2 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
               >
                 <Lock className="h-4 w-4" /> Security
+              </TabsTrigger>
+              <TabsTrigger
+                value="integrations"
+                className="rounded-xl px-4 py-2 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
+                <Puzzle className="h-4 w-4" /> Integrations
               </TabsTrigger>
             </>
           )}
@@ -1171,6 +1195,17 @@ function AccountCenterContent() {
               })}
             </div>
           </Card>
+        </TabsContent>
+
+        {/* INTEGRATIONS TAB */}
+        <TabsContent value="integrations" className="space-y-6">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">Integrations</h2>
+            <p className="text-muted-foreground mt-1 text-sm">Connect third-party tools and biometric systems to Media OS.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <EtimeofficeSettingsCard />
+          </div>
         </TabsContent>
       </Tabs>
 

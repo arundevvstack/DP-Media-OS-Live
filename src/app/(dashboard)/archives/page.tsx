@@ -180,15 +180,15 @@ export default function ArchivesPage() {
         </div>
       </div>
 
-      <Card className="border-none shadow-soft bg-accent/10 border border-accent/20 rounded-[10px]">
+      <Card className="border-none shadow-sm bg-primary/5 border border-primary/10 rounded-[10px]">
         <CardContent className="p-6 flex items-start gap-4">
-          <div className="h-10 w-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-accent shadow-sm shrink-0">
+          <div className="h-10 w-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center text-primary shadow-sm shrink-0">
             <Info className="h-5 w-5" />
           </div>
           <div className="space-y-1">
-            <h4 className="font-bold text-accent text-sm">Vault Retention Policy</h4>
-            <p className="text-xs text-accent/70 leading-relaxed">
-              Archived items are retained indefinitely until you choose to <strong>Permanently Delete</strong> them.
+            <h4 className="font-bold text-foreground text-sm">Vault Retention Policy</h4>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Archived items are retained indefinitely until you choose to <strong className="text-foreground">Permanently Delete</strong> them.
               Restoring an item will move it back to its original production or CRM stage.
             </p>
           </div>

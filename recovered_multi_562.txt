@@ -1,0 +1,23 @@
+{
+  "Description": "Fix invalid SUGGESTIONS keys",
+  "Instruction": "Fix invalid keys accessed from SUGGESTIONS object",
+  "ReplacementChunks": [
+    {
+      "AllowMultiple": false,
+      "EndLine": 510,
+      "ReplacementContent": "                  <MultiSuggestionInput values={data.creative_requirements?.visual_style || []} asArray={true} onChange={v => updateField('creative_requirements', 'visual_style', v)} suggestions={SUGGESTIONS.style} placeholder=\"Add visual style keywords...\" />",
+      "StartLine": 510,
+      "TargetContent": "                  <MultiSuggestionInput values={data.creative_requirements?.visual_style || []} asArray={true} onChange={v => updateField('creative_requirements', 'visual_style', v)} suggestions={SUGGESTIONS.visual_style} placeholder=\"Add visual style keywords...\" />"
+    },
+    {
+      "AllowMultiple": false,
+      "EndLine": 514,
+      "ReplacementContent": "                  <div className=\"space-y-3\"><SuggestionInput label=\"Target Region\" value={data.creative_requirements?.target_region || \"\"} onChange={v => updateField('creative_requirements', 'target_region', v)} suggestions={SUGGESTIONS.region} placeholder=\"e.g. Global\" /></div>",
+      "StartLine": 514,
+      "TargetContent": "                  <div className=\"space-y-3\"><SuggestionInput label=\"Target Region\" value={data.creative_requirements?.target_region || \"\"} onChange={v => updateField('creative_requirements', 'target_region', v)} suggestions={SUGGESTIONS.target_region} placeholder=\"e.g. Global\" /></div>"
+    }
+  ],
+  "TargetFile": "d:\\Workstation DP-2\\DP Clients\\WEB DEVELOPMENT\\Media OS V.1\\src\\app\\(dashboard)\\crm\\[prospectId]\\components\\RequirementChartForm.tsx",
+  "toolAction": "Fixing SUGGESTIONS references",
+  "toolSummary": "File edit"
+}

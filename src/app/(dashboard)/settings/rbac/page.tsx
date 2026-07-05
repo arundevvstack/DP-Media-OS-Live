@@ -83,7 +83,9 @@ export default function RBACPage() {
   const [selectedRole, setSelectedRole] = useState("EMPLOYEE");
   const [selectedDepartment, setSelectedDepartment] = useState("Production");
 
-  const { data: members, isLoading: isUsersLoading, refetch: reloadMembers } = useSupabaseCollection('User');
+  const { data: members, isLoading: isUsersLoading, refetch: reloadMembers } = useSupabaseCollection('User', {
+    filters: [{ column: 'role_id', operator: 'neq', value: 'CLIENT' }]
+  });
 
   const [localRolePerms, setLocalRolePerms] = useState<Record<string, string[]>>({});
 
@@ -462,7 +464,7 @@ export default function RBACPage() {
 
                                 {member.status === 'approved' && member.id !== profile?.id && (
                                   <DropdownMenuItem 
-                                    className="gap-2.5 cursor-pointer py-2 rounded-xl font-bold text-accent text-xs hover:bg-accent/10"
+                                    className="gap-2.5 cursor-pointer py-2 rounded-xl font-bold text-red-600 text-xs hover:bg-red-50 hover:text-red-700"
                                     onClick={() => handleUpdateStatus(member.id, 'suspended')}
                                   >
                                     <Ban className="h-4 w-4" /> Suspend Credentials
@@ -482,7 +484,7 @@ export default function RBACPage() {
                                   <>
                                     <DropdownMenuSeparator className="my-1" />
                                     <DropdownMenuItem 
-                                      className="gap-2.5 cursor-pointer py-2 rounded-xl font-bold text-accent text-xs hover:bg-accent/10"
+                                      className="gap-2.5 cursor-pointer py-2 rounded-xl font-bold text-red-600 text-xs hover:bg-red-50"
                                       onClick={() => handleRemoveMember(member.id)}
                                     >
                                       <UserMinus className="h-4 w-4" /> Expel from Office

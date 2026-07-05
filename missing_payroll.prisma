@@ -1,0 +1,26 @@
+// ==========================================
+// MISSING PAYROLL MODELS (To fix runtime crash)
+// ==========================================
+
+model PayrollPeriod {
+  id         String       @id @default(uuid())
+  name       String
+  start_date DateTime
+  end_date   DateTime
+  status     String       @default("OPEN")
+  Runs       PayrollRun[]
+}
+
+model PayrollRun {
+  id               String        @id @default(uuid())
+  user_id          String
+  period_id        String
+  status           String        @default("DRAFT")
+  gross_pay        Float         @default(0)
+  total_deductions Float         @default(0)
+  net_pay          Float         @default(0)
+  created_at       DateTime      @default(now())
+  
+  User             User          @relation(fields: [user_id], references: [id])
+  Period           PayrollPeriod @relation(fields: [period_id], references: [id])
+}

@@ -1,0 +1,16 @@
+{
+  "Description": "Update Deliverables Summary presets",
+  "Instruction": "Update the deliverables_summary array in the SUGGESTIONS object to include time-based and format-based video deliverables.",
+  "ReplacementChunks": [
+    {
+      "AllowMultiple": false,
+      "EndLine": 45,
+      "ReplacementContent": "  voice_accent: [\"US\", \"UK\", \"Indian\", \"Australian\", \"Neutral\"],\n  deliverables_summary: [\"10 sec video\", \"15 sec video\", \"30 sec video\", \"45 sec video\", \"60 sec video\", \"Short Form\", \"Long Form\", \"Raw Footage\", \"Source Files\", \"Photography 50 Edits\"],",
+      "StartLine": 44,
+      "TargetContent": "  voice_accent: [\"US\", \"UK\", \"Indian\", \"Australian\", \"Neutral\"],\n  deliverables_summary: [\"1x 60s Main Video\", \"3x 15s Shorts\", \"Raw Footage\", \"Source Files\", \"Photography 50 Edits\", \"Logo Source Files\", \"Complete Branding Kit\"],"
+    }
+  ],
+  "TargetFile": "d:\\Workstation DP-2\\DP Clients\\WEB DEVELOPMENT\\Media OS V.1\\src\\app\\(dashboard)\\crm\\[prospectId]\\components\\RequirementChartForm.tsx",
+  "toolAction": "Updating deliverables summary presets",
+  "toolSummary": "File edit"
+}

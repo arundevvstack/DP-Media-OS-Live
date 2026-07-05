@@ -5,7 +5,7 @@ import * as React from "react";
 import {
   LayoutGrid, Film, Users, Briefcase, FileText, Receipt, Search, PieChart, 
   UserCircle, Plus, ShieldCheck, LogOut, Loader2, Building2, Wallet, 
-  Settings2, Archive, Bot
+  Settings2, Archive, Bot, CheckCircle
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarHeader, SidebarMenu, 
@@ -65,6 +65,11 @@ export const navGroups: { label: string; items: NavItem[] }[] = [
       { title: "Finance Dashboard", url: "/finance", icon: PieChart, module: "finance" },
       { title: "Invoice and Quote", url: "/invoices", icon: Receipt, module: "invoices" },
       { title: "Accounts", url: "/accounts", icon: Wallet, module: "accounts" },
+    ]},
+  { label: "HR & Ops", items: [
+      { title: "HR Dashboard", url: "/hr-ops/dashboard", icon: PieChart, module: "hr_ops", isCore: true },
+      { title: "Employee Directory", url: "/hr-ops/hr/employees", icon: Users, module: "hr_ops" },
+      { title: "Attendance", url: "/hr-ops/hr/attendance/dashboard", icon: CheckCircle, module: "hr_ops" },
     ]},
   
 ];

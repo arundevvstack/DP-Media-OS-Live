@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { addReviewAnnotation } from "@/app/actions/project-overview";
 import { useParams, useRouter } from "next/navigation";
 import {
   Card,
@@ -185,24 +186,30 @@ export default function ProjectWorkspacePage({
     seconds: "00",
     text: "",
   });
-  const [mockAnnotations, setMockAnnotations] = useState<ReviewAnnotation[]>([
-    {
-      timestamp: "00:15",
-      comment: "Ensure color balance on host face looks natural.",
-      author: "Creative Director",
-    },
-    {
-      timestamp: "01:04",
-      comment: "Sound level dips slightly, raise gain by +2dB.",
-      author: "Audio Engineer",
-    },
-  ]);
+  
 
   // Asset Folder Navigation Filter
   const [selectedFolderFilter, setSelectedFolderFilter] =
     useState<string>("all");
 
   // --- DATA FETCHING FROM SUPABASE ---
+
+  const { data: productionComments, refetch: refetchComments } = useSupabaseCollection("ProductionComment", {
+    where: { project_id: projectId }
+  });
+  
+  // Transform DB comments to local annotation format for the video player
+  const liveAnnotations = (productionComments || [])
+    .filter(c => c.asset_id === selectedAssetForReview?.id)
+    .map(c => {
+        const parts = c.content.split(' - ');
+        return {
+            timestamp: parts[0] || "00:00",
+            comment: parts.slice(1).join(' - ') || c.content,
+            author: "User" // Or lookup author ID
+        };
+    });
+
   const { data: project, isLoading: isProjectLoading } = useSupabaseDoc(
     "Project",
     projectId || "",
@@ -587,7 +594,7 @@ export default function ProjectWorkspacePage({
         project_id: projectId,
         name: newAsset.name,
         url: fileUrl,
-        file_size: 14890240, // 14.8 MB dummy size
+        
         file_type: newAsset.file_type,
       });
 
@@ -1876,7 +1883,7 @@ export default function ProjectWorkspacePage({
                             Feedback
                           </p>
                           <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {mockAnnotations.map((ann, i) => (
+                            {liveAnnotations.map((ann, i) => (
                               <div
                                 key={i}
                                 className="flex items-start gap-3 text-xs"
@@ -2026,7 +2033,7 @@ export default function ProjectWorkspacePage({
                                   {asset.file_type}
                                 </span>
                                 <span className="text-[10px] text-muted-foreground font-bold">
-                                  {(asset.file_size / 1000000).toFixed(1)} MB
+                                  {( (asset.file_size || 0) / 1000000).toFixed(1)} MB
                                 </span>
                               </div>
                             </div>

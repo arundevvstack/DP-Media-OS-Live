@@ -1,0 +1,142 @@
+// ==========================================
+// MODULE 9B: ENTERPRISE REVIEW CENTER
+// ==========================================
+
+model ReviewSession {
+  id             String   @id @default(uuid())
+  production_id  String
+  name           String
+  description    String?
+  status         String   @default("DRAFT") // DRAFT, INTERNAL_REVIEW, CLIENT_REVIEW, APPROVED, REJECTED, ARCHIVED
+  created_by_id  String
+  expires_at     DateTime?
+  secure_token   String?  @unique
+  password_hash  String?
+  watermark      Boolean  @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  Production     Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+  Creator        User @relation(fields: [created_by_id], references: [id])
+  Participants   ReviewParticipant[]
+  Frames         ReviewFrame[]
+  Assets         AssetReview[]
+  Decisions      ReviewDecision[]
+}
+
+model ReviewParticipant {
+  id             String   @id @default(uuid())
+  session_id     String
+  user_id        String?
+  external_email String?
+  role           String   @default("REVIEWER") // OWNER, REVIEWER, APPROVER, GUEST
+  joined_at      DateTime?
+  created_at     DateTime @default(now())
+
+  Session        ReviewSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  User           User? @relation(fields: [user_id], references: [id])
+}
+
+model ReviewFrame {
+  id             String   @id @default(uuid())
+  session_id     String
+  frame_id       String
+  version_number Int      @default(1)
+  status         String   @default("PENDING")
+  created_at     DateTime @default(now())
+
+  Session        ReviewSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  Frame          StoryboardFrame @relation(fields: [frame_id], references: [id], onDelete: Cascade)
+  Comments       ReviewComment[]
+  Annotations    ReviewAnnotation[]
+}
+
+model AssetReview {
+  id             String   @id @default(uuid())
+  session_id     String
+  asset_id       String
+  version_number Int      @default(1)
+  status         String   @default("PENDING")
+  created_at     DateTime @default(now())
+
+  Session        ReviewSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  Asset          AIAsset @relation(fields: [asset_id], references: [id], onDelete: Cascade)
+  Comments       ReviewComment[]
+  Annotations    ReviewAnnotation[]
+}
+
+model ReviewComment {
+  id             String   @id @default(uuid())
+  review_frame_id String?
+  asset_review_id String?
+  user_id        String?
+  external_email String?
+  content        String
+  thread_id      String?
+  status         String   @default("OPEN") // OPEN, RESOLVED
+  timestamp      Float?   // For video/audio assets
+  marker_x       Float?
+  marker_y       Float?
+  created_at     DateTime @default(now())
+
+  ReviewFrame    ReviewFrame? @relation(fields: [review_frame_id], references: [id], onDelete: Cascade)
+  AssetReview    AssetReview? @relation(fields: [asset_review_id], references: [id], onDelete: Cascade)
+  User           User? @relation(fields: [user_id], references: [id])
+}
+
+model ReviewAnnotation {
+  id             String   @id @default(uuid())
+  review_frame_id String?
+  asset_review_id String?
+  user_id        String?
+  type           String   // RECTANGLE, CIRCLE, ARROW, PEN, TEXT
+  drawing_data   Json     // Coordinates, color, layer info
+  created_at     DateTime @default(now())
+
+  ReviewFrame    ReviewFrame? @relation(fields: [review_frame_id], references: [id], onDelete: Cascade)
+  AssetReview    AssetReview? @relation(fields: [asset_review_id], references: [id], onDelete: Cascade)
+  User           User? @relation(fields: [user_id], references: [id])
+}
+
+model ReviewDecision {
+  id             String   @id @default(uuid())
+  session_id     String
+  user_id        String?
+  external_email String?
+  decision       String   // APPROVED, APPROVED_WITH_CHANGES, REJECTED
+  comments       String?
+  stage          String   @default("INTERNAL") // INTERNAL, DIRECTOR, PRODUCER, CLIENT, FINAL
+  created_at     DateTime @default(now())
+
+  Session        ReviewSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  User           User? @relation(fields: [user_id], references: [id])
+}
+
+model RevisionRequest {
+  id             String   @id @default(uuid())
+  production_id  String
+  title          String
+  description    String
+  status         String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  requested_by_id String
+  assigned_to_id String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  Production     Production @relation(fields: [production_id], references: [id], onDelete: Cascade)
+  Requester      User @relation("RevisionRequester", fields: [requested_by_id], references: [id])
+  Assignee       User? @relation("RevisionAssignee", fields: [assigned_to_id], references: [id])
+  Tasks          RevisionTask[]
+}
+
+model RevisionTask {
+  id             String   @id @default(uuid())
+  request_id     String
+  task_type      String   // FRAME, ASSET, STORYBOARD, PROMPT
+  target_id      String
+  description    String
+  status         String   @default("PENDING")
+  created_at     DateTime @default(now())
+
+  Request        RevisionRequest @relation(fields: [request_id], references: [id], onDelete: Cascade)
+}

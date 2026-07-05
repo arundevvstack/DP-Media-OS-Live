@@ -1,0 +1,12 @@
+{
+  "AllowMultiple": false,
+  "Description": "Hide scrollbar on TabsList",
+  "EndLine": 388,
+  "Instruction": "Add CSS utilities to hide the scrollbar on the TabsList container",
+  "ReplacementContent": "        <TabsList className=\"w-full flex flex-row justify-between h-auto bg-slate-100/50 dark:bg-slate-900/30 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 p-2 rounded-2xl overflow-x-auto flex-nowrap gap-1 shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]\">",
+  "StartLine": 388,
+  "TargetContent": "        <TabsList className=\"w-full flex flex-row justify-between h-auto bg-slate-100/50 dark:bg-slate-900/30 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 p-2 rounded-2xl overflow-x-auto flex-nowrap gap-1 shadow-sm\">",
+  "TargetFile": "d:\\Workstation DP-2\\DP Clients\\WEB DEVELOPMENT\\Media OS V.1\\src\\app\\(dashboard)\\crm\\[prospectId]\\components\\RequirementChartForm.tsx",
+  "toolAction": "Hiding scrollbar on TabsList",
+  "toolSummary": "File edit"
+}

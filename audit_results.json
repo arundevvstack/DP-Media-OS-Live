@@ -1,0 +1,1297 @@
+{
+  "hardcoded": [
+    {
+      "file": "src\\supabase\\hooks\\use-doc.ts",
+      "line": 52,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\supabase\\hooks\\use-collection.ts",
+      "line": 119,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\vector-provider.ts",
+      "line": 48,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\event-bus.ts",
+      "line": 37,
+      "reason": "Found consoleLog",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\event-bus.ts",
+      "line": 57,
+      "reason": "Found consoleLog",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\event-bus.ts",
+      "line": 78,
+      "reason": "Found consoleLog",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\event-bus.ts",
+      "line": 116,
+      "reason": "Found consoleError",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\ai-router.ts",
+      "line": 100,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\ai-router.ts",
+      "line": 104,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\ai-router.ts",
+      "line": 149,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\production\\PermissionEngine.ts",
+      "line": 24,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\production\\PermissionEngine.ts",
+      "line": 27,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\production\\providers\\JobDispatcher.ts",
+      "line": 35,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\core\\engines\\approval.engine.ts",
+      "line": 32,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\components\\profile\\profile-detail-view.tsx",
+      "line": 90,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\components\\profile\\profile-detail-view.tsx",
+      "line": 127,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\components\\profile\\profile-detail-view.tsx",
+      "line": 201,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\components\\production\\studio\\GenerationWorkspace.tsx",
+      "line": 22,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\components\\production\\studio\\GenerationWorkspace.tsx",
+      "line": 188,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\components\\production\\studio\\GenerationWorkspace.tsx",
+      "line": 195,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\components\\production\\studio\\GenerationConsole.tsx",
+      "line": 15,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\components\\production\\studio\\ContextPanel.tsx",
+      "line": 83,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\page.tsx",
+      "line": 34,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\page.tsx",
+      "line": 55,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\page.tsx",
+      "line": 60,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\layout.tsx",
+      "line": 74,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\layout.tsx",
+      "line": 81,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\storyboard\\page.tsx",
+      "line": 25,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\storyboard\\page.tsx",
+      "line": 31,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\storyboard\\page.tsx",
+      "line": 49,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\storyboard\\page.tsx",
+      "line": 94,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\storyboard\\page.tsx",
+      "line": 98,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\script\\page.tsx",
+      "line": 23,
+      "reason": "Found dummy",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\script\\page.tsx",
+      "line": 24,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\script\\page.tsx",
+      "line": 29,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\script\\page.tsx",
+      "line": 32,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\script\\page.tsx",
+      "line": 61,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\script\\page.tsx",
+      "line": 82,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\script\\page.tsx",
+      "line": 88,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\script\\page.tsx",
+      "line": 96,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\scenes\\[sceneId]\\page.tsx",
+      "line": 60,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\scenes\\[sceneId]\\page.tsx",
+      "line": 136,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\production\\projects\\[id]\\scenes\\[sceneId]\\page.tsx",
+      "line": 280,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\webhooks\\stripe\\route.ts",
+      "line": 26,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\user\\avatar\\route.ts",
+      "line": 33,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\system\\demo-seed\\route.ts",
+      "line": 8,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\system\\demo-seed\\route.ts",
+      "line": 9,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\system\\demo-seed\\route.ts",
+      "line": 22,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\system\\demo-seed\\route.ts",
+      "line": 29,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\system\\demo-seed\\route.ts",
+      "line": 31,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\system\\demo-seed\\route.ts",
+      "line": 36,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\system\\demo-seed\\route.ts",
+      "line": 46,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\system\\demo\\start\\route.ts",
+      "line": 21,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\system\\demo\\start\\route.ts",
+      "line": 22,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\system\\demo\\start\\route.ts",
+      "line": 23,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\system\\demo\\start\\route.ts",
+      "line": 33,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\system\\demo\\start\\route.ts",
+      "line": 37,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\projects\\[projectId]\\change-pipeline\\route.ts",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\media-ops\\review\\dashboard\\route.ts",
+      "line": 52,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\media-ops\\productions\\[id]\\route.ts",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\media-ops\\productions\\[id]\\crew\\route.ts",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\media-ops\\productions\\[id]\\call-sheets\\route.ts",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\reporting\\route.ts",
+      "line": 32,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\reindex\\route.ts",
+      "line": 14,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\metrics\\route.ts",
+      "line": 10,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\metrics\\route.ts",
+      "line": 14,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\metrics\\route.ts",
+      "line": 30,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\metrics\\route.ts",
+      "line": 53,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\metrics\\route.ts",
+      "line": 168,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\metrics\\route.ts",
+      "line": 184,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\metrics\\route.ts",
+      "line": 185,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\market\\scan\\route.ts",
+      "line": 112,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\market\\scan\\route.ts",
+      "line": 112,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\market\\scan\\route.ts",
+      "line": 114,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\market\\scan\\route.ts",
+      "line": 116,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\copilot\\route.ts",
+      "line": 17,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\crm\\client\\create\\route.ts",
+      "line": 19,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\clients\\[clientId]\\assets\\route.ts",
+      "line": 34,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\assets\\index\\route.ts",
+      "line": 35,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\assets\\index\\route.ts",
+      "line": 40,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\talent\\signup\\page.tsx",
+      "line": 87,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\talent\\signup\\page.tsx",
+      "line": 126,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\talent\\signup\\page.tsx",
+      "line": 127,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\talent\\signup\\page.tsx",
+      "line": 129,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\talent\\signup\\page.tsx",
+      "line": 139,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\talent\\signup\\page.tsx",
+      "line": 148,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\talent\\signup\\page.tsx",
+      "line": 158,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\talent\\signup\\page.tsx",
+      "line": 448,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\talent\\signup\\page.tsx",
+      "line": 577,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\talent\\signup\\page.tsx",
+      "line": 579,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\talent\\signup\\page.tsx",
+      "line": 610,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\talent\\signup\\page.tsx",
+      "line": 696,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\creators\\page.tsx",
+      "line": 23,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\creators\\page.tsx",
+      "line": 234,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(public)\\creators\\[id]\\page.tsx",
+      "line": 20,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\talents\\page.tsx",
+      "line": 26,
+      "reason": "Found dummy",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\talents\\page.tsx",
+      "line": 26,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\talents\\page.tsx",
+      "line": 46,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\settings\\page.tsx",
+      "line": 476,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\settings\\page.tsx",
+      "line": 889,
+      "reason": "Found sample",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\research\\page.tsx",
+      "line": 75,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\research\\page.tsx",
+      "line": 93,
+      "reason": "Found dummy",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\proposals\\generate\\page.tsx",
+      "line": 24,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\projects\\[projectId]\\timeline\\page.tsx",
+      "line": 12,
+      "reason": "Found todo",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\projects\\[projectId]\\tasks\\page.tsx",
+      "line": 12,
+      "reason": "Found todo",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\projects\\[projectId]\\procurement\\page.tsx",
+      "line": 12,
+      "reason": "Found todo",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\projects\\[projectId]\\files\\page.tsx",
+      "line": 12,
+      "reason": "Found todo",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\projects\\[projectId]\\communication\\page.tsx",
+      "line": 12,
+      "reason": "Found todo",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\projects\\[projectId]\\ai-assistant\\page.tsx",
+      "line": 12,
+      "reason": "Found todo",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\projects\\[projectId]\\activity\\page.tsx",
+      "line": 12,
+      "reason": "Found todo",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\recruitment\\jobs\\[id]\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\leave\\requests\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\leave\\requests\\page.tsx",
+      "line": 8,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\leave\\requests\\new\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\leave\\reports\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\leave\\policies\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\leave\\dashboard\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\leave\\calendar\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\leave\\approvals\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\leave\\approvals\\page.tsx",
+      "line": 12,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\employees\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\employees\\[id]\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\employees\\[id]\\components\\employee-training.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\employees\\[id]\\components\\employee-performance.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\employees\\[id]\\components\\employee-performance.tsx",
+      "line": 17,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\employees\\[id]\\components\\employee-leave.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\employees\\[id]\\components\\employee-documents.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\employees\\[id]\\components\\employee-documents.tsx",
+      "line": 63,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\employees\\[id]\\components\\employee-attendance.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\employees\\new\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\attendance\\shifts\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\attendance\\reports\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\attendance\\overtime\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\attendance\\overtime\\page.tsx",
+      "line": 21,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\attendance\\dashboard\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\attendance\\check-in\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\attendance\\calendar\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\attendance\\calendar\\page.tsx",
+      "line": 17,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\dashboard\\page.tsx",
+      "line": 76,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\automation\\builder\\page.tsx",
+      "line": 137,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\assets\\bookings\\page.tsx",
+      "line": 1,
+      "reason": "Found tsNocheck",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\ai-command\\page.tsx",
+      "line": 65,
+      "reason": "Found dummy",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\suggest-scope.ts",
+      "line": 18,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\suggest-scope.ts",
+      "line": 40,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\suggest-scope.ts",
+      "line": 47,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\market-flows.ts",
+      "line": 45,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\market-flows.ts",
+      "line": 82,
+      "reason": "Found fake",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\market-flows.ts",
+      "line": 124,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\market-flows.ts",
+      "line": 130,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-requirements.ts",
+      "line": 41,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-requirements.ts",
+      "line": 43,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-requirements.ts",
+      "line": 51,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-requirements.ts",
+      "line": 72,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-requirements.ts",
+      "line": 170,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-requirements.ts",
+      "line": 177,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-requirements.ts",
+      "line": 183,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-requirements.ts",
+      "line": 190,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-requirements.ts",
+      "line": 196,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-requirements.ts",
+      "line": 203,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-proposal-content.ts",
+      "line": 31,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-proposal-content.ts",
+      "line": 43,
+      "reason": "Found mathRandom",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-proposal-content.ts",
+      "line": 136,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\generate-proposal-content.ts",
+      "line": 143,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\analyze-market-and-suggest-pitch.ts",
+      "line": 42,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\analyze-market-and-suggest-pitch.ts",
+      "line": 94,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\analyze-market-and-suggest-pitch.ts",
+      "line": 101,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\ai-accountant-flow.ts",
+      "line": 34,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\ai-accountant-flow.ts",
+      "line": 71,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\ai\\flows\\ai-accountant-flow.ts",
+      "line": 78,
+      "reason": "Found mock",
+      "replacement": "Requires refactor to database-driven logic",
+      "status": "FAIL"
+    }
+  ],
+  "unused": [],
+  "security": [],
+  "performance": [
+    {
+      "file": "src\\scripts\\migrate_master_data.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\scheduling-engine.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\analytics-engine.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\lib\\production\\intelligence\\GraphEngine.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\core\\services\\intelligence\\automation.engine.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\system\\demo-seed\\route.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\queue\\process\\route.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\proposals\\[proposalId]\\convert\\route.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\projects\\[projectId]\\objectives\\route.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\projects\\[projectId]\\change-pipeline\\route.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\projects\\create\\route.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\media-ops\\storyboard\\[productionId]\\approve\\route.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\media-ops\\review\\[productionId]\\route.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\market\\scan\\route.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\api\\v1\\intelligence\\brain\\route.ts",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\payroll\\run\\page.tsx",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\leave\\approvals\\page.tsx",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\employees\\[id]\\components\\employee-leave.tsx",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\hr\\attendance\\check-in\\page.tsx",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    },
+    {
+      "file": "src\\app\\(dashboard)\\hr-ops\\dashboard\\page.tsx",
+      "reason": "Potential N+1 Query (await inside loop)",
+      "status": "FAIL"
+    }
+  ],
+  "models": {},
+  "routes": {
+    "total": 148,
+    "api": 0,
+    "page": 148
+  }
+}

@@ -103,8 +103,9 @@ export default function DashboardPage() {
     where: { company_id: companyId }
   });
 
-  // Table Proposal does not exist in schema yet
-  const proposals: any[] = [];
+  const { data: proposals } = useSupabaseCollection('Proposal', {
+    where: { company_id: companyId }
+  });
 
   const { data: companyUsers, refetch: reloadUsers } = useSupabaseCollection('User');
 
@@ -216,7 +217,7 @@ export default function DashboardPage() {
     }).length || 0;
     const crmWon = prospects?.filter(p => p.stage === 'won').reduce((s: number, p: any) => s + (p.deal_value || 0), 0) || 0;
     const crmActive = prospects?.filter(p => !['won','lost'].includes(p.stage || ''));
-    const approvedUsers = companyUsers?.filter(u => u.status === 'approved') || [];
+    const approvedUsers = companyUsers?.filter(u => u.status === 'approved' && !['CLIENT', 'TALENT'].includes(u.role_id || '')) || [];
 
     const statusColor = (s: string) => {
       if (s === 'in_progress') return 'bg-primary/10 text-primary';

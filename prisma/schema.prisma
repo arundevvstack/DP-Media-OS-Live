@@ -45,6 +45,7 @@ model ActivityLog {
   previous_state Json?
   new_state      Json?
   created_at     DateTime @default(now())
+  project_id     String?
   Company        Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
   User           User     @relation(fields: [user_id], references: [id])
 }
@@ -106,7 +107,7 @@ model ApprovalRequest {
   current_step    Int               @default(1)
   due_date        DateTime?
   created_at      DateTime          @default(now())
-  updated_at      DateTime
+  updated_at      DateTime          @default(now())
   ApprovalHistory ApprovalHistory[]
   ApprovalChain   ApprovalChain     @relation(fields: [chain_id], references: [id], onDelete: Cascade)
   Company         Company           @relation(fields: [company_id], references: [id], onDelete: Cascade)
@@ -260,7 +261,7 @@ model Comment {
   prospect_id  String?
   is_edited    Boolean    @default(false)
   reactions    Json?      @default("[]")
-  updated_at   DateTime?
+  updated_at   DateTime?  @default(now())
   edit_history Json?      @default("[]")
   Company      Company    @relation(fields: [company_id], references: [id], onDelete: Cascade)
   Objective    Objective? @relation(fields: [objective_id], references: [id], onDelete: Cascade)
@@ -281,7 +282,17 @@ model CommunicationLog {
 }
 
 model Company {
-  requirements RequirementChart[]
+  SalaryStructure SalaryStructure[]
+  EmployeeSalary  EmployeeSalary[]
+  Loan            Loan[]
+  PayrollPeriod   PayrollPeriod[]
+  PayrollRun      PayrollRun[]
+  Reimbursement   Reimbursement[]
+
+  EmployeeDocument    EmployeeDocument[]
+  EmployeeAttendance  EmployeeAttendance[]
+  EmployeePerformance EmployeePerformance[]
+  EmployeeTraining    EmployeeTraining[]
 
   id                           String                         @id
   name                         String
@@ -326,6 +337,7 @@ model Company {
   Project                      Project[]
   Proposal                     Proposal[]
   Prospect                     Prospect[]
+  requirements                 RequirementChart[]
   Resource                     Resource[]
   Talent                       Talent[]
   Team                         Team[]
@@ -336,6 +348,13 @@ model Company {
   Vendor                       Vendor[]
   WebhookEndpoint              WebhookEndpoint[]
   WorkflowTemplate             WorkflowTemplate[]
+  LeaveType                    LeaveType[]
+  OrganizationUnit             OrganizationUnit[]
+  Designation                  Designation[]
+  JobGrade                     JobGrade[]
+  Shift                        Shift[]
+  PayrollGroup                 PayrollGroup[]
+  MasterDataRecord             MasterDataRecord[]
 }
 
 model CompanyPluginInstallation {
@@ -377,7 +396,7 @@ model Competitor {
   production_quality String?
   weaknesses         String[]             @default([])
   created_at         DateTime             @default(now())
-  updated_at         DateTime
+  updated_at         DateTime             @default(now())
   Company            Company              @relation(fields: [company_id], references: [id], onDelete: Cascade)
   CompetitorActivity CompetitorActivity[]
 }
@@ -423,7 +442,7 @@ model DistributedJobQueue {
   retry_count    Int       @default(0)
   schema_version String    @default("1.0")
   trace_id       String?
-  updated_at     DateTime
+  updated_at     DateTime  @default(now())
 }
 
 model Expense {
@@ -560,7 +579,7 @@ model MarketLead {
   is_synced          Boolean            @default(false)
   synced_prospect_id String?
   created_at         DateTime           @default(now())
-  updated_at         DateTime
+  updated_at         DateTime           @default(now())
   LeadScore          LeadScore[]
   Company            Company            @relation(fields: [company_id], references: [id], onDelete: Cascade)
   MarketOpportunity  MarketOpportunity? @relation(fields: [opportunity_id], references: [id])
@@ -579,7 +598,7 @@ model MarketOpportunity {
   status          String       @default("open")
   owner_id        String?
   created_at      DateTime     @default(now())
-  updated_at      DateTime
+  updated_at      DateTime     @default(now())
   MarketLead      MarketLead[]
   Company         Company      @relation(fields: [company_id], references: [id], onDelete: Cascade)
   User            User?        @relation(fields: [owner_id], references: [id])
@@ -591,7 +610,7 @@ model MarketResearchNote {
   user_id    String
   content    String
   created_at DateTime @default(now())
-  updated_at DateTime
+  updated_at DateTime @default(now())
   Company    Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
   User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
@@ -649,7 +668,7 @@ model NotificationPreference {
   id         String   @id
   user_id    String   @unique
   channels   Json
-  updated_at DateTime
+  updated_at DateTime @default(now())
   User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
@@ -687,7 +706,7 @@ model Objective {
   completion_pct                                               Float                 @default(0)
   checklist                                                    Json?
   created_at                                                   DateTime              @default(now())
-  updated_at                                                   DateTime
+  updated_at                                                   DateTime              @default(now())
   is_blocked                                                   Boolean               @default(false)
   attachment_count                                             Int                   @default(0)
   revision_count                                               Int                   @default(0)
@@ -744,7 +763,7 @@ model ProductionAIJob {
   external_job_id        String?
   metadata               Json?
   created_at             DateTime                 @default(now())
-  updated_at             DateTime
+  updated_at             DateTime                 @default(now())
   Project                Project                  @relation(fields: [project_id], references: [id], onDelete: Cascade)
   ProductionPromptSet    ProductionPromptSet?     @relation(fields: [prompt_set_id], references: [id])
   ProductionAIProvider   ProductionAIProvider     @relation(fields: [provider_id], references: [id])
@@ -765,7 +784,7 @@ model ProductionAIProvider {
   auth_type                    String
   status                       String                         @default("active")
   created_at                   DateTime                       @default(now())
-  updated_at                   DateTime
+  updated_at                   DateTime                       @default(now())
   ProductionAIJob              ProductionAIJob[]
   ProductionProviderCredential ProductionProviderCredential[]
 }
@@ -792,7 +811,7 @@ model ProductionAsset {
   tags                   String[]
   current_version_id     String?
   created_at             DateTime                 @default(now())
-  updated_at             DateTime
+  updated_at             DateTime                 @default(now())
   Project                Project                  @relation(fields: [project_id], references: [id], onDelete: Cascade)
   ProductionPromptSet    ProductionPromptSet?     @relation(fields: [prompt_set_id], references: [id])
   ProductionScene        ProductionScene?         @relation(fields: [scene_id], references: [id])
@@ -811,7 +830,7 @@ model ProductionAssetPlaceholder {
   assigned_to      String?
   future_ai_job_id String?
   created_at       DateTime         @default(now())
-  updated_at       DateTime
+  updated_at       DateTime         @default(now())
   ProductionScene  ProductionScene? @relation(fields: [scene_id], references: [id], onDelete: Cascade)
   ProductionShot   ProductionShot?  @relation(fields: [shot_id], references: [id], onDelete: Cascade)
 }
@@ -831,7 +850,7 @@ model ProductionAssetVersion {
   status          String           @default("Ready")
   is_current      Boolean          @default(true)
   created_at      DateTime         @default(now())
-  updated_at      DateTime
+  updated_at      DateTime         @default(now())
   ProductionAsset ProductionAsset  @relation(fields: [asset_id], references: [id], onDelete: Cascade)
   ProductionAIJob ProductionAIJob? @relation(fields: [job_id], references: [id])
 }
@@ -844,7 +863,7 @@ model ProductionAttachment {
   url           String
   uploader_id   String
   created_at    DateTime @default(now())
-  updated_at    DateTime
+  updated_at    DateTime @default(now())
   project_id    String?
   script_id     String?
   scene_id      String?
@@ -859,7 +878,7 @@ model ProductionChecklist {
   target_type             String
   target_id               String?
   created_at              DateTime                  @default(now())
-  updated_at              DateTime
+  updated_at              DateTime                  @default(now())
   ProductionChecklistItem ProductionChecklistItem[]
 }
 
@@ -872,7 +891,7 @@ model ProductionChecklistItem {
   completed_by        String?
   completed_at        DateTime?
   created_at          DateTime            @default(now())
-  updated_at          DateTime
+  updated_at          DateTime            @default(now())
   ProductionChecklist ProductionChecklist @relation(fields: [checklist_id], references: [id], onDelete: Cascade)
 }
 
@@ -882,7 +901,7 @@ model ProductionComment {
   author_id     String
   resolved      Boolean  @default(false)
   created_at    DateTime @default(now())
-  updated_at    DateTime
+  updated_at    DateTime @default(now())
   project_id    String?
   script_id     String?
   storyboard_id String?
@@ -917,7 +936,7 @@ model ProductionPromptSet {
   version            Int               @default(1)
   status             String            @default("Draft")
   created_at         DateTime          @default(now())
-  updated_at         DateTime
+  updated_at         DateTime          @default(now())
   completion_pct     Int               @default(0)
   ProductionAIJob    ProductionAIJob[]
   ProductionAsset    ProductionAsset[]
@@ -934,7 +953,7 @@ model ProductionProviderCredential {
   last_used_at         DateTime?
   default_models       Json?
   created_at           DateTime             @default(now())
-  updated_at           DateTime
+  updated_at           DateTime             @default(now())
   Company              Company              @relation(fields: [company_id], references: [id], onDelete: Cascade)
   ProductionAIProvider ProductionAIProvider @relation(fields: [provider_id], references: [id], onDelete: Cascade)
 
@@ -950,7 +969,7 @@ model ProductionReference {
   thumbnail_url   String?
   url             String?
   created_at      DateTime        @default(now())
-  updated_at      DateTime
+  updated_at      DateTime        @default(now())
   ProductionScene ProductionScene @relation(fields: [scene_id], references: [id], onDelete: Cascade)
 }
 
@@ -964,7 +983,7 @@ model ProductionScene {
   notes                      String?
   status                     String                       @default("draft")
   created_at                 DateTime                     @default(now())
-  updated_at                 DateTime
+  updated_at                 DateTime                     @default(now())
   completion_pct             Int                          @default(0)
   mood                       String?
   objective                  String?
@@ -986,7 +1005,9 @@ model ProductionScript {
   is_approved          Boolean               @default(false)
   is_locked            Boolean               @default(false)
   created_at           DateTime              @default(now())
-  updated_at           DateTime
+  updated_at           DateTime              @default(now())
+  assigned_to          String?
+  completion_pct       Int                   @default(0)
   Project              Project               @relation(fields: [project_id], references: [id], onDelete: Cascade)
   ProductionStoryboard ProductionStoryboard?
 }
@@ -1003,13 +1024,13 @@ model ProductionShot {
   lighting                   String?
   duration                   String?
   created_at                 DateTime                     @default(now())
-  updated_at                 DateTime
+  updated_at                 DateTime                     @default(now())
   ProductionAIJob            ProductionAIJob[]
   ProductionAsset            ProductionAsset[]
   ProductionAssetPlaceholder ProductionAssetPlaceholder[]
   ProductionPromptSet        ProductionPromptSet[]
   ProductionScene            ProductionScene              @relation(fields: [scene_id], references: [id], onDelete: Cascade)
-  creative_memories ProductionCreativeMemory[] @relation("ShotToMemory")
+  creative_memories          ProductionCreativeMemory[]   @relation("ShotToMemory")
 }
 
 model ProductionStoryboard {
@@ -1018,7 +1039,7 @@ model ProductionStoryboard {
   script_id        String            @unique
   is_completed     Boolean           @default(false)
   created_at       DateTime          @default(now())
-  updated_at       DateTime
+  updated_at       DateTime          @default(now())
   ProductionScene  ProductionScene[]
   Project          Project           @relation(fields: [project_id], references: [id], onDelete: Cascade)
   ProductionScript ProductionScript  @relation(fields: [script_id], references: [id], onDelete: Cascade)
@@ -1041,7 +1062,7 @@ model ProductionWorkflowStage {
   required_role                                                                                    String?
   is_active                                                                                        Boolean                        @default(true)
   created_at                                                                                       DateTime                       @default(now())
-  updated_at                                                                                       DateTime
+  updated_at                                                                                       DateTime                       @default(now())
   ProductionWorkflowDependency_ProductionWorkflowDependency_depends_on_idToProductionWorkflowStage ProductionWorkflowDependency[] @relation("ProductionWorkflowDependency_depends_on_idToProductionWorkflowStage")
   ProductionWorkflowDependency_ProductionWorkflowDependency_stage_idToProductionWorkflowStage      ProductionWorkflowDependency[] @relation("ProductionWorkflowDependency_stage_idToProductionWorkflowStage")
   ProductionWorkflowTemplate                                                                       ProductionWorkflowTemplate     @relation(fields: [template_id], references: [id], onDelete: Cascade)
@@ -1053,30 +1074,28 @@ model ProductionWorkflowTemplate {
   description             String?
   is_default              Boolean                   @default(false)
   created_at              DateTime                  @default(now())
-  updated_at              DateTime
+  updated_at              DateTime                  @default(now())
   ProductionWorkflowStage ProductionWorkflowStage[]
 }
 
 model Project {
-  pilot_project_id String?
-  requirements RequirementChart[]
-
-  id                       String                     @id
+  id                       String                        @id
   company_id               String
   client_id                String?
   project_name             String
   project_ref              String?
-  type                     String                     @default("Custom")
-  status                   String                     @default("draft")
-  progress                 Float                      @default(0)
-  budget                   Float                      @default(0)
+  type                     String                        @default("Custom")
+  status                   String                        @default("draft")
+  progress                 Float                         @default(0)
+  budget                   Float                         @default(0)
   deadline                 DateTime?
   color                    String?
-  created_at               DateTime                   @default(now())
-  updated_at               DateTime
+  created_at               DateTime                      @default(now())
+  updated_at               DateTime                      @default(now())
   project_category         String?
-  project_type             String                     @default("Normal Production")
+  project_type             String                        @default("Normal Production")
   client_name              String?
+  pilot_project_id         String?
   AIGenerationJob          AIGenerationJob[]
   Asset                    Asset[]
   Booking                  Booking[]
@@ -1090,20 +1109,21 @@ model Project {
   Objective                Objective[]
   ProductionAIJob          ProductionAIJob[]
   ProductionAsset          ProductionAsset[]
+  assistant_threads        ProductionAssistantThread[]
+  creative_memories        ProductionCreativeMemory[]
+  generation_presets       ProductionGenerationPreset[]
+  generation_sessions      ProductionGenerationSession[]
   ProductionLog            ProductionLog[]
   ProductionScript         ProductionScript?
   ProductionStoryboard     ProductionStoryboard?
-  Client                   Client?                    @relation(fields: [client_id], references: [id])
-  Company                  Company                    @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  timeline_events          ProductionTimelineEvent[]
+  Client                   Client?                       @relation(fields: [client_id], references: [id])
+  Company                  Company                       @relation(fields: [company_id], references: [id], onDelete: Cascade)
   ProjectHealthScore       ProjectHealthScore?
   ProjectMember            ProjectMember[]
   ProjectStage             ProjectStage[]
+  requirements             RequirementChart?
   WorkflowState            WorkflowState?
-  assistant_threads ProductionAssistantThread[]
-  generation_presets ProductionGenerationPreset[]
-  generation_sessions ProductionGenerationSession[]
-  creative_memories ProductionCreativeMemory[]
-  timeline_events ProductionTimelineEvent[]
 }
 
 model ProjectHealthScore {
@@ -1154,11 +1174,6 @@ model Proposal {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Prospect {
-  pilot_project_id String?
-  pilot_status     String?
-  requirement_status String?
-  requirements RequirementChart[]
-
   id                  String             @id
   company_id          String
   company_name        String
@@ -1178,12 +1193,15 @@ model Prospect {
   assignee_id         String?
   next_follow_up      DateTime?
   created_at          DateTime           @default(now())
-  updated_at          DateTime
+  updated_at          DateTime           @default(now())
   service_vertical    String?
   sub_vertical        String?
   converted_client_id String?
   is_converted        Boolean            @default(false)
   phone               String?
+  pilot_project_id    String?
+  pilot_status        String?
+  requirement_status  String?
   project_type        String             @default("Normal Production")
   Comment             Comment[]
   CommunicationLog    CommunicationLog[]
@@ -1191,6 +1209,7 @@ model Prospect {
   User                User?              @relation(fields: [assignee_id], references: [id])
   Company             Company            @relation(fields: [company_id], references: [id], onDelete: Cascade)
   Client              Client?            @relation(fields: [converted_client_id], references: [id])
+  requirements        RequirementChart[]
 
   @@index([company_id])
   @@index([converted_client_id])
@@ -1212,11 +1231,11 @@ model Resource {
 
 model RevisionRequest {
   id             String      @id
-  deliverable_id String
-  client_id      String
-  round_number   Int
-  feedback_notes Json
   status         String      @default("pending")
+  client_id      String
+  deliverable_id String
+  feedback_notes Json
+  round_number   Int
   Client         Client      @relation(fields: [client_id], references: [id], onDelete: Cascade)
   Deliverable    Deliverable @relation(fields: [deliverable_id], references: [id], onDelete: Cascade)
 }
@@ -1264,7 +1283,7 @@ model TenantMarginForecast {
   compute_cost_cogs     Float    @default(0.0)
   profit_margin_pct     Float    @default(100.0)
   forecasted_churn_risk Float    @default(0.0)
-  updated_at            DateTime
+  updated_at            DateTime @default(now())
   Company               Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
 }
 
@@ -1276,7 +1295,7 @@ model TenantSlaMetrics {
   avg_latency_ms   Int      @default(0)
   total_requests   Int      @default(0)
   failed_requests  Int      @default(0)
-  updated_at       DateTime
+  updated_at       DateTime @default(now())
   Company          Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
 }
 
@@ -1310,23 +1329,32 @@ model TimeEntry {
 }
 
 model User {
-  requirement_versions RequirementVersion[]
-  requirement_changes RequirementChangeRequest[]
+  UserEmployeeSalary EmployeeSalary? @relation("UserEmployeeSalary")
+  UserLoans          Loan[]          @relation("UserLoans")
+  PayrollRun         PayrollRun[]
+  Reimbursement      Reimbursement[]
 
-  id                                    String                  @id
+  EmployeeDocument             EmployeeDocument[]
+  EmployeeAttendance           EmployeeAttendance[]
+  EmployeePerformance          EmployeePerformance[] @relation("PerformanceUser")
+  EmployeePerformance_Reviewer EmployeePerformance[] @relation("PerformanceReviewer")
+  EmployeeTraining             EmployeeTraining[]
+
+  id                                    String                        @id
   company_id                            String?
   role_id                               String?
-  email                                 String                  @unique
+  email                                 String                        @unique
   fullName                              String
-  status                                String                  @default("pending")
-  department                            String                  @default("Production")
-  onboarding_status                     String                  @default("awaiting_approval")
+  status                                String                        @default("pending")
+  department                            String                        @default("Production")
+  onboarding_status                     String                        @default("awaiting_approval")
   skill_tags                            String[]
-  availability                          String                  @default("available")
-  productivity_score                    Float                   @default(100.0)
-  createdAt                             DateTime                @default(now())
-  capacity_hours                        Float                   @default(40)
+  availability                          String                        @default("available")
+  productivity_score                    Float                         @default(100.0)
+  createdAt                             DateTime                      @default(now())
+  capacity_hours                        Float                         @default(40)
   avatar                                String?
+  emp_code                              String?   // eTimeOffice Employee Code for biometric sync
   theme_preference                      Json?
   ActivityLog                           ActivityLog[]
   Approval                              Approval[]
@@ -1338,20 +1366,23 @@ model User {
   Notification                          Notification[]
   NotificationPreference                NotificationPreference?
   NotificationQueue                     NotificationQueue[]
-  Objective_Objective_assignee_idToUser Objective[]             @relation("Objective_assignee_idToUser")
-  Objective_Objective_reviewer_idToUser Objective[]             @relation("Objective_reviewer_idToUser")
+  Objective_Objective_assignee_idToUser Objective[]                   @relation("Objective_assignee_idToUser")
+  Objective_Objective_reviewer_idToUser Objective[]                   @relation("Objective_reviewer_idToUser")
+  assistant_threads                     ProductionAssistantThread[]
+  creative_memories                     ProductionCreativeMemory[]
+  generation_presets                    ProductionGenerationPreset[]
+  generation_sessions                   ProductionGenerationSession[]
+  timeline_events                       ProductionTimelineEvent[]
   ProjectMember                         ProjectMember[]
   Prospect                              Prospect[]
+  requirement_changes                   RequirementChangeRequest[]
+  requirement_versions                  RequirementVersion[]
   TimeEntry                             TimeEntry[]
-  Company                               Company?                @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  Company                               Company?                      @relation(fields: [company_id], references: [id], onDelete: Cascade)
   UserTeam                              UserTeam[]
+  LeaveRequest                          LeaveRequest[]
 
   @@index([company_id])
-  assistant_threads    ProductionAssistantThread[]
-  generation_presets ProductionGenerationPreset[]
-  generation_sessions ProductionGenerationSession[]
-  creative_memories ProductionCreativeMemory[]
-  timeline_events ProductionTimelineEvent[]
 }
 
 model UserTeam {
@@ -1405,7 +1436,7 @@ model WorkflowExecution {
   current_step         Int                    @default(0)
   context              Json
   created_at           DateTime               @default(now())
-  updated_at           DateTime
+  updated_at           DateTime               @default(now())
   WorkflowTemplate     WorkflowTemplate       @relation(fields: [template_id], references: [id], onDelete: Cascade)
   WorkflowExecutionLog WorkflowExecutionLog[]
 }
@@ -1430,7 +1461,7 @@ model WorkflowState {
   is_blocked            Boolean  @default(false)
   blocked_reason        String?
   approval_status       String   @default("pending")
-  updated_at            DateTime
+  updated_at            DateTime @default(now())
   Project               Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
 }
 
@@ -1447,123 +1478,107 @@ model WorkflowTemplate {
 }
 
 model ProductionAssistantThread {
-  id              String   @id @default(uuid())
-  project_id      String
-  user_id         String
-  title           String?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-
-  project         Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  messages        ProductionAssistantMessage[]
+  id         String                       @id @default(uuid())
+  project_id String
+  user_id    String
+  title      String?
+  created_at DateTime                     @default(now())
+  updated_at DateTime                     @default(now()) @updatedAt
+  messages   ProductionAssistantMessage[]
+  project    Project                      @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user       User                         @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model ProductionAssistantMessage {
-  id              String   @id @default(uuid())
-  thread_id       String
-  role            String   // "user" or "assistant"
-  content         String
-  created_at      DateTime @default(now())
-
-  thread          ProductionAssistantThread @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  id         String                    @id @default(uuid())
+  thread_id  String
+  role       String
+  content    String
+  created_at DateTime                  @default(now())
+  thread     ProductionAssistantThread @relation(fields: [thread_id], references: [id], onDelete: Cascade)
 }
 
 model ProductionGenerationPreset {
-  id              String   @id @default(uuid())
-  project_id      String
-  user_id         String
-  name            String
-  category        String   // "Portrait", "Landscape", "Instagram", etc.
-  parameters      Json
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-
-  project         Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  project_id String
+  user_id    String
+  name       String
+  category   String
+  parameters Json
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  project    Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model ProductionGenerationSession {
-  id              String   @id @default(uuid())
-  project_id      String
-  user_id         String
-  started_at      DateTime @default(now())
-  ended_at        DateTime?
-  total_tokens    Int      @default(0)
-  total_cost      Float    @default(0.0)
-  providers_used  String[]
-  assets_created  Int      @default(0)
-
-  project         Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id             String    @id @default(uuid())
+  project_id     String
+  user_id        String
+  started_at     DateTime  @default(now())
+  ended_at       DateTime?
+  total_tokens   Int       @default(0)
+  total_cost     Float     @default(0.0)
+  providers_used String[]
+  assets_created Int       @default(0)
+  project        Project   @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user           User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model ProductionCreativeMemory {
-  id              String   @id @default(uuid())
-  project_id      String
-  user_id         String
-  type            String   // "Character", "Environment", "Brand", "Style", etc.
-  name            String
-  description     String?
-  attributes      Json     // Flexible storage for Age, Gender, Color Palette, etc.
-  prompt_snippet  String   // The text injected into the prompt
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-
-  project         Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  versions        ProductionCreativeMemoryVersion[]
-  shots           ProductionShot[] @relation("ShotToMemory")
+  id             String                            @id @default(uuid())
+  project_id     String
+  user_id        String
+  type           String
+  name           String
+  description    String?
+  attributes     Json
+  prompt_snippet String
+  created_at     DateTime                          @default(now())
+  updated_at     DateTime                          @default(now()) @updatedAt
+  project        Project                           @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user           User                              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  versions       ProductionCreativeMemoryVersion[]
+  shots          ProductionShot[]                  @relation("ShotToMemory")
 }
 
 model ProductionCreativeMemoryVersion {
-  id                  String   @id @default(uuid())
-  memory_id           String
-  version_number      Int
-  attributes          Json
-  prompt_snippet      String
-  created_at          DateTime @default(now())
-  created_by          String
-
-  memory              ProductionCreativeMemory @relation(fields: [memory_id], references: [id], onDelete: Cascade)
+  id             String                   @id @default(uuid())
+  memory_id      String
+  version_number Int
+  attributes     Json
+  prompt_snippet String
+  created_at     DateTime                 @default(now())
+  created_by     String
+  memory         ProductionCreativeMemory @relation(fields: [memory_id], references: [id], onDelete: Cascade)
 }
 
 model ProductionTimelineEvent {
-  id              String   @id @default(uuid())
-  project_id      String
-  user_id         String
-  entity_type     String   // "Scene", "Shot", "Asset", "Memory", "Project"
-  entity_id       String
-  action          String   // "CREATED", "UPDATED", "APPROVED", "GENERATED"
-  metadata        Json?
-  created_at      DateTime @default(now())
-
-  project         Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  project_id  String
+  user_id     String
+  entity_type String
+  entity_id   String
+  action      String
+  metadata    Json?
+  created_at  DateTime @default(now())
+  project     Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-
-// ==========================================
-// REQUIREMENT ANALYSIS MODULE
-// ==========================================
-
 model RequirementChart {
-  id                      String   @id @default(uuid())
+  id                      String                     @id @default(uuid())
   company_id              String
   prospect_id             String?
-  project_id              String?  @unique
-  status                  String   @default("draft") // draft, approved, completed
-  
-  // Base details
-  client_details          Json     @default("{}")
-  project_details         Json     @default("{}")
-  objective               String   @default("")
-  timeline                Json     @default("{}")
-  assets                  Json     @default("{}")
-  notes                   String   @default("")
-
-  // Dynamic Workflows
-  production_type         String   @default("") // AI, Hybrid, Live, Photography, Post
+  project_id              String?                    @unique
+  status                  String                     @default("draft")
+  client_details          Json                       @default("{}")
+  project_details         Json                       @default("{}")
+  objective               String                     @default("")
+  timeline                Json                       @default("{}")
+  assets                  Json                       @default("{}")
+  notes                   String                     @default("")
+  production_type         String                     @default("")
   ai_style                Json?
   ai_assets_required      Json?
   live_shoot_details      Json?
@@ -1571,51 +1586,295 @@ model RequirementChart {
   photography_details     Json?
   post_production_details Json?
   universal_deliverables  Json?
-
-  // Generated outputs
-  scope_of_work           String   @default("")
-  deliverables_summary    String   @default("")
-  completeness_score      Int      @default(0)
-  items_checked           Int      @default(0)
-  
-  created_at              DateTime @default(now())
-  updated_at              DateTime @updatedAt
-
-  company                 Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  prospect                Prospect? @relation(fields: [prospect_id], references: [id], onDelete: SetNull)
-  project                 Project? @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  
-  versions                RequirementVersion[]
+  scope_of_work           String                     @default("")
+  deliverables_summary    String                     @default("")
+  completeness_score      Int                        @default(0)
+  items_checked           Int                        @default(0)
+  created_at              DateTime                   @default(now())
+  updated_at              DateTime                   @default(now()) @updatedAt
   change_requests         RequirementChangeRequest[]
+  company                 Company                    @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  project                 Project?                   @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  prospect                Prospect?                  @relation(fields: [prospect_id], references: [id])
+  versions                RequirementVersion[]
 }
 
 model RequirementVersion {
-  id                   String   @id @default(uuid())
+  id                   String           @id @default(uuid())
   requirement_chart_id String
   version_number       Int
   changed_by           String
-  changed_fields       Json     @default("[]")
-  reason               String   @default("")
+  changed_fields       Json             @default("[]")
+  reason               String           @default("")
   data_snapshot        Json
-  created_at           DateTime @default(now())
-  
-  requirement_chart    RequirementChart @relation(fields: [requirement_chart_id], references: [id], onDelete: Cascade)
+  created_at           DateTime         @default(now())
   user                 User             @relation(fields: [changed_by], references: [id], onDelete: Cascade)
+  requirement_chart    RequirementChart @relation(fields: [requirement_chart_id], references: [id], onDelete: Cascade)
 }
 
 model RequirementChangeRequest {
-  id                   String   @id @default(uuid())
+  id                   String           @id @default(uuid())
   requirement_chart_id String
   requested_by         String
   description          String
   reason               String
-  impact               String   @default("")
-  budget_impact        Float    @default(0)
-  timeline_impact      String   @default("")
-  status               String   @default("pending") // pending, approved, rejected
-  created_at           DateTime @default(now())
-  updated_at           DateTime @updatedAt
-  
-  requirement_chart    RequirementChart @relation(fields: [requirement_chart_id], references: [id], onDelete: Cascade)
+  impact               String           @default("")
+  budget_impact        Float            @default(0)
+  timeline_impact      String           @default("")
+  status               String           @default("pending")
+  created_at           DateTime         @default(now())
+  updated_at           DateTime         @default(now()) @updatedAt
   user                 User             @relation(fields: [requested_by], references: [id], onDelete: Cascade)
+  requirement_chart    RequirementChart @relation(fields: [requirement_chart_id], references: [id], onDelete: Cascade)
+}
+
+model LeaveType {
+  id          String   @id @default(uuid())
+  company_id  String
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+
+  LeaveRequest LeaveRequest[]
+  Company      Company        @relation(fields: [company_id], references: [id], onDelete: Cascade)
+}
+
+model LeaveRequest {
+  id            String   @id @default(uuid())
+  user_id       String
+  leave_type_id String
+  start_date    DateTime
+  end_date      DateTime
+  days          Float
+  status        String   @default("PENDING")
+  reason        String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @default(now()) @updatedAt
+
+  User      User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  LeaveType LeaveType @relation(fields: [leave_type_id], references: [id], onDelete: Cascade)
+}
+
+model OrganizationUnit {
+  id         String   @id @default(uuid())
+  company_id String
+  name       String
+  type       String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  Company    Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+}
+
+model Designation {
+  id         String   @id @default(uuid())
+  company_id String
+  name       String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  Company    Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+}
+
+model JobGrade {
+  id         String   @id @default(uuid())
+  company_id String
+  name       String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  Company    Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+}
+
+model Shift {
+  id         String   @id @default(uuid())
+  company_id String
+  name       String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  Company    Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+}
+
+model PayrollGroup {
+  id         String   @id @default(uuid())
+  company_id String
+  name       String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  Company    Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+}
+
+model MasterDataRecord {
+  id         String   @id @default(uuid())
+  company_id String
+  category   String
+  name       String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  Company    Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+}
+
+model EmployeeDocument {
+  id         String   @id @default(uuid())
+  company_id String
+  user_id    String
+  name       String
+  type       String
+  url        String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  Company    Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model EmployeeAttendance {
+  id         String    @id @default(uuid())
+  company_id String
+  user_id    String
+  date       DateTime
+  status     String
+  check_in   DateTime?
+  check_out  DateTime?
+  location   String?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now()) @updatedAt
+  Company    Company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  User       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model EmployeePerformance {
+  id          String   @id @default(uuid())
+  company_id  String
+  user_id     String
+  period      String
+  score       Float
+  feedback    String?
+  status      String
+  reviewer_id String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+  Company     Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  User        User     @relation("PerformanceUser", fields: [user_id], references: [id], onDelete: Cascade)
+  Reviewer    User     @relation("PerformanceReviewer", fields: [reviewer_id], references: [id], onDelete: Cascade)
+}
+
+model EmployeeTraining {
+  id           String    @id @default(uuid())
+  company_id   String
+  user_id      String
+  course_name  String
+  status       String
+  score        Float?
+  completed_at DateTime?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @default(now()) @updatedAt
+  Company      Company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  User         User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model SalaryStructure {
+  id                String   @id @default(uuid())
+  company_id        String
+  name              String
+  base_salary       Float
+  hra_percent       Float
+  da_percent        Float
+  special_allowance Float
+  status            String   @default("ACTIVE")
+  created_at        DateTime @default(now())
+  updated_at        DateTime @default(now()) @updatedAt
+
+  Company          Company          @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  EmployeeSalaries EmployeeSalary[]
+}
+
+model EmployeeSalary {
+  id           String   @id @default(uuid())
+  company_id   String
+  user_id      String   @unique
+  structure_id String
+  created_at   DateTime @default(now())
+  updated_at   DateTime @default(now()) @updatedAt
+
+  Company   Company         @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  User      User            @relation("UserEmployeeSalary", fields: [user_id], references: [id], onDelete: Cascade)
+  Structure SalaryStructure @relation(fields: [structure_id], references: [id], onDelete: Cascade)
+}
+
+model Loan {
+  id          String   @id @default(uuid())
+  company_id  String
+  user_id     String
+  amount      Float
+  emi         Float
+  outstanding Float
+  status      String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+
+  Company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  User    User    @relation("UserLoans", fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model PayrollPeriod {
+  id         String   @id @default(uuid())
+  company_id String
+  name       String
+  start_date DateTime
+  end_date   DateTime
+  status     String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  Company     Company      @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  PayrollRuns PayrollRun[]
+}
+
+model PayrollRun {
+  id               String   @id @default(uuid())
+  company_id       String
+  period_id        String
+  user_id          String
+  gross_pay        Float
+  net_pay          Float
+  total_allowances Float
+  total_deductions Float
+  status           String
+  created_at       DateTime @default(now())
+  updated_at       DateTime @default(now()) @updatedAt
+
+  Company Company          @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  Period  PayrollPeriod    @relation(fields: [period_id], references: [id], onDelete: Cascade)
+  User    User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  Items   PayrollRunItem[]
+}
+
+model PayrollRunItem {
+  id         String   @id @default(uuid())
+  run_id     String
+  type       String
+  name       String
+  amount     Float
+  created_at DateTime @default(now())
+
+  Run PayrollRun @relation(fields: [run_id], references: [id], onDelete: Cascade)
+}
+
+model Reimbursement {
+  id          String   @id @default(uuid())
+  company_id  String
+  user_id     String
+  type        String
+  amount      Float
+  description String?
+  status      String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+
+  Company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  User    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }

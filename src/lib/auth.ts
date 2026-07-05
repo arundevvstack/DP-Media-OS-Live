@@ -30,3 +30,31 @@ export async function getCompanyId(): Promise<string | null> {
     return null;
   }
 }
+export async function getUserDetails(): Promise<{ userId: string | null; roleId: string | null; companyId: string | null }> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+        },
+      }
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { userId: null, roleId: null, companyId: null };
+
+    const profile = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { role_id: true, company_id: true }
+    });
+    
+    return { userId: user.id, roleId: profile?.role_id ?? null, companyId: profile?.company_id ?? null };
+  } catch (err) {
+    console.error("Error fetching user details:", err);
+    return { userId: null, roleId: null, companyId: null };
+  }
+}

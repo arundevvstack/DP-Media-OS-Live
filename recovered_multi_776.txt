@@ -1,0 +1,23 @@
+{
+  "Description": "Add Project Category dropdown in Requirement Chart",
+  "Instruction": "Add a list of project categories to SUGGESTIONS object, and replace the Project Category input field with a SuggestionInput component.",
+  "ReplacementChunks": [
+    {
+      "AllowMultiple": false,
+      "EndLine": 48,
+      "ReplacementContent": "  project_type: [\"Commercial\", \"Corporate Film\", \"Brand Film\", \"Social Media Reel\", \"Documentary\", \"Event Aftermovie\", \"Music Video\", \"Animation\"],\n  project_category: [\"Ad Film\", \"Corporate Video\", \"Documentary\", \"Music Video\", \"Social Media Content\", \"Photography\", \"Event Coverage\", \"Animation\", \"VFX/CGI\", \"Live Stream\"],",
+      "StartLine": 48,
+      "TargetContent": "  project_type: [\"Commercial\", \"Corporate Film\", \"Brand Film\", \"Social Media Reel\", \"Documentary\", \"Event Aftermovie\", \"Music Video\", \"Animation\"],"
+    },
+    {
+      "AllowMultiple": false,
+      "EndLine": 488,
+      "ReplacementContent": "                <div className=\"space-y-3\"><SuggestionInput label=\"Project Category\" placeholder=\"e.g. Ad Film\" value={data.project_details?.project_category || \"\"} onChange={v => updateField('project_details', 'project_category', v)} suggestions={SUGGESTIONS.project_category} /></div>",
+      "StartLine": 488,
+      "TargetContent": "                <div className=\"space-y-3\"><Label className=\"text-muted-foreground\">Project Category</Label><Input placeholder=\"e.g. Ad Film\" value={data.project_details?.project_category || \"\"} onChange={e => updateField('project_details', 'project_category', e.target.value)} className=\"rounded-xl\" /></div>"
+    }
+  ],
+  "TargetFile": "d:\\Workstation DP-2\\DP Clients\\WEB DEVELOPMENT\\Media OS V.1\\src\\app\\(dashboard)\\crm\\[prospectId]\\components\\RequirementChartForm.tsx",
+  "toolAction": "Adding Project Category dropdown",
+  "toolSummary": "File edit"
+}

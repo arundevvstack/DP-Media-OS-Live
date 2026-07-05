@@ -107,20 +107,20 @@ export function useTenant() {
 
       case 'EMPLOYEE':
         // Employees only see their own assigned modules and cannot perform deletions/approvals
-        const employeeAllowed = ['dashboard', 'projects', 'tasks', 'talents'];
+        const employeeAllowed = ['dashboard', 'projects', 'tasks', 'talents', 'hr_ops'];
         if (!employeeAllowed.includes(module)) return false;
         if (action === 'delete' || action === 'approve') return false;
         return true;
 
       case 'ACCOUNTS':
         // Accounts team only sees financial ledgers, invoicing, budgets, expenses, and GST
-        const accountsAllowed = ['dashboard', 'finance', 'invoices', 'expenses', 'gst_filings', 'payroll'];
+        const accountsAllowed = ['dashboard', 'finance', 'invoices', 'expenses', 'gst_filings', 'payroll', 'hr_ops'];
         if (module === 'projects' && action === 'view') return true; // Can view projects to check budgets, but not edit/create
         return accountsAllowed.includes(module);
 
       case 'MARKETING_SALES':
         // Sales team has access to CRM pipeline, proposals, and portfolios
-        const marketingAllowed = ['dashboard', 'crm', 'proposals', 'talents'];
+        const marketingAllowed = ['dashboard', 'crm', 'proposals', 'talents', 'hr_ops'];
         if (module === 'invoices' && action === 'view') return true; // Can see invoice totals in CRM/leads but cannot edit
         return marketingAllowed.includes(module);
 
@@ -131,8 +131,11 @@ export function useTenant() {
   }, [isSuperAdmin, roleId, settings?.role_permissions]);
 
   const isModuleEnabled = useCallback((moduleName: string) => {
-    // First, enforce company-level module enablement (this overrides even super admin)
-    if (settings?.modules_enabled && !settings.modules_enabled.includes(moduleName)) {
+    // Enforce company-level module enablement
+    // If settings don't exist yet, default to core modules only
+    const enabledModules = settings?.modules_enabled || ['dashboard', 'projects', 'clients', 'hr_ops'];
+    
+    if (!enabledModules.includes(moduleName)) {
       return false;
     }
 

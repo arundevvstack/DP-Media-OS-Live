@@ -1,0 +1,12 @@
+{
+  "AllowMultiple": false,
+  "Description": "Add budget to project details in form",
+  "EndLine": 219,
+  "Instruction": "Add budget field",
+  "ReplacementContent": "                <div className=\"space-y-2\">\n                  <Label>Objective</Label>\n                  <Textarea value={data.objective || \"\"} onChange={e => updateField('root', 'objective', e.target.value)} placeholder=\"Brand Awareness...\" className=\"rounded-xl\" />\n                </div>\n                <div className=\"space-y-2\">\n                  <Label>Budget (Optional)</Label>\n                  <Input value={data.project_details?.budget || \"\"} onChange={e => updateField('project_details', 'budget', e.target.value)} placeholder=\"e.g. ₹5,00,000\" className=\"rounded-xl\" />\n                </div>\n              </CardContent>\n            </Card>\n          </div>\n        </TabsContent>",
+  "StartLine": 212,
+  "TargetContent": "                <div className=\"space-y-2\">\n                  <Label>Objective</Label>\n                  <Textarea value={data.objective || \"\"} onChange={e => updateField('root', 'objective', e.target.value)} placeholder=\"Brand Awareness...\" className=\"rounded-xl\" />\n                </div>\n              </CardContent>\n            </Card>\n          </div>\n        </TabsContent>",
+  "TargetFile": "d:\\Workstation DP-2\\DP Clients\\WEB DEVELOPMENT\\Media OS V.1\\src\\app\\(dashboard)\\crm\\[prospectId]\\components\\RequirementChartForm.tsx",
+  "toolAction": "Editing project information",
+  "toolSummary": "File edit"
+}

@@ -1,0 +1,37 @@
+{
+  "Description": "Change Duration/Objective to dropdown and add real upload input",
+  "Instruction": "1. Change Objective to Select. 2. Change Duration to Select. 3. Add file input handling to Client Assets and Client Footage Upload.",
+  "ReplacementChunks": [
+    {
+      "AllowMultiple": false,
+      "EndLine": 266,
+      "ReplacementContent": "                <div className=\"space-y-3\"><Label className=\"text-muted-foreground font-semibold\">Duration</Label>\n                  <Select value={data.technical_specs?.duration || \"\"} onValueChange={v => updateField('technical_specs', 'duration', v)}>\n                    <SelectTrigger className=\"rounded-xl\"><SelectValue placeholder=\"Select Duration\" /></SelectTrigger>\n                    <SelectContent className=\"rounded-xl\">\n                      <SelectItem value=\"10 seconds\">10 seconds</SelectItem>\n                      <SelectItem value=\"15 seconds\">15 seconds</SelectItem>\n                      <SelectItem value=\"30 seconds\">30 seconds</SelectItem>\n                      <SelectItem value=\"60 seconds\">60 seconds</SelectItem>\n                      <SelectItem value=\"90 seconds\">90 seconds</SelectItem>\n                      <SelectItem value=\"2 minutes\">2 minutes</SelectItem>\n                      <SelectItem value=\"Custom\">Custom</SelectItem>\n                    </SelectContent>\n                  </Select>\n                </div>",
+      "StartLine": 266,
+      "TargetContent": "                <div className=\"space-y-3\"><Label className=\"text-muted-foreground font-semibold\">Duration</Label><Input value={data.technical_specs?.duration || \"\"} onChange={e => updateField('technical_specs', 'duration', e.target.value)} className=\"rounded-xl\" /></div>"
+    },
+    {
+      "AllowMultiple": false,
+      "EndLine": 259,
+      "ReplacementContent": "                <div className=\"space-y-3\"><Label className=\"text-muted-foreground font-semibold\">Objective</Label>\n                  <Select value={data.objective || \"\"} onValueChange={v => updateField('root', 'objective', v)}>\n                    <SelectTrigger className=\"rounded-xl\"><SelectValue placeholder=\"Select Objective\" /></SelectTrigger>\n                    <SelectContent className=\"rounded-xl\">\n                      {SUGGESTIONS.objective.map(obj => <SelectItem key={obj} value={obj}>{obj}</SelectItem>)}\n                    </SelectContent>\n                  </Select>\n                </div>",
+      "StartLine": 259,
+      "TargetContent": "                <div className=\"space-y-3\"><Label className=\"text-muted-foreground font-semibold\">Objective</Label><Input value={data.objective || \"\"} onChange={e => updateField('root', 'objective', e.target.value)} className=\"rounded-xl\" /></div>"
+    },
+    {
+      "AllowMultiple": false,
+      "EndLine": 287,
+      "ReplacementContent": "              <div className=\"space-y-3 md:col-span-2\">\n                <Label className=\"text-muted-foreground font-semibold\">Client Assets</Label>\n                <div onClick={() => document.getElementById('client-assets-upload')?.click()} className=\"border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors\">\n                  <Upload className=\"h-8 w-8 text-slate-400 mb-2\" />\n                  <p className=\"text-sm font-medium text-slate-600 dark:text-slate-300\">Click to upload Client Assets</p>\n                  <p className=\"text-xs text-slate-400\">PDF, PNG, JPG, MP4 up to 50MB</p>\n                  <input id=\"client-assets-upload\" type=\"file\" multiple className=\"hidden\" onChange={(e) => {\n                    const files = Array.from(e.target.files || []);\n                    if (files.length > 0) {\n                      toast({ title: \"Files Selected\", description: `${files.length} file(s) ready for upload.` });\n                    }\n                  }} />\n                </div>\n              </div>",
+      "StartLine": 280,
+      "TargetContent": "              <div className=\"space-y-3 md:col-span-2\">\n                <Label className=\"text-muted-foreground font-semibold\">Client Assets</Label>\n                <div className=\"border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors\">\n                  <Upload className=\"h-8 w-8 text-slate-400 mb-2\" />\n                  <p className=\"text-sm font-medium text-slate-600 dark:text-slate-300\">Click to upload Client Assets</p>\n                  <p className=\"text-xs text-slate-400\">PDF, PNG, JPG, MP4 up to 50MB</p>\n                </div>\n              </div>"
+    },
+    {
+      "AllowMultiple": false,
+      "EndLine": 373,
+      "ReplacementContent": "                <div className=\"space-y-3 md:col-span-2\"><Label className=\"text-muted-foreground font-semibold\">Client Footage Upload</Label>\n                  <div onClick={() => document.getElementById('client-footage-upload')?.click()} className=\"border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors\">\n                    <Upload className=\"h-8 w-8 text-slate-400 mb-2\" />\n                    <p className=\"text-sm font-medium text-slate-600 dark:text-slate-300\">Click to upload Footage</p>\n                    <input id=\"client-footage-upload\" type=\"file\" multiple accept=\"video/*\" className=\"hidden\" onChange={(e) => {\n                      const files = Array.from(e.target.files || []);\n                      if (files.length > 0) {\n                        toast({ title: \"Footage Selected\", description: `${files.length} video(s) ready for upload.` });\n                      }\n                    }} />\n                  </div>\n                </div>",
+      "StartLine": 367,
+      "TargetContent": "                <div className=\"space-y-3 md:col-span-2\"><Label className=\"text-muted-foreground font-semibold\">Client Footage Upload</Label>\n                  <div className=\"border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors\">\n                    <Upload className=\"h-8 w-8 text-slate-400 mb-2\" />\n                    <p className=\"text-sm font-medium text-slate-600 dark:text-slate-300\">Click to upload Footage</p>\n                  </div>\n                </div>"
+    }
+  ],
+  "TargetFile": "d:\\Workstation DP-2\\DP Clients\\WEB DEVELOPMENT\\Media OS V.1\\src\\app\\(dashboard)\\crm\\[prospectId]\\components\\RequirementChartForm.tsx",
+  "toolAction": "Updating UI fields",
+  "toolSummary": "File edit"
+}
