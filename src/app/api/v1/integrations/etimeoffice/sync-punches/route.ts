@@ -124,16 +124,4 @@ async function handleSync(req: NextRequest, hasBody: boolean) {
   }
 }
 
-/**
- * GET /api/v1/integrations/etimeoffice/sync-punches
- * Returns integration status
- */
-export async function GET() {
-  const configured = isConfigured();
-  return NextResponse.json({
-    configured,
-    message: configured
-      ? 'eTimeOffice integration is active'
-      : 'Fill in ETIMEOFFICE_* environment variables to activate'
-  });
-}
+
