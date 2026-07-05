@@ -67,9 +67,10 @@ export const navGroups: { label: string; items: NavItem[] }[] = [
       { title: "Accounts", url: "/accounts", icon: Wallet, module: "accounts" },
     ]},
   { label: "HR & Ops", items: [
-      { title: "HR Dashboard", url: "/hr-ops/dashboard", icon: PieChart, module: "hr_ops", isCore: true },
-      { title: "Employee Directory", url: "/hr-ops/hr/employees", icon: Users, module: "hr_ops" },
-      { title: "Attendance", url: "/hr-ops/hr/attendance/dashboard", icon: CheckCircle, module: "hr_ops" },
+      { title: "HR Dashboard", url: "/hr-ops/dashboard", icon: PieChart, module: "hr_ops", isCore: true, hideFrom: ['EMPLOYEE', 'TALENT', 'CLIENT'] },
+      { title: "Employee Directory", url: "/hr-ops/hr/employees", icon: Users, module: "hr_ops", hideFrom: ['EMPLOYEE', 'TALENT', 'CLIENT'] },
+      { title: "Attendance", url: "/hr-ops/hr/attendance/dashboard", icon: CheckCircle, module: "hr_ops", hideFrom: ['EMPLOYEE', 'TALENT', 'CLIENT'] },
+      { title: "My Portal", url: "/hr-ops/hr/leave/dashboard", icon: UserCircle, module: "hr_ops", hideFrom: ['SUPER_ADMIN', 'MANAGER'] },
     ]},
   
 ];
