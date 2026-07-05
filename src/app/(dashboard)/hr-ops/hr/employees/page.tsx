@@ -28,7 +28,7 @@ async function getEmployeesData(companyId: string, searchParams: any) {
 
   const where: any = {
     company_id: companyId,
-    role_id: { in: ['EMPLOYEE', 'SUPER_ADMIN'] },
+    role_id: { notIn: ['CLIENT', 'TALENT'] },
   };
 
   if (query) {

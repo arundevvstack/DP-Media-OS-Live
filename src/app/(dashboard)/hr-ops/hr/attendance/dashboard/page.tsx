@@ -27,7 +27,7 @@ export default async function AttendanceDashboardPage({ searchParams }: {
   // Parallel data fetch
   const [employees, attendanceRecords, trend] = await Promise.all([
     prisma.user.findMany({
-      where: { company_id, role_id: { in: ['EMPLOYEE', 'SUPER_ADMIN'] } },
+      where: { company_id, role_id: { notIn: ['CLIENT', 'TALENT'] } },
       select: { id: true, fullName: true, department: true, avatar: true },
       orderBy: { fullName: 'asc' },
     }),
