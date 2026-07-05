@@ -9,13 +9,25 @@ import prisma from '@/lib/prisma';
  * and upsert attendance records into EmployeeAttendance.
  * Body: { from_date: "YYYY-MM-DD", to_date: "YYYY-MM-DD" }
  */
+export async function GET(req: NextRequest) {
+  // Allow cron to hit this route via GET without a body
+  return handleSync(req, false);
+}
+
 export async function POST(req: NextRequest) {
+  return handleSync(req, true);
+}
+
+async function handleSync(req: NextRequest, hasBody: boolean) {
   try {
     if (!isConfigured()) {
       return NextResponse.json({ error: 'eTimeOffice credentials not configured in .env' }, { status: 400 });
     }
 
-    const body = await req.json();
+    let body: any = {};
+    if (hasBody) {
+      body = await req.json().catch(() => ({}));
+    }
     const fromDate = body.from_date ? new Date(body.from_date) : (() => {
       const d = new Date(); d.setDate(d.getDate() - 1); return d;
     })();

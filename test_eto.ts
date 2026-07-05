@@ -1,0 +1,1 @@
+import { scrapeAttendance, testConnection } from './src/lib/etimeoffice'; async function run() { console.log('Testing connection...'); console.log(await testConnection()); console.log('Testing scrape...'); console.log(await scrapeAttendance(new Date('2026-07-04'), new Date('2026-07-05'))); } run();
