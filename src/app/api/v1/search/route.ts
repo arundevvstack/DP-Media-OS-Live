@@ -1,11 +1,11 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { getUserDetails } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   try {
-    const { company_id } = await requireAuth();
+    const { companyId: company_id } = await getUserDetails();
     const searchParams = req.nextUrl.searchParams;
     const q = searchParams.get("q");
 

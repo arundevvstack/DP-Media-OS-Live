@@ -344,3 +344,4 @@ Please fill out the remaining details for the client and finalize the pricing be
     </div>
   );
 }
+

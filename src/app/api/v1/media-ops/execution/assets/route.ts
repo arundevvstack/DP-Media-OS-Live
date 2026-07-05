@@ -1,11 +1,11 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
 import { BaseService } from "@/core/services/base.service";
-import { requireAuth } from "@/lib/auth";
+import { getUserDetails } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await requireAuth();
+    const session = await getUserDetails();
     const service = new BaseService("aIAsset"); // Prisma models are usually lower camelCase in BaseService
     
     const { searchParams } = new URL(req.url);
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await requireAuth();
+    const session = await getUserDetails();
     const body = await req.json();
     const service = new BaseService("aIAsset");
     

@@ -7,6 +7,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getUserDetails } from "@/lib/auth";
 
+export const dynamic = 'force-dynamic';
+
 export default async function LeavePoliciesPage() {
   const { roleId } = await getUserDetails();
   const isEmployee = roleId === 'EMPLOYEE' || roleId === 'TALENT' || roleId === 'CLIENT';

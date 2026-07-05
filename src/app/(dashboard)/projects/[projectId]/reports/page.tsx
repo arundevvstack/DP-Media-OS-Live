@@ -1,6 +1,7 @@
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import prisma from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
+import { getUserDetails } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,7 @@ import { Download, FileText, PieChart, Users, DollarSign, Activity, FileJson } f
 import Link from 'next/link';
 
 export default async function ProjectReportsPage({ params }: { params: { projectId: string } }) {
-  const { company_id } = await requireAuth();
+  const { companyId: company_id } = await getUserDetails();
   const projectId = (await params).projectId;
 
   const project = await prisma.project.findUnique({

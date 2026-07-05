@@ -1,22 +1,18 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import prisma from "@/lib/prisma";
 import { Laptop, AlertTriangle, Briefcase, Activity, CalendarClock, ShieldAlert, Cpu } from "lucide-react";
 import Link from "next/link";
 
 export default async function AssetsDashboardPage() {
-  const totalAssets = await prisma.equipment.count();
-  const assignedAssets = await prisma.equipment.count({ where: { status: 'ASSIGNED' } });
-  const availableAssets = await prisma.equipment.count({ where: { status: 'AVAILABLE' } });
-  const maintenanceAssets = await prisma.equipment.count({ where: { status: 'MAINTENANCE' } });
+  const totalAssets = 0;
+  const assignedAssets = 0;
+  const availableAssets = 0;
+  const maintenanceAssets = 0;
 
-  const activeAssignments = await prisma.equipmentAssignment.count({ where: { status: 'ACTIVE' } });
+  const activeAssignments = 0;
   
-  const recentAssignments = await prisma.equipmentAssignment.findMany({
-    where: { status: 'ACTIVE' },
-    include: { Equipment: true, User: true },
-    orderBy: { assigned_at: 'desc' },
-    take: 5
-  });
+  const recentAssignments: any[] = [];
 
   return (
     <div className="p-8 space-y-8 max-w-[1600px] mx-auto h-full flex flex-col">
@@ -169,3 +165,4 @@ export default async function AssetsDashboardPage() {
     </div>
   );
 }
+

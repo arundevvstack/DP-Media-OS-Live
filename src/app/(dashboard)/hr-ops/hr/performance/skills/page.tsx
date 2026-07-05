@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import prisma from "@/lib/prisma";
 import { Plus, Book, Star, ShieldAlert, CheckCircle } from "lucide-react";
@@ -210,3 +211,4 @@ export default async function SkillsPage() {
     </div>
   );
 }
+

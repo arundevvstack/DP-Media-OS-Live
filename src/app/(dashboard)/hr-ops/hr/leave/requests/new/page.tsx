@@ -6,6 +6,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserDetails } from "@/lib/auth";
 
+export const dynamic = 'force-dynamic';
+
 export default async function NewLeaveRequestPage() {
   const { userId, roleId } = await getUserDetails();
   const isEmployee = roleId === 'EMPLOYEE' || roleId === 'TALENT' || roleId === 'CLIENT';

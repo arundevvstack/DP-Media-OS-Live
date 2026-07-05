@@ -1,9 +1,10 @@
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import prisma from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
+import { getUserDetails } from '@/lib/auth';
 
 export default async function ActivityPage({ params }: { params: { projectId: string } }) {
-  const { company_id } = await requireAuth();
+  const { companyId: company_id } = await getUserDetails();
   const projectId = (await params).projectId;
   
   return (

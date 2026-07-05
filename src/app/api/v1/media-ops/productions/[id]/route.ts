@@ -1,11 +1,11 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
 import { BaseService } from "@/core/services/base.service";
-import { requireAuth } from "@/lib/auth";
+import { getUserDetails } from '@/lib/auth';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await requireAuth();
+    const session = await getUserDetails();
     const service = new BaseService("production");
     
     const production = await service.findOne({
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await requireAuth();
+    const session = await getUserDetails();
     const body = await req.json();
     const service = new BaseService("production");
     

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import prisma from "@/lib/prisma";
 import { Users, Briefcase, Calendar, CheckCircle, Clock, Search, ChevronRight, Activity, MapPin } from "lucide-react";
@@ -167,4 +168,5 @@ export default async function RecruitmentDashboardPage() {
     </div>
   );
 }
+
 

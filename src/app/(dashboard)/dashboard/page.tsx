@@ -1022,3 +1022,4 @@ export default function DashboardPage() {
   // fallback to base active view
   return null;
 }
+

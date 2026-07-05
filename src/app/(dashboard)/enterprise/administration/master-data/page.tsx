@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import { Settings, Users, Building, DollarSign, Box, Shield, Zap, ChevronRight, Edit, Trash, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -117,3 +118,4 @@ export default function EnterpriseConfigurationPage() {
     </div>
   );
 }
+

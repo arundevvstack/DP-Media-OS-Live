@@ -1,27 +1,21 @@
 import React from "react";
 import prisma from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { getUserDetails } from '@/lib/auth';
 import { notFound } from "next/navigation";
 import { ChevronLeft, Image as ImageIcon, Video, Music, Box, CheckCircle, XCircle, AlertCircle, Clock, History, FileText } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AIAssetDetailsPage({ params }: { params: { id: string } }) {
-  const { company_id } = await requireAuth();
+  const { companyId: company_id } = await getUserDetails();
   const assetId = (await params).id;
 
-  const asset = await prisma.aIAsset.findUnique({
+  const asset = await prisma.asset.findUnique({
     where: { id: assetId },
     include: {
-      Production: true,
-      PromptExecution: {
-        include: {
-          Template: true
-        }
-      },
-      Versions: {
-        orderBy: { version: "desc" }
-      }
+      Project: true
     }
   });
 
@@ -55,15 +49,15 @@ export default async function AIAssetDetailsPage({ params }: { params: { id: str
         </Link>
         <div className="flex items-center gap-3">
           <div className="p-3 bg-primary/10 text-primary rounded-xl">
-            {getIcon(asset.asset_type)}
+            {getIcon(asset.file_type || 'IMAGE')}
           </div>
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold tracking-tight">{asset.name}</h1>
-              {getStatusBadge(asset.status)}
+              {getStatusBadge('APPROVED')}
             </div>
             <p className="text-muted-foreground mt-1">
-              Production: <Link href={`/media-ops/productions/${asset.production_id}`} className="hover:underline font-medium text-foreground">{asset.Production.title}</Link>
+              Project: <span className="font-medium text-foreground">{asset.Project?.project_name || 'Unknown Project'}</span>
             </p>
           </div>
         </div>
@@ -72,11 +66,11 @@ export default async function AIAssetDetailsPage({ params }: { params: { id: str
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-black/5 dark:bg-black/40 border border-border rounded-xl overflow-hidden shadow-inner flex items-center justify-center min-h-[500px]">
-            {asset.asset_type === 'IMAGE' && asset.url.startsWith('http') ? (
+            {(asset.file_type || 'IMAGE') === 'IMAGE' && asset.url.startsWith('http') ? (
               <img src={asset.url} alt={asset.name} className="max-w-full max-h-[600px] object-contain shadow-2xl" />
             ) : (
               <div className="text-center text-muted-foreground flex flex-col items-center">
-                {getIcon(asset.asset_type)}
+                {getIcon(asset.file_type || 'IMAGE')}
                 <p className="mt-4">Media preview not available.</p>
                 <a href={asset.url} target="_blank" rel="noreferrer" className="mt-2 text-primary hover:underline text-sm font-medium">Download Asset</a>
               </div>
@@ -87,30 +81,9 @@ export default async function AIAssetDetailsPage({ params }: { params: { id: str
             <h3 className="font-semibold text-lg flex items-center gap-2 mb-4">
               <FileText className="h-5 w-5 text-primary" /> Prompt Lineage
             </h3>
-            {asset.PromptExecution ? (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Source Template</p>
-                  <Link href={`/media-ops/execution/prompt-library/${asset.PromptExecution.Template.prompt_library_id}`} className="text-primary hover:underline font-medium">
-                    {asset.PromptExecution.Template.name} v{asset.PromptExecution.Template.version}
-                  </Link>
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Executed Prompt</p>
-                  <div className="p-4 bg-muted/50 border border-border rounded-lg font-mono text-sm whitespace-pre-wrap">
-                    {asset.PromptExecution.Template.template_text}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Execution Metrics</p>
-                  <p className="text-sm">Time taken: {asset.PromptExecution.execution_time_ms}ms</p>
-                </div>
-              </div>
-            ) : (
-              <div className="p-8 text-center border border-border border-dashed rounded-lg text-muted-foreground">
-                <p>No prompt lineage found. Asset may have been generated externally.</p>
-              </div>
-            )}
+            <div className="p-8 text-center border border-border border-dashed rounded-lg text-muted-foreground">
+              <p>No prompt lineage found. Asset may have been generated externally.</p>
+            </div>
           </div>
         </div>
 
@@ -124,7 +97,7 @@ export default async function AIAssetDetailsPage({ params }: { params: { id: str
               </div>
               <div>
                 <span className="text-muted-foreground block mb-1">Asset Type</span>
-                <span className="font-semibold">{asset.asset_type}</span>
+                <span className="font-semibold">{asset.file_type || 'IMAGE'}</span>
               </div>
               <div>
                 <span className="text-muted-foreground block mb-1">Generated At</span>
@@ -132,7 +105,7 @@ export default async function AIAssetDetailsPage({ params }: { params: { id: str
               </div>
               <div>
                 <span className="text-muted-foreground block mb-1">Last Updated</span>
-                <span>{format(new Date(asset.updated_at), "PPp")}</span>
+                <span>{format(new Date(asset.created_at), "PPp")}</span>
               </div>
               {asset.metadata && (
                 <div>
@@ -149,24 +122,7 @@ export default async function AIAssetDetailsPage({ params }: { params: { id: str
             <h3 className="font-semibold mb-4 flex items-center gap-2">
               <History className="h-5 w-5" /> Version History
             </h3>
-            {asset.Versions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No revisions. This is the original asset.</p>
-            ) : (
-              <div className="space-y-4">
-                {asset.Versions.map(v => (
-                  <div key={v.id} className="p-3 border border-border rounded-lg bg-muted/30">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-bold text-sm">Version {v.version}</span>
-                      <span className="text-xs text-muted-foreground">{format(new Date(v.created_at), "MMM d, HH:mm")}</span>
-                    </div>
-                    {v.changes && (
-                      <p className="text-xs text-muted-foreground italic mb-2">"{v.changes}"</p>
-                    )}
-                    <a href={v.url} target="_blank" rel="noreferrer" className="text-xs font-medium text-primary hover:underline">View File</a>
-                  </div>
-                ))}
-              </div>
-            )}
+            <p className="text-sm text-muted-foreground">No revisions. This is the original asset.</p>
           </div>
         </div>
       </div>

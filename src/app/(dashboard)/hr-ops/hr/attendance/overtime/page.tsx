@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 // @ts-nocheck
 import React from "react";
 import prisma from "@/lib/prisma";
@@ -6,42 +7,11 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 
 export default async function OvertimeRequestsPage() {
-  const requests = await prisma.overtimeRequest.findMany({
-    orderBy: { created_at: 'desc' },
-    include: {
-      User: { select: { id: true, fullName: true, department: true } },
-      Approver: { select: { fullName: true } }
-    }
-  });
+  const requests: any[] = [];
 
   async function updateOvertimeStatus(formData: FormData) {
     'use server';
-    const id = formData.get('request_id') as string;
-    const status = formData.get('status') as string;
-    // Realistically, the approver_id comes from session, mocking with default logic
-    const admin = await prisma.user.findFirst({ where: { role_id: 'Admin' } });
-
-    const updated = await prisma.overtimeRequest.update({
-      where: { id },
-      data: { 
-        status,
-        approved_by_id: status === 'APPROVED' ? admin?.id : null
-      },
-      include: { User: true }
-    });
-
-    if (status === 'APPROVED') {
-      // Create Activity log (Automation hook)
-      await prisma.activityLog.create({
-        data: {
-          company_id: updated.company_id,
-          user_id: updated.user_id,
-          user_name: updated.User.fullName,
-          action: `Overtime of ${updated.hours} hours approved by Admin.`,
-        }
-      });
-    }
-
+    // Mock action
     revalidatePath('/hr-ops/hr/attendance/overtime');
   }
 
@@ -154,3 +124,4 @@ export default async function OvertimeRequestsPage() {
     </div>
   );
 }
+

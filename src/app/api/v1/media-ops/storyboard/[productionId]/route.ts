@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BaseService } from "@/core/services/base.service";
-import { requireAuth } from "@/lib/auth";
+import { getUserDetails } from '@/lib/auth';
 import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest, { params }: { params: { productionId: string } }) {
   try {
-    const session = await requireAuth();
+    const session = await getUserDetails();
     
     // Fetch the primary storyboard for the production
     let storyboard = await prisma.storyboard.findFirst({

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import prisma from "@/lib/prisma";
 import { TrendingUp, Users, ShieldAlert, Award, Search, BrainCircuit } from "lucide-react";
@@ -193,3 +194,4 @@ export default async function SuccessionPage() {
     </div>
   );
 }
+

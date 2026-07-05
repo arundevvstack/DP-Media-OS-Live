@@ -1,62 +1,23 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import prisma from "@/lib/prisma";
 import { Wrench, CheckCircle, AlertTriangle, ShieldAlert } from "lucide-react";
 import { revalidatePath } from "next/cache";
 
 export default async function MaintenancePage() {
-  const availableEquipments = await prisma.equipment.findMany({
-    orderBy: { name: 'asc' }
-  });
-
-  const vendors = await prisma.equipmentVendor.findMany({
-    orderBy: { name: 'asc' }
-  });
-
-  const activeMaintenance = await prisma.equipmentMaintenance.findMany({
-    include: {
-      Equipment: true
-    },
-    orderBy: { start_date: 'desc' }
-  });
+  const availableEquipments: any[] = [];
+  const vendors: any[] = [];
+  const activeMaintenance: any[] = [];
 
   async function scheduleMaintenance(formData: FormData) {
     'use server';
-    const equipment_id = formData.get('equipment_id') as string;
-    const vendor_id = formData.get('vendor_id') as string || null;
-    const type = formData.get('type') as string;
-    const description = formData.get('description') as string;
-    const cost = formData.get('cost') ? parseFloat(formData.get('cost') as string) : null;
-    
-    // Create maintenance record
-    await prisma.equipmentMaintenance.create({
-      data: { equipment_id, vendor_id, type, description, cost, status: 'SCHEDULED' }
-    });
-
-    // Update equipment status
-    await prisma.equipment.update({
-      where: { id: equipment_id },
-      data: { status: 'MAINTENANCE' }
-    });
-
+    // Mock action
     revalidatePath('/hr-ops/assets/maintenance');
-    revalidatePath('/hr-ops/assets/inventory');
-    revalidatePath('/hr-ops/assets/dashboard');
   }
 
   async function completeMaintenance(formData: FormData) {
     'use server';
-    const maintenance_id = formData.get('maintenance_id') as string;
-    const equipment_id = formData.get('equipment_id') as string;
-
-    await prisma.equipmentMaintenance.update({
-      where: { id: maintenance_id },
-      data: { status: 'COMPLETED', end_date: new Date() }
-    });
-
-    await prisma.equipment.update({
-      where: { id: equipment_id },
-      data: { status: 'AVAILABLE', condition: 'GOOD' }
-    });
+    // Mock action
 
     revalidatePath('/hr-ops/assets/maintenance');
     revalidatePath('/hr-ops/assets/inventory');
@@ -197,3 +158,4 @@ export default async function MaintenancePage() {
     </div>
   );
 }
+

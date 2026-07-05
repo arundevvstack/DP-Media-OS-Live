@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import prisma from "@/lib/prisma";
 import { Plus, Search, Filter, LayoutGrid, List as ListIcon, Clock, AlertCircle, CheckCircle2, Play, CheckCircle, Briefcase, Calendar, ChevronRight, Activity } from "lucide-react";
@@ -278,3 +279,4 @@ export default async function OperationsHubPage() {
     </div>
   );
 }
+

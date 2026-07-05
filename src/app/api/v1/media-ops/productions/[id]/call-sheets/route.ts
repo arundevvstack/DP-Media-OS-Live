@@ -1,12 +1,12 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
 import { BaseService } from "@/core/services/base.service";
-import { requireAuth } from "@/lib/auth";
+import { getUserDetails } from '@/lib/auth';
 import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await requireAuth();
+    const session = await getUserDetails();
     const service = new BaseService("callSheet");
     
     // Ensure production belongs to company
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await requireAuth();
+    const session = await getUserDetails();
     const body = await req.json();
     
     // Auth check

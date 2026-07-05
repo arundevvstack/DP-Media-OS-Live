@@ -1,10 +1,11 @@
+export const dynamic = 'force-dynamic';
 import React from 'react';
-import { prisma } from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { getUserDetails } from '@/lib/auth';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 export default async function TimelinePage({ params }: { params: { projectId: string } }) {
-  const { company_id } = await requireAuth();
+  const { companyId: company_id } = await getUserDetails();
   const projectId = (await params).projectId;
   
   // Fetch unified chronological feed directly from ActivityLog

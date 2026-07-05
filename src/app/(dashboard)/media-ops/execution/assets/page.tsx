@@ -1,21 +1,18 @@
 import React from "react";
 import prisma from "@/lib/prisma";
-import { getCompanyId, requireAuth } from "@/lib/auth";
+import { getCompanyId, getUserDetails } from '@/lib/auth';
 import { Image as ImageIcon, Video, Music, Box, Search, Filter, Play, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 
-export default async function AIAssetsDashboard() {
-  const { company_id } = await requireAuth();
+export const dynamic = 'force-dynamic';
 
-  // Find all assets linked to productions for this company
-  // Note: we can use a join or where clause on Production.company_id if it existed,
-  // but since we don't have company_id on Production right now, we fetch by user or just generic
-  
-  const assets = await prisma.aIAsset.findMany({
+export default async function AIAssetsDashboard() {
+  const { companyId: company_id } = await getUserDetails();
+
+  const assets = await prisma.asset.findMany({
     include: {
-      Production: true,
-      Versions: true
+      Project: true
     },
     orderBy: { created_at: "desc" },
     take: 100
@@ -59,7 +56,7 @@ export default async function AIAssetsDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">{type} Assets</p>
-                <h3 className="text-2xl font-bold">{assets.filter(a => a.asset_type === type).length}</h3>
+                <h3 className="text-2xl font-bold">{assets.filter(a => (a.file_type || 'IMAGE') === type).length}</h3>
               </div>
             </div>
           </div>
@@ -100,35 +97,34 @@ export default async function AIAssetsDashboard() {
                   <td className="px-6 py-4 font-medium">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 bg-muted rounded-md overflow-hidden flex items-center justify-center shrink-0 border border-border">
-                        {asset.asset_type === 'IMAGE' && asset.url.startsWith('http') ? (
+                        {(asset.file_type || 'IMAGE') === 'IMAGE' && asset.url.startsWith('http') ? (
                           <img src={asset.url} alt={asset.name} className="h-full w-full object-cover" />
                         ) : (
-                          getIcon(asset.asset_type)
+                          getIcon(asset.file_type || 'IMAGE')
                         )}
                       </div>
                       <span className="line-clamp-1">{asset.name}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="line-clamp-1">{asset.Production.title}</span>
+                  <td className="px-6 py-4 text-muted-foreground">
+                    {asset.Project?.project_name || 'Unknown Project'}
                   </td>
+                  <td className="px-6 py-4">{asset.file_type || 'IMAGE'}</td>
+                  <td className="px-6 py-4 text-center">1</td>
                   <td className="px-6 py-4">
-                    <span className="px-2 py-1 bg-accent rounded-md text-xs font-medium">{asset.asset_type}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    v{asset.Versions.length + 1}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${getStatusColor(asset.status)}`}>
-                      {asset.status}
+                    <span className={`inline-block px-2 py-1 rounded-md text-xs font-medium ${getStatusColor('APPROVED')}`}>
+                      APPROVED
                     </span>
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">
                     {format(new Date(asset.created_at), "MMM d, yyyy")}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Link href={`/media-ops/execution/assets/${asset.id}`} className="inline-flex items-center justify-center px-3 py-1.5 border border-border rounded-md text-xs font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
-                      View Details
+                    <Link 
+                      href={`/media-ops/execution/assets/${asset.id}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border rounded-md text-xs font-medium hover:bg-accent transition-colors"
+                    >
+                      <Play className="h-3 w-3" /> View Asset
                     </Link>
                   </td>
                 </tr>
@@ -137,7 +133,7 @@ export default async function AIAssetsDashboard() {
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
                     <Box className="h-8 w-8 mx-auto mb-3 opacity-20" />
-                    <p>No AI Assets generated yet.</p>
+                    <p>No AI generated assets found.</p>
                   </td>
                 </tr>
               )}

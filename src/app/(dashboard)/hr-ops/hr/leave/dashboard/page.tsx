@@ -6,6 +6,8 @@ import Link from "next/link";
 
 import { getUserDetails } from "@/lib/auth";
 
+export const dynamic = 'force-dynamic';
+
 export default async function LeaveDashboardPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);

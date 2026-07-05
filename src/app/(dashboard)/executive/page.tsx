@@ -1,6 +1,6 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
+import { getUserDetails } from '@/lib/auth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -8,8 +8,10 @@ import { BrainCircuit, Target, AlertTriangle, Activity, DollarSign, Users, Brief
 import Link from 'next/link';
 import { HealthEngine } from '@/core/services/intelligence/health.engine';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ExecutiveDashboardPage() {
-  const { company_id } = await requireAuth();
+  const { companyId: company_id } = await getUserDetails();
 
   // Fetch all active projects for the enterprise portfolio
   const projects = await prisma.project.findMany({

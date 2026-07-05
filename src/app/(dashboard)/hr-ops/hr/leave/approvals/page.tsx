@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import prisma from "@/lib/prisma";
 import { CheckCircle, XCircle, Search, Calendar as CalendarIcon, Clock } from "lucide-react";
@@ -213,3 +214,4 @@ export default async function LeaveApprovalsPage(props: { searchParams: Promise<
     </div>
   );
 }
+

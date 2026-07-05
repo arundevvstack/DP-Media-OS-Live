@@ -1507,3 +1507,4 @@ export default function TalentNetworkPage() {
     </div>
   );
 }
+

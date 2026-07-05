@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import prisma from "@/lib/prisma";
 import { Workflow, Play, Settings2, Plus, ArrowRight, Zap, History, Power, Search } from "lucide-react";
@@ -216,3 +217,4 @@ export default async function AutomationBuilderPage() {
     </div>
   );
 }
+

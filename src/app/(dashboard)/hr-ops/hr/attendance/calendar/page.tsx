@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 // @ts-nocheck
 import React from "react";
 import prisma from "@/lib/prisma";
@@ -102,3 +103,4 @@ export default async function AttendanceCalendarPage() {
     </div>
   );
 }
+

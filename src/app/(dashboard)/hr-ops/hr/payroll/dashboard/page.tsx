@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import prisma from "@/lib/prisma";
 import { DollarSign, FileText, CheckCircle, Clock, AlertTriangle, Users, Calendar, Activity } from "lucide-react";
@@ -187,4 +188,5 @@ export default async function PayrollDashboardPage() {
     </div>
   );
 }
+
 

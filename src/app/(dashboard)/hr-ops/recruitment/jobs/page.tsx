@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import prisma from "@/lib/prisma";
 import { Search, Plus, MapPin, Users, Briefcase, ChevronRight, Filter } from "lucide-react";
@@ -137,4 +138,5 @@ export default async function JobRequisitionsPage(props: { searchParams: Promise
     </div>
   );
 }
+
 

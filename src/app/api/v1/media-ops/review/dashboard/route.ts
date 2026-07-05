@@ -1,11 +1,11 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { getUserDetails } from '@/lib/auth';
 import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await requireAuth();
+    const session = await getUserDetails();
 
     const reviewSessions = await prisma.reviewSession.findMany({
       where: {

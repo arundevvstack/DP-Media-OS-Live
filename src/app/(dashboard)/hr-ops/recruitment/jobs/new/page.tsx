@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import prisma from "@/lib/prisma";
 import { ArrowLeft, Save, Briefcase, MapPin, DollarSign } from "lucide-react";
@@ -177,4 +178,5 @@ export default async function CreateJobRequisitionPage() {
     </div>
   );
 }
+
 

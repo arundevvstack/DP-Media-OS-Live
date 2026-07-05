@@ -894,3 +894,4 @@ function ProjectCard({ project, view, index, onArchive, companyUsers, clients }:
   );
 }
 
+

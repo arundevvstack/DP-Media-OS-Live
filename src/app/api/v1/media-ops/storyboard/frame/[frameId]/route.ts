@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BaseService } from "@/core/services/base.service";
-import { requireAuth } from "@/lib/auth";
+import { getUserDetails } from '@/lib/auth';
 import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest, { params }: { params: { frameId: string } }) {
   try {
-    const session = await requireAuth();
+    const session = await getUserDetails();
     
     if (params.frameId === 'new') {
       return NextResponse.json({ data: { isNew: true } });
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: { frameId: str
         LightingSetup: true,
         ArtDirection: true,
         Comments: {
-          include: { User: { select: { id: true, name: true } } },
+          include: { User: { select: { id: true, fullName: true } } },
           orderBy: { created_at: 'desc' }
         },
         Storyboard: { select: { production_id: true } }
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest, { params }: { params: { frameId: str
 
 export async function PUT(req: NextRequest, { params }: { params: { frameId: string } }) {
   try {
-    const session = await requireAuth();
+    const session = await getUserDetails();
     const body = await req.json();
 
     const { 
@@ -85,7 +85,7 @@ export async function PUT(req: NextRequest, { params }: { params: { frameId: str
 
 export async function POST(req: NextRequest, { params }: { params: { frameId: string } }) {
   try {
-    const session = await requireAuth();
+    const session = await getUserDetails();
     const body = await req.json();
     const { storyboard_id, ...rest } = body;
 

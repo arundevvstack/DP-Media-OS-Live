@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import prisma from "@/lib/prisma";
 import { Plus, Settings2, Percent, DollarSign, Users } from "lucide-react";
@@ -151,4 +152,5 @@ export default async function SalaryStructuresPage() {
     </div>
   );
 }
+
 

@@ -1337,3 +1337,4 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
     l: Math.round(l * 100),
   };
 }
+

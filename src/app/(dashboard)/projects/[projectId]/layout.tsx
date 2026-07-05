@@ -1,6 +1,6 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
+import { getUserDetails } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, LayoutDashboard, Calendar, CheckSquare, Folder, MessageSquare, Activity, Bot, Film, Video, Scissors, ShoppingCart, DollarSign, BarChart, BrainCircuit } from 'lucide-react';
@@ -12,7 +12,7 @@ export default async function ProjectWorkspaceLayout({
   children: React.ReactNode;
   params: { projectId: string };
 }) {
-  const { company_id } = await requireAuth();
+  const { companyId: company_id } = await getUserDetails();
   const projectId = (await params).projectId;
 
   const project = await prisma.project.findUnique({

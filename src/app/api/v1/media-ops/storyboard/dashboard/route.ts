@@ -1,12 +1,12 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
 import { BaseService } from "@/core/services/base.service";
-import { requireAuth } from "@/lib/auth";
+import { getUserDetails } from '@/lib/auth';
 import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await requireAuth();
+    const session = await getUserDetails();
     
     // Calculate live widgets for the user's company
     const storyboards = await prisma.storyboard.findMany({

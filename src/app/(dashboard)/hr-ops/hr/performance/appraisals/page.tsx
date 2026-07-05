@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from "react";
 import prisma from "@/lib/prisma";
 import { Plus, BarChart3, Clock, CheckCircle, Users } from "lucide-react";
@@ -230,3 +231,4 @@ export default async function AppraisalsPage() {
     </div>
   );
 }
+

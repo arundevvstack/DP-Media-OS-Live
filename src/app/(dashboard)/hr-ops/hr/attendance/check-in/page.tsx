@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { LogIn, LogOut, Clock, MapPin, CheckCircle, Search } from "lucide-react";
 import { revalidatePath } from "next/cache";
 
+export const dynamic = 'force-dynamic';
+
 export default async function CheckInKioskPage() {
   const users = await prisma.user.findMany({
     where: { status: 'approved', role_id: 'EMPLOYEE' },

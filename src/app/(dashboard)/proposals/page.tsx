@@ -2760,3 +2760,4 @@ export default function ProposalsPage() {
     </Suspense>
   );
 }
+

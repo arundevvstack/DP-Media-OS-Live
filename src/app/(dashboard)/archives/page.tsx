@@ -358,3 +358,4 @@ function EmptyState({ icon: Icon, label }: { icon: any, label: string }) {
     </div>
   );
 }
+
