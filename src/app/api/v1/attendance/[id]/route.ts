@@ -1,29 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { TransactionService, DomainError, ErrorCode } from '@/lib/transaction';
+import { withIdempotency } from '@/lib/idempotency';
+import { logger } from '@/lib/observability/logger';
+import crypto from 'crypto';
+
+const transactionService = new TransactionService(prisma);
 
 // PATCH /api/v1/attendance/[id] — update check_in, check_out, status on an existing record
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+async function attendancePatchHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const { check_in, check_out, status } = await req.json();
 
-    // Fetch the record to get the date for building DateTime values
-    const existing = await prisma.employeeAttendance.findUnique({ where: { id } });
-    if (!existing) {
-      return NextResponse.json({ error: 'Record not found' }, { status: 404 });
-    }
+    const correlationId = req.headers.get("x-correlation-id") || crypto.randomUUID();
 
-    const dateStr = existing.date.toISOString().split('T')[0];
-    const checkInDt  = check_in  ? new Date(dateStr + 'T' + check_in)  : existing.check_in;
-    const checkOutDt = check_out ? new Date(dateStr + 'T' + check_out) : existing.check_out;
+    const updated = await transactionService.runInTransaction(correlationId, async (tx) => {
+      // Fetch the record to get the date for building DateTime values
+      const existing = await tx.employeeAttendance.findUnique({ where: { id } });
+      if (!existing) {
+        throw new DomainError('Record not found', ErrorCode.NOT_FOUND);
+      }
 
-    const updated = await prisma.employeeAttendance.update({
-      where: { id },
-      data: {
-        ...(status    && { status }),
-        check_in:  checkInDt,
-        check_out: checkOutDt,
-      },
+      const dateStr = existing.date.toISOString().split('T')[0];
+      const checkInDt  = check_in  ? new Date(dateStr + 'T' + check_in)  : existing.check_in;
+      const checkOutDt = check_out ? new Date(dateStr + 'T' + check_out) : existing.check_out;
+
+      return tx.employeeAttendance.update({
+        where: { id },
+        data: {
+          ...(status    && { status }),
+          check_in:  checkInDt,
+          check_out: checkOutDt,
+        },
+      });
+    }, undefined, {
+      userId: 'system',
+      tenantId: 'unknown',
+      domain: 'hr',
+      service: 'attendance-update',
+      attendanceId: id
     });
 
     return NextResponse.json({
@@ -38,6 +54,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
     });
   } catch (err: any) {
+    logger.error('Attendance PATCH Error:', err);
+    if (err instanceof DomainError) {
+      let status = 500;
+      if (err.code === ErrorCode.NOT_FOUND) status = 404;
+      return NextResponse.json({ error: err.message }, { status });
+    }
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+}
+
+export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  return withIdempotency(req, attendancePatchHandler, ctx);
 }

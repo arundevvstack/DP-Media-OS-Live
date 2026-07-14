@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { randomUUID } from 'crypto';
+import { TransactionService, DomainError, ErrorCode } from '@/lib/transaction';
+import { withIdempotency } from '@/lib/idempotency';
+import { logger } from '@/lib/observability/logger';
+import crypto from 'crypto';
 
-// POST /api/v1/attendance — upsert an attendance record
-export async function POST(req: NextRequest) {
+const transactionService = new TransactionService(prisma);
+
+async function attendancePostHandler(req: NextRequest) {
   try {
     const { user_id, company_id, date, status, check_in, check_out, location } = await req.json();
 
@@ -14,37 +19,50 @@ export async function POST(req: NextRequest) {
     const dateObj = new Date(date + 'T00:00:00.000Z');
     const checkInDt  = check_in  ? new Date(date + 'T' + check_in)  : null;
     const checkOutDt = check_out ? new Date(date + 'T' + check_out) : null;
+    
+    const correlationId = req.headers.get("x-correlation-id") || crypto.randomUUID();
 
-    // Manual upsert — compound unique @@unique([user_id, date]) not in client types
-    const existing = await prisma.employeeAttendance.findFirst({
-      where: { user_id, date: dateObj },
+    const record = await transactionService.runInTransaction(correlationId, async (tx) => {
+      // Manual upsert — compound unique @@unique([user_id, date]) not in client types
+      const existing = await tx.employeeAttendance.findFirst({
+        where: { user_id, date: dateObj },
+      });
+
+      if (existing) {
+        // Prevent duplicate creation with same initial params if not actually an update
+        if (!check_in && !check_out && existing.status === (status || 'PRESENT')) {
+          throw new DomainError("Duplicate attendance record for this date already exists", ErrorCode.CONFLICT);
+        }
+        
+        return tx.employeeAttendance.update({
+          where: { id: existing.id },
+          data: {
+            status,
+            ...(checkInDt  !== null && { check_in:  checkInDt }),
+            ...(checkOutDt !== null && { check_out: checkOutDt }),
+            ...(location && { location }),
+          },
+        });
+      } else {
+        return tx.employeeAttendance.create({
+          data: {
+            id: randomUUID(),
+            user_id,
+            company_id: company_id || '',
+            date: dateObj,
+            status: status || 'PRESENT',
+            check_in:  checkInDt,
+            check_out: checkOutDt,
+            location:  location || 'Office - Head Quarters',
+          },
+        });
+      }
+    }, undefined, {
+      userId: user_id,
+      tenantId: company_id || 'unknown',
+      domain: 'hr',
+      service: 'attendance-upsert'
     });
-
-    let record;
-    if (existing) {
-      record = await prisma.employeeAttendance.update({
-        where: { id: existing.id },
-        data: {
-          status,
-          ...(checkInDt  !== null && { check_in:  checkInDt }),
-          ...(checkOutDt !== null && { check_out: checkOutDt }),
-          ...(location && { location }),
-        },
-      });
-    } else {
-      record = await prisma.employeeAttendance.create({
-        data: {
-          id: randomUUID(),
-          user_id,
-          company_id: company_id || '',
-          date: dateObj,
-          status: status || 'PRESENT',
-          check_in:  checkInDt,
-          check_out: checkOutDt,
-          location:  location || 'Office - Head Quarters',
-        },
-      });
-    }
 
     return NextResponse.json({
       success: true,
@@ -58,6 +76,16 @@ export async function POST(req: NextRequest) {
       }
     });
   } catch (err: any) {
+    logger.error('Attendance POST Error:', err);
+    if (err instanceof DomainError) {
+      let status = 500;
+      if (err.code === ErrorCode.CONFLICT) status = 409;
+      return NextResponse.json({ error: err.message }, { status });
+    }
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+}
+
+export async function POST(req: NextRequest) {
+  return withIdempotency(req, attendancePostHandler);
 }
