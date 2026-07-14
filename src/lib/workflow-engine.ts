@@ -1,6 +1,9 @@
 import { PrismaClient } from '@prisma/client';
+import { TransactionService, DomainError, ErrorCode } from '@/lib/transaction';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
+const transactionService = new TransactionService(prisma);
 
 export class WorkflowEngine {
   /**
@@ -12,9 +15,11 @@ export class WorkflowEngine {
     currentStageId: string,
     nextStageId: string,
     userId: string,
-    companyId: string
+    companyId: string,
+    correlationId?: string
   ) {
-    return await prisma.$transaction(async (tx) => {
+    const id = correlationId || crypto.randomUUID();
+    return await transactionService.runInTransaction(id, async (tx) => {
       // 1. Fetch current workflow state
       let workflowState = await tx.workflowState.findUnique({
         where: { project_id: projectId },
@@ -23,6 +28,7 @@ export class WorkflowEngine {
       if (!workflowState) {
         workflowState = await tx.workflowState.create({
           data: {
+            id: crypto.randomUUID(),
             project_id: projectId,
             active_stage_id: currentStageId,
           },
@@ -31,7 +37,12 @@ export class WorkflowEngine {
 
       // 2. Validate state lock
       if (workflowState.is_blocked) {
-        throw new Error(`Workflow is blocked: ${workflowState.blocked_reason}`);
+        throw new DomainError(`Workflow is blocked: ${workflowState.blocked_reason}`, ErrorCode.CONFLICT);
+      }
+
+      // Check idempotency (duplicate transitions)
+      if (workflowState.active_stage_id === nextStageId) {
+        throw new DomainError(`Project is already in the target stage`, ErrorCode.CONFLICT);
       }
 
       // 3. Verify all mandatory objectives in current stage are completed
@@ -44,8 +55,9 @@ export class WorkflowEngine {
       });
 
       if (incompleteObjectives.length > 0) {
-        throw new Error(
-          `Cannot transition stage. ${incompleteObjectives.length} objective(s) are incomplete in the current stage.`
+        throw new DomainError(
+          `Cannot transition stage. ${incompleteObjectives.length} objective(s) are incomplete in the current stage.`,
+          ErrorCode.VALIDATION
         );
       }
 
@@ -73,6 +85,7 @@ export class WorkflowEngine {
       // 6. Audit Log
       await tx.auditLog.create({
         data: {
+          id: crypto.randomUUID(),
           company_id: companyId,
           user_id: userId,
           entity_type: 'ProjectStage',
@@ -84,14 +97,26 @@ export class WorkflowEngine {
       });
 
       return updatedState;
+    }, undefined, {
+      userId,
+      tenantId: companyId,
+      domain: 'project',
+      service: 'workflow-transition',
+      projectId
     });
   }
 
   /**
    * Locks the workflow (e.g., when client rejects or a critical block occurs)
    */
-  static async lockWorkflow(projectId: string, reason: string, userId: string, companyId: string) {
-    return await prisma.$transaction(async (tx) => {
+  static async lockWorkflow(projectId: string, reason: string, userId: string, companyId: string, correlationId?: string) {
+    const id = correlationId || crypto.randomUUID();
+    return await transactionService.runInTransaction(id, async (tx) => {
+      const existing = await tx.workflowState.findUnique({ where: { project_id: projectId } });
+      if (existing?.is_blocked) {
+        throw new DomainError('Workflow is already locked', ErrorCode.CONFLICT);
+      }
+
       const state = await tx.workflowState.update({
         where: { project_id: projectId },
         data: {
@@ -102,6 +127,7 @@ export class WorkflowEngine {
 
       await tx.auditLog.create({
         data: {
+          id: crypto.randomUUID(),
           company_id: companyId,
           user_id: userId,
           entity_type: 'WorkflowState',
@@ -112,14 +138,26 @@ export class WorkflowEngine {
       });
 
       return state;
+    }, undefined, {
+      userId,
+      tenantId: companyId,
+      domain: 'project',
+      service: 'workflow-lock',
+      projectId
     });
   }
 
   /**
    * Unlocks the workflow
    */
-  static async unlockWorkflow(projectId: string, userId: string, companyId: string) {
-    return await prisma.$transaction(async (tx) => {
+  static async unlockWorkflow(projectId: string, userId: string, companyId: string, correlationId?: string) {
+    const id = correlationId || crypto.randomUUID();
+    return await transactionService.runInTransaction(id, async (tx) => {
+      const existing = await tx.workflowState.findUnique({ where: { project_id: projectId } });
+      if (!existing?.is_blocked) {
+        throw new DomainError('Workflow is not locked', ErrorCode.CONFLICT);
+      }
+
       const state = await tx.workflowState.update({
         where: { project_id: projectId },
         data: {
@@ -130,6 +168,7 @@ export class WorkflowEngine {
 
       await tx.auditLog.create({
         data: {
+          id: crypto.randomUUID(),
           company_id: companyId,
           user_id: userId,
           entity_type: 'WorkflowState',
@@ -139,6 +178,12 @@ export class WorkflowEngine {
       });
 
       return state;
+    }, undefined, {
+      userId,
+      tenantId: companyId,
+      domain: 'project',
+      service: 'workflow-unlock',
+      projectId
     });
   }
 }

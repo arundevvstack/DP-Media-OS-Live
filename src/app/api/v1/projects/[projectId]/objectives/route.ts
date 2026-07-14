@@ -1,7 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { TransactionService, DomainError, ErrorCode } from '@/lib/transaction';
+import { withIdempotency } from '@/lib/idempotency';
+import { logger } from '@/lib/observability/logger';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
+const transactionService = new TransactionService(prisma);
 
 /**
  * GET /api/v1/projects/[projectId]/objectives
@@ -125,12 +130,12 @@ export async function GET(
  * POST /api/v1/projects/[projectId]/objectives
  * Create a new objective, respecting dependency rules.
  */
-export async function POST(
-  req: Request,
-  context: { params: Promise<{ projectId: string }> }
+async function objectiveCreateHandler(
+  req: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const { projectId } = await context.params;
+    const { projectId } = await params;
     const body = await req.json();
     const {
       title,
@@ -149,9 +154,21 @@ export async function POST(
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const objective = await prisma.$transaction(async (tx) => {
+    const correlationId = req.headers.get("x-correlation-id") || crypto.randomUUID();
+
+    const objective = await transactionService.runInTransaction(correlationId, async (tx) => {
+      // Conflict detection: prevent exact duplicate objective in the same stage
+      const duplicate = await tx.objective.findFirst({
+        where: { project_id: projectId, stage_id, title }
+      });
+
+      if (duplicate) {
+        throw new DomainError(`Objective with title "${title}" already exists in this stage`, ErrorCode.CONFLICT);
+      }
+
       const newObj = await tx.objective.create({
         data: {
+          id: crypto.randomUUID(),
           project_id: projectId,
           stage_id,
           title,
@@ -163,6 +180,7 @@ export async function POST(
           assignee_id: assignee_id ?? null,
           checklist: checklist ?? [],
           status: 'Pending',
+          updated_at: new Date()
         },
       });
 
@@ -171,6 +189,7 @@ export async function POST(
         for (const parentId of depends_on_ids) {
           await tx.objectiveDependency.create({
             data: {
+              id: crypto.randomUUID(),
               parent_id: parentId,
               child_id: newObj.id,
               type: 'blocking',
@@ -180,11 +199,29 @@ export async function POST(
       }
 
       return newObj;
+    }, undefined, {
+      userId: 'system',
+      tenantId: 'unknown',
+      domain: 'project',
+      service: 'objective-create',
+      projectId
     });
 
     return NextResponse.json({ success: true, objective });
   } catch (error: any) {
-    console.error('Objective creation error:', error);
+    logger.error('Objective creation error:', error);
+    if (error instanceof DomainError) {
+      let status = 500;
+      if (error.code === ErrorCode.CONFLICT) status = 409;
+      return NextResponse.json({ error: error.message }, { status });
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+}
+
+export async function POST(
+  req: NextRequest,
+  ctx: { params: Promise<{ projectId: string }> }
+) {
+  return withIdempotency(req, objectiveCreateHandler, ctx);
 }

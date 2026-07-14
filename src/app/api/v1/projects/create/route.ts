@@ -1,14 +1,13 @@
-// @ts-nocheck
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
 import { ENTERPRISE_TEMPLATES, DEFAULT_TIMELINE_DAYS, EnterpriseStageTemplate } from '@/lib/enterprise-workflow-templates';
+import { TransactionService, DomainError, ErrorCode } from '@/lib/transaction';
+import { withIdempotency } from '@/lib/idempotency';
+import { logger } from '@/lib/observability/logger';
+import crypto from 'crypto';
 
-const prisma = new PrismaClient();
+const transactionService = new TransactionService(prisma);
 
-/**
- * Distribute stage timelines across the total project duration.
- * Returns { start, end } dates for each stage.
- */
 function distributeStageTimelines(
   startDate: Date,
   endDate: Date,
@@ -26,7 +25,6 @@ function distributeStageTimelines(
     cursor += stageDuration;
   }
 
-  // Ensure the last stage always ends at the exact deadline
   if (result.length > 0) {
     result[result.length - 1].end = new Date(endDate);
   }
@@ -34,17 +32,12 @@ function distributeStageTimelines(
   return result;
 }
 
-/**
- * Match a department name to the best available team member.
- * Picks the member with the fewest active objectives (workload balancing).
- */
 async function findBestAssignee(
   tx: any,
   companyId: string,
   department: string
 ): Promise<string | null> {
   try {
-    // Get users in this company who match the department
     const users = await tx.user.findMany({
       where: {
         company_id: companyId,
@@ -59,7 +52,6 @@ async function findBestAssignee(
 
     if (!users || users.length === 0) return null;
 
-    // Count active objectives per user to load-balance
     const loads = await Promise.all(
       users.map(async (u: { id: string; department: string }) => {
         const count = await tx.objective.count({
@@ -72,7 +64,6 @@ async function findBestAssignee(
       })
     );
 
-    // Pick the user with the lowest workload
     loads.sort((a: { userId: string; load: number }, b: { userId: string; load: number }) => a.load - b.load);
     return loads[0]?.userId ?? null;
   } catch {
@@ -80,7 +71,7 @@ async function findBestAssignee(
   }
 }
 
-export async function POST(req: Request) {
+async function projectCreateHandler(req: NextRequest) {
   try {
     const body = await req.json();
     const {
@@ -102,23 +93,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Resolve template — fall back to Normal Production if unknown type
     const template = ENTERPRISE_TEMPLATES[project_type] ?? ENTERPRISE_TEMPLATES['Normal Production'];
 
-    // Compute project timeline
     const projectStart = new Date();
     const defaultDays = DEFAULT_TIMELINE_DAYS[project_type] ?? 30;
     const projectEnd = deadline
       ? new Date(deadline)
       : new Date(projectStart.getTime() + defaultDays * 24 * 60 * 60 * 1000);
 
-    // Distribute stage timelines based on weights
     const stageTimelines = distributeStageTimelines(projectStart, projectEnd, template.stages);
 
-    // ─── Pre-compute assignees OUTSIDE the transaction ───────────────────────
-    // Running async parallel queries inside a Prisma interactive transaction
-    // holds the connection open and causes "Transaction not found" errors.
-    // We resolve all assignees first, then the transaction only does writes.
     const uniqueDepartments = [...new Set(
       template.stages.flatMap(s => s.objectives.map(o => o.department))
     )];
@@ -126,10 +110,9 @@ export async function POST(req: Request) {
     const departmentAssigneeMap: Record<string, string | null> = {};
     await Promise.all(
       uniqueDepartments.map(async (dept) => {
-        departmentAssigneeMap[dept] = await findBestAssignee(prisma as any, company_id, dept);
+        departmentAssigneeMap[dept] = await findBestAssignee(prisma, company_id, dept);
       })
     );
-    // ─────────────────────────────────────────────────────────────────────────
 
     let pilotProjectId = null;
     let requirementId = null;
@@ -155,9 +138,19 @@ export async function POST(req: Request) {
       }
     }
 
-    // Run all WRITES in a single transaction (no async sub-queries inside)
-    const result = await prisma.$transaction(
-      async (tx) => {
+    const correlationId = req.headers.get("x-correlation-id") || crypto.randomUUID();
+
+    const result = await transactionService.runInTransaction(correlationId, async (tx) => {
+        
+        // Conflict detection: duplicate project name within the tenant
+        const duplicate = await tx.project.findFirst({
+            where: { company_id, project_name }
+        });
+
+        if (duplicate) {
+            throw new DomainError(`Project with name "${project_name}" already exists`, ErrorCode.CONFLICT);
+        }
+
         // 1. Create the project
         const newProject = await tx.project.create({
           data: {
@@ -188,6 +181,7 @@ export async function POST(req: Request) {
               project_id: newProject.id,
               user_id: projectManagerId,
               role: 'Project Manager',
+              company_id // Enforced missing company_id logic or implicit
             },
           });
         }
@@ -200,7 +194,6 @@ export async function POST(req: Request) {
           const stageDef = template.stages[si];
           const { start: stageStart, end: stageEnd } = stageTimelines[si];
 
-          // Create stage
           const createdStage = await tx.projectStage.create({
             data: {
               id: crypto.randomUUID(),
@@ -215,13 +208,10 @@ export async function POST(req: Request) {
 
           const stageMs = stageEnd.getTime() - stageStart.getTime();
 
-          // Create objectives for this stage
           for (const objDef of stageDef.objectives) {
-            // Compute due date: stage_start + (offset_ratio × stage_duration)
             const dueDateMs = stageStart.getTime() + Math.round(objDef.offset_ratio * stageMs);
             const clampedDue = new Date(Math.min(dueDateMs, stageEnd.getTime()));
 
-            // Use pre-computed assignee — no query inside tx
             const assigneeId = departmentAssigneeMap[objDef.department] ?? null;
 
             const createdObj = await tx.objective.create({
@@ -242,10 +232,8 @@ export async function POST(req: Request) {
               },
             });
 
-            // Register objective in title map
             objectiveTitleToId[objDef.title] = createdObj.id;
 
-            // Collect pending dependencies
             if (objDef.depends_on && objDef.depends_on.length > 0) {
               pendingDependencies.push({
                 childId: createdObj.id,
@@ -256,23 +244,25 @@ export async function POST(req: Request) {
         }
 
         // 4. Wire dependency chains
-        // Use create + ignore-duplicate instead of upsert to avoid stalling the tx
         for (const dep of pendingDependencies) {
           for (const parentTitle of dep.dependsOnTitles) {
             const parentId = objectiveTitleToId[parentTitle];
             if (parentId && parentId !== dep.childId) {
-              try {
-                await tx.objectiveDependency.create({
-                  data: {
-                    id: crypto.randomUUID(),
-                    parent_id: parentId,
-                    child_id: dep.childId,
-                    type: 'blocking',
-                  },
+                // Check duplicate dependency manually to avoid try-catch inside transaction causing rollbacks
+                const existingDep = await tx.objectiveDependency.findFirst({
+                    where: { parent_id: parentId, child_id: dep.childId }
                 });
-              } catch {
-                // Ignore duplicate dependency error
-              }
+                
+                if (!existingDep) {
+                  await tx.objectiveDependency.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        parent_id: parentId,
+                        child_id: dep.childId,
+                        type: 'blocking',
+                    },
+                  });
+                }
             }
           }
         }
@@ -310,16 +300,31 @@ export async function POST(req: Request) {
         };
       },
       {
-        timeout: 60000, // 60s — write-only tx is fast, but generous for slow DBs
+        timeout: 60000, 
+      }, 
+      {
+        userId: user_id || 'system',
+        tenantId: company_id,
+        domain: 'project',
+        service: 'project-create'
       }
     );
 
     return NextResponse.json({ success: true, ...result });
   } catch (error: any) {
-    console.error('Project Creation API Error:', error);
+    logger.error('Project Creation API Error:', error);
+    if (error instanceof DomainError) {
+      let status = 500;
+      if (error.code === ErrorCode.CONFLICT) status = 409;
+      return NextResponse.json({ error: error.message }, { status });
+    }
     return NextResponse.json(
       { error: error.message || 'Failed to create project' },
       { status: 500 }
     );
   }
+}
+
+export async function POST(req: NextRequest) {
+  return withIdempotency(req, projectCreateHandler);
 }

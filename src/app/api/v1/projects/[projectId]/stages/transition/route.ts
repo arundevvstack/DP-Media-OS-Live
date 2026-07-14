@@ -1,12 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { WorkflowEngine } from '@/lib/workflow-engine';
 import { createClient } from '@/utils/supabase/server';
 import { PrismaClient } from '@prisma/client';
+import { withIdempotency } from '@/lib/idempotency';
+import { DomainError, ErrorCode } from '@/lib/transaction';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
-export async function POST(
-  request: Request,
+async function stageTransitionHandler(
+  request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
@@ -44,22 +47,38 @@ export async function POST(
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    const correlationId = request.headers.get("x-correlation-id") || crypto.randomUUID();
+
     // Execute state transition using our transactional engine
     const newState = await WorkflowEngine.transitionStage(
       projectId,
       currentStageId,
       nextStageId,
       user.id,
-      companyId
+      companyId,
+      correlationId
     );
 
     return NextResponse.json({ success: true, data: newState });
 
   } catch (error: any) {
     console.error('State Transition Error:', error);
+    if (error instanceof DomainError) {
+      let status = 500;
+      if (error.code === ErrorCode.CONFLICT) status = 409;
+      if (error.code === ErrorCode.VALIDATION) status = 400;
+      return NextResponse.json({ error: error.message }, { status });
+    }
     return NextResponse.json(
       { error: error.message || 'Failed to transition stage' },
       { status: 500 }
     );
   }
+}
+
+export async function POST(
+  req: NextRequest,
+  ctx: { params: Promise<{ projectId: string }> }
+) {
+  return withIdempotency(req, stageTransitionHandler, ctx);
 }
