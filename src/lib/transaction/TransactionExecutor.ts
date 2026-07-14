@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { TransactionContext } from './TransactionContext';
 import { RetryManager, RetryOptions, DEFAULT_RETRY_POLICY } from './RetryPolicy';
 import { logger } from '../observability/logger';
-import { TransactionError, ErrorCode } from './DomainError';
+import { TransactionError, DomainError, ErrorCode } from './DomainError';
 
 // Type alias for Prisma's transaction client
 export type PrismaTransactionClient = Omit<

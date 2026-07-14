@@ -1,30 +1,33 @@
 import prisma from '@/lib/prisma';
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { TransactionService, DomainError, ErrorCode } from '@/lib/transaction';
 
 const supabaseAdmin = createSupabaseAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const transactionService = new TransactionService(prisma);
+
 export const conversionService = {
-  async convertProspectToClient(prospectId: string, companyId: string, userId: string, userName: string) {
-    return prisma.$transaction(async (tx: any) => {
+  async convertProspectToClient(prospectId: string, companyId: string, userId: string, userName: string, correlationId: string = crypto.randomUUID()) {
+    return transactionService.runInTransaction(correlationId, async (tx) => {
       // 1. Fetch and validate Prospect
       const prospect = await tx.prospect.findUnique({
         where: { id: prospectId }
       });
 
       if (!prospect) {
-        throw new Error('Prospect not found.');
+        throw new DomainError('Prospect not found.', ErrorCode.NOT_FOUND);
       }
 
       if (prospect.company_id !== companyId) {
-        throw new Error('Unauthorized: Prospect does not belong to your company tenant.');
+        throw new DomainError('Unauthorized: Prospect does not belong to your company tenant.', ErrorCode.FORBIDDEN);
       }
 
       if (prospect.is_converted) {
-        throw new Error('Prospect has already been converted to a client.');
+        throw new DomainError('Prospect has already been converted to a client.', ErrorCode.CONFLICT);
       }
 
       // Check if client already exists by company name
@@ -221,8 +224,12 @@ export const conversionService = {
         portalUserId,
         isNewClient
       };
-    }, {
-      timeout: 30000
+    }, undefined, {
+      userId,
+      tenantId: companyId,
+      domain: 'crm',
+      service: 'conversion',
+      prospectId
     });
   }
 };

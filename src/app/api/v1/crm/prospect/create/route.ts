@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
 import { prospectService } from '@/services/prospect.service';
+import { withIdempotency } from '@/lib/idempotency';
+import { logger } from '@/lib/observability/logger';
+import { DomainError, ErrorCode } from '@/lib/transaction';
 
-export async function POST(req: NextRequest) {
+async function createProspectHandler(req: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -37,6 +40,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Validation Error: company_name is required.' }, { status: 400 });
     }
 
+    const correlationId = req.headers.get("x-correlation-id") || crypto.randomUUID();
+
     const prospect = await prospectService.create({
       id: crypto.randomUUID(),
       company_id: profile.company_id,
@@ -53,11 +58,20 @@ export async function POST(req: NextRequest) {
       notes: body.notes,
       assignee_id: body.assignee_id,
       project_type: body.project_type,
-    } as any);
+    } as any, profile.id, correlationId);
 
     return NextResponse.json({ data: prospect }, { status: 201 });
   } catch (error: any) {
-    console.error('API Error in crm/prospect/create:', error);
+    logger.error('API Error in crm/prospect/create:', error);
+    if (error instanceof DomainError) {
+      let status = 500;
+      if (error.code === ErrorCode.CONFLICT) status = 409;
+      return NextResponse.json({ error: error.message }, { status });
+    }
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
+}
+
+export async function POST(req: NextRequest) {
+  return withIdempotency(req, createProspectHandler);
 }

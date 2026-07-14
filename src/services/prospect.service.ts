@@ -1,5 +1,8 @@
 import prisma from '@/lib/prisma';
 import crypto from 'crypto';
+import { TransactionService, DomainError, ErrorCode } from '@/lib/transaction';
+
+const transactionService = new TransactionService(prisma);
 
 export const prospectService = {
   async create(data: {
@@ -18,26 +21,42 @@ export const prospectService = {
     notes?: string;
     assignee_id?: string;
     project_type?: string;
-  }) {
-    return prisma.prospect.create({
-      data: {
-        id: data.id || crypto.randomUUID(),
-        company_id: data.company_id,
-        company_name: data.company_name,
-        contact_person: data.contact_person,
-        email: data.email,
-        phone: data.phone,
-        whatsapp: data.whatsapp,
-        service_vertical: data.service_vertical,
-        sub_vertical: data.sub_vertical,
-        industry: data.industry,
-        deal_value: data.deal_value ?? 0,
-        stage: data.stage ?? 'new_lead',
-        notes: data.notes,
-        assignee_id: data.assignee_id,
-        project_type: data.project_type ?? 'Normal Production',
-        updated_at: new Date(),
-      },
+  }, userId?: string, correlationId: string = crypto.randomUUID()) {
+    return transactionService.runInTransaction(correlationId, async (tx) => {
+      // Conflict detection for duplicate leads
+      const existingProspect = await tx.prospect.findFirst({
+        where: { company_id: data.company_id, company_name: data.company_name }
+      });
+
+      if (existingProspect) {
+        throw new DomainError('Duplicate lead with the same company name exists', ErrorCode.CONFLICT);
+      }
+
+      return tx.prospect.create({
+        data: {
+          id: data.id || crypto.randomUUID(),
+          company_id: data.company_id,
+          company_name: data.company_name,
+          contact_person: data.contact_person,
+          email: data.email,
+          phone: data.phone,
+          whatsapp: data.whatsapp,
+          service_vertical: data.service_vertical,
+          sub_vertical: data.sub_vertical,
+          industry: data.industry,
+          deal_value: data.deal_value ?? 0,
+          stage: data.stage ?? 'new_lead',
+          notes: data.notes,
+          assignee_id: data.assignee_id,
+          project_type: data.project_type ?? 'Normal Production',
+          updated_at: new Date(),
+        },
+      });
+    }, undefined, {
+      tenantId: data.company_id,
+      userId,
+      domain: 'crm',
+      service: 'prospect-creation'
     });
   },
 
@@ -57,13 +76,29 @@ export const prospectService = {
     project_type: string;
     is_converted: boolean;
     converted_client_id: string;
-  }>) {
-    return prisma.prospect.update({
-      where: { id },
-      data: {
-        ...data,
-        updated_at: new Date(),
-      },
+  }>, companyId?: string, userId?: string, correlationId: string = crypto.randomUUID()) {
+    return transactionService.runInTransaction(correlationId, async (tx) => {
+      const existingProspect = await tx.prospect.findUnique({
+        where: { id }
+      });
+      
+      if (!existingProspect) {
+         throw new DomainError('Lead not found', ErrorCode.NOT_FOUND);
+      }
+
+      return tx.prospect.update({
+        where: { id },
+        data: {
+          ...data,
+          updated_at: new Date(),
+        },
+      });
+    }, undefined, {
+      tenantId: companyId || 'unknown',
+      userId,
+      domain: 'crm',
+      service: 'prospect-update',
+      prospectId: id
     });
   },
 

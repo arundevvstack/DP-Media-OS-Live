@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
 import { conversionService } from '@/services/conversion.service';
+import { withIdempotency } from '@/lib/idempotency';
+import { logger } from '@/lib/observability/logger';
+import { DomainError, ErrorCode } from '@/lib/transaction';
 
-export async function POST(
+async function convertHandler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -40,11 +43,14 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden: Insufficient permissions to convert prospects.' }, { status: 403 });
     }
 
+    const correlationId = req.headers.get("x-correlation-id") || crypto.randomUUID();
+
     const result = await conversionService.convertProspectToClient(
       prospectId,
       profile.company_id,
       profile.id,
-      profile.fullName
+      profile.fullName,
+      correlationId
     );
 
     return NextResponse.json({
@@ -52,7 +58,21 @@ export async function POST(
       data: result
     }, { status: 200 });
   } catch (error: any) {
-    console.error('API Error in crm/prospect/[id]/convert:', error);
+    logger.error('API Error in crm/prospect/[id]/convert:', error);
+    if (error instanceof DomainError) {
+      let status = 500;
+      if (error.code === ErrorCode.NOT_FOUND) status = 404;
+      if (error.code === ErrorCode.CONFLICT) status = 409;
+      if (error.code === ErrorCode.FORBIDDEN) status = 403;
+      return NextResponse.json({ error: error.message }, { status });
+    }
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
+}
+
+export async function POST(
+  req: NextRequest,
+  ctx: { params: Promise<{ id: string }> }
+) {
+  return withIdempotency(req, convertHandler, ctx);
 }
