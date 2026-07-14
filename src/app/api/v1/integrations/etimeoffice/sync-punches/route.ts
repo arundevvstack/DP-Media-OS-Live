@@ -28,18 +28,28 @@ async function handleSync(req: NextRequest, hasBody: boolean) {
     if (hasBody) {
       body = await req.json().catch(() => ({}));
     }
-    const fromDate = body.from_date ? new Date(body.from_date) : (() => {
-      const d = new Date(); d.setDate(d.getDate() - 1); return d;
-    })();
-    const toDate = body.to_date ? new Date(body.to_date) : new Date();
+    
+    let records = [];
+    let fromDate = new Date();
+    let toDate = new Date();
 
-    // Scrape attendance via Playwright headless browser
-    const result = await scrapeAttendance(fromDate, toDate);
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 502 });
+    if (body.records && Array.isArray(body.records)) {
+      // Manual CSV import provided from the frontend
+      records = body.records;
+    } else {
+      fromDate = body.from_date ? new Date(body.from_date) : (() => {
+        const d = new Date(); d.setDate(d.getDate() - 1); return d;
+      })();
+      toDate = body.to_date ? new Date(body.to_date) : new Date();
+
+      // Scrape attendance via Playwright headless browser
+      const result = await scrapeAttendance(fromDate, toDate);
+      if (!result.success) {
+        return NextResponse.json({ error: result.error }, { status: 502 });
+      }
+      records = result.records || [];
     }
 
-    const records = result.records || [];
     if (records.length === 0) {
       return NextResponse.json({
         success: true,

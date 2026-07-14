@@ -8,6 +8,8 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Fingerprint } from 'lucide-react';
 import { AttendanceManager } from '../components/attendance-manager';
+import { SyncButton } from '../components/sync-button';
+import { ImportCsvButton } from '../components/import-csv-button';
 import { getUserDetails } from '@/lib/auth';
 
 export default async function AttendanceDashboardPage({ searchParams }: {
@@ -93,6 +95,8 @@ export default async function AttendanceDashboardPage({ searchParams }: {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <ImportCsvButton />
+          <SyncButton />
           <Link href="/hr-ops/hr/attendance/check-in"
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
             <Fingerprint className="h-4 w-4" /> Kiosk

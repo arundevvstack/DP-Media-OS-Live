@@ -43,14 +43,17 @@ export function isConfigured(): boolean {
  */
 export async function scrapeAttendance(fromDate: Date, toDate: Date): Promise<EtoSyncResult> {
   let chromium: any;
-  let pw: any;
-
   try {
-    // Dynamic import to avoid build errors if Playwright is not installed
-    pw = await import('playwright-core');
+    const pw = (await import('playwright-extra')).default || await import('playwright-extra');
+    const stealth = (await import('puppeteer-extra-plugin-stealth')).default;
+    pw.chromium.use(stealth());
     chromium = pw.chromium;
   } catch {
-    return { success: false, error: 'Playwright is not installed. Run: npm install playwright-core' };
+    try {
+      chromium = (await import('playwright-core')).chromium;
+    } catch {
+      return { success: false, error: 'Playwright is not installed. Run: npm install playwright-core' };
+    }
   }
 
   let browser: any;
@@ -157,17 +160,24 @@ export async function scrapeAttendance(fromDate: Date, toDate: Date): Promise<Et
 }
 
 export async function testConnection(): Promise<{ success: boolean; message: string }> {
-  let pw: any;
+  let chromium: any;
   try {
-    pw = await import('playwright');
+    const pw = (await import('playwright-extra')).default || await import('playwright-extra');
+    const stealth = (await import('puppeteer-extra-plugin-stealth')).default;
+    pw.chromium.use(stealth());
+    chromium = pw.chromium;
   } catch {
-    return { success: false, message: 'Playwright not installed. Run: npm install playwright' };
+    try {
+      chromium = (await import('playwright-core')).chromium;
+    } catch {
+      return { success: false, message: 'Playwright not installed. Run: npm install playwright' };
+    }
   }
 
   let browser: any;
   try {
     const base = (process.env.ETIMEOFFICE_BASE_URL || 'https://www.etimeoffice.com').replace(/\/$/, '');
-    browser = await pw.chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await (await browser.newContext()).newPage();
 
     // Real login URL discovered via browser inspection
