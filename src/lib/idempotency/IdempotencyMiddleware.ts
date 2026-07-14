@@ -7,14 +7,15 @@ import { InMemoryIdempotencyRepository } from './IdempotencyRepository';
 const defaultRepository = new InMemoryIdempotencyRepository();
 const idempotencyService = new IdempotencyService(defaultRepository);
 
-export async function withIdempotency(
+export async function withIdempotency<T extends any[]>(
   req: NextRequest,
-  handler: (req: NextRequest) => Promise<NextResponse>
+  handler: (req: NextRequest, ...args: T) => Promise<NextResponse>,
+  ...args: T
 ): Promise<NextResponse> {
   const idempotencyKey = req.headers.get('x-idempotency-key');
   
   if (!idempotencyKey) {
-    return handler(req); // Bypass if no key provided
+    return handler(req, ...args); // Bypass if no key provided
   }
 
   try {
@@ -30,7 +31,7 @@ export async function withIdempotency(
       });
     }
 
-    const response = await handler(req);
+    const response = await handler(req, ...args);
     const body = await response.clone().text();
 
     await idempotencyService.finishOperation(idempotencyKey, response.status, body);

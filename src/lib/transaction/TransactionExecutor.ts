@@ -59,6 +59,9 @@ export class TransactionExecutor {
         ...context,
         durationMs: Date.now() - context.startTime,
       });
+      if (error instanceof DomainError && !(error instanceof TransactionError)) {
+        throw error;
+      }
       throw new TransactionError('Transaction failed after retries', ErrorCode.TRANSACTION_FAILED, false, {
         originalError: error,
       });

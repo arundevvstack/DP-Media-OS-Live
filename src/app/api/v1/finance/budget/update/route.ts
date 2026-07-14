@@ -1,11 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { FinancialEngine } from '@/lib/financial-engine';
 import { createClient } from '@/utils/supabase/server';
 import { PrismaClient } from '@prisma/client';
+import { withIdempotency } from '@/lib/idempotency';
+import { logger } from '@/lib/observability/logger';
+import { DomainError, ErrorCode } from '@/lib/transaction';
 
 const prisma = new PrismaClient();
 
-export async function POST(req: Request) {
+async function updateBudgetHandler(req: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -35,7 +38,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, data: stats });
 
   } catch (error: any) {
-    console.error("Budget Update Error:", error);
+    logger.error("Budget Update Error", error);
+    if (error instanceof DomainError) {
+      let status = 500;
+      if (error.code === ErrorCode.NOT_FOUND) status = 404;
+      return NextResponse.json({ error: error.message }, { status });
+    }
     return NextResponse.json({ error: error.message || "Failed to update budget" }, { status: 500 });
   }
+}
+
+export async function POST(req: NextRequest) {
+  return withIdempotency(req, updateBudgetHandler);
 }

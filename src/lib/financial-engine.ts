@@ -1,6 +1,10 @@
 import { PrismaClient } from '@prisma/client';
+import { TransactionService, DomainError, ErrorCode } from './transaction';
+import { logger } from './observability/logger';
+import { PrismaTransactionClient } from './transaction/TransactionExecutor';
 
 const prisma = new PrismaClient();
+const transactionService = new TransactionService(prisma);
 
 export class FinancialEngine {
   /**
@@ -8,79 +12,90 @@ export class FinancialEngine {
    * based on all active/approved time entries and expenses.
    */
   static async recalculateProjectBudget(projectId: string, averageHourlyLaborCost: number = 50) {
-    return await prisma.$transaction(async (tx) => {
-      // 1. Fetch budget record
-      const budget = await tx.budget.findUnique({
-        where: { project_id: projectId }
-      });
+    const correlationId = crypto.randomUUID();
 
-      if (!budget) {
-        throw new Error(`No budget record found for project ${projectId}`);
-      }
+    return await transactionService.runInTransaction(
+      correlationId,
+      async (tx) => {
+        // 1. Fetch budget record
+        const budget = await tx.budget.findUnique({
+          where: { project_id: projectId }
+        });
 
-      // 2. Calculate Labor Cost
-      const objectives = await tx.objective.findMany({
-        where: { project_id: projectId },
-        select: { id: true }
-      });
-      const objectiveIds = objectives.map(o => o.id);
-
-      const timeEntries = await tx.timeEntry.aggregate({
-        where: {
-          objective_id: { in: objectiveIds },
-          approval_status: 'approved'
-        },
-        _sum: { duration_sec: true }
-      });
-
-      const totalHours = (timeEntries._sum.duration_sec || 0) / 3600;
-      const laborCost = totalHours * averageHourlyLaborCost;
-
-      // 3. Calculate External / Hardware Expenses
-      const expenses = await tx.expense.aggregate({
-        where: { project_id: projectId, status: 'approved' },
-        _sum: { amount: true }
-      });
-      const externalCost = expenses._sum.amount || 0;
-
-      // 4. Calculate AI Costs
-      const aiJobs = await tx.aIGenerationJob.aggregate({
-        where: { project_id: projectId, status: 'completed' },
-        _sum: { cost_credits: true }
-      });
-      const aiCost = aiJobs._sum.cost_credits || 0;
-
-      // 5. Compute Utilization
-      const totalUtilized = laborCost + externalCost + aiCost;
-
-      // 6. Update Budget Record
-      const updatedBudget = await tx.budget.update({
-        where: { project_id: projectId },
-        data: {
-          utilized_budget: totalUtilized
+        if (!budget) {
+          throw new DomainError(`No budget record found for project ${projectId}`, ErrorCode.NOT_FOUND);
         }
-      });
 
-      const burnRate = (totalUtilized / budget.approved_budget) * 100;
+        // 2. Calculate Labor Cost
+        const objectives = await tx.objective.findMany({
+          where: { project_id: projectId },
+          select: { id: true }
+        });
+        const objectiveIds = objectives.map(o => o.id);
 
-      // 7. Optional: Fire Warning if over budget
-      if (burnRate >= 90) {
-        await this.fireBudgetWarning(tx, projectId, burnRate);
-      }
+        const timeEntries = await tx.timeEntry.aggregate({
+          where: {
+            objective_id: { in: objectiveIds },
+            approval_status: 'approved'
+          },
+          _sum: { duration_sec: true }
+        });
 
-      return {
+        const totalHours = (timeEntries._sum.duration_sec || 0) / 3600;
+        const laborCost = totalHours * averageHourlyLaborCost;
+
+        // 3. Calculate External / Hardware Expenses
+        const expenses = await tx.expense.aggregate({
+          where: { project_id: projectId, status: 'approved' },
+          _sum: { amount: true }
+        });
+        const externalCost = expenses._sum.amount || 0;
+
+        // 4. Calculate AI Costs
+        const aiJobs = await tx.aIGenerationJob.aggregate({
+          where: { project_id: projectId, status: 'completed' },
+          _sum: { cost_credits: true }
+        });
+        const aiCost = aiJobs._sum.cost_credits || 0;
+
+        // 5. Compute Utilization
+        const totalUtilized = laborCost + externalCost + aiCost;
+
+        // 6. Update Budget Record
+        const updatedBudget = await tx.budget.update({
+          where: { project_id: projectId },
+          data: {
+            utilized_budget: totalUtilized
+          }
+        });
+
+        const burnRate = (totalUtilized / budget.approved_budget) * 100;
+
+        // 7. Optional: Fire Warning if over budget
+        if (burnRate >= 90) {
+          await this.fireBudgetWarning(tx, projectId, burnRate);
+        }
+
+        return {
+          projectId,
+          laborCost,
+          externalCost,
+          aiCost,
+          totalUtilized,
+          approvedBudget: budget.approved_budget,
+          burnRatePercent: Math.round(burnRate * 100) / 100
+        };
+      },
+      undefined,
+      {
         projectId,
-        laborCost,
-        externalCost,
-        aiCost,
-        totalUtilized,
-        approvedBudget: budget.approved_budget,
-        burnRatePercent: Math.round(burnRate * 100) / 100
-      };
-    });
+        domain: 'finance',
+        service: 'financial-engine'
+      }
+    );
   }
 
-  private static async fireBudgetWarning(tx: any, projectId: string, burnRate: number) {
+  private static async fireBudgetWarning(tx: PrismaTransactionClient, projectId: string, burnRate: number) {
     const project = await tx.project.findUnique({
       where: { id: projectId },
       select: { company_id: true, project_name: true }
