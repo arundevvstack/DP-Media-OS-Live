@@ -1,8 +1,9 @@
+import prisma from "@/lib/prisma";
 import { PrismaClient } from '@prisma/client';
 import { TransactionService, DomainError, ErrorCode } from '@/lib/transaction';
 import crypto from 'crypto';
 
-const prisma = new PrismaClient();
+
 const transactionService = new TransactionService(prisma);
 
 export class WorkflowEngine {

@@ -1,7 +1,6 @@
+import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { scrapeAttendance, isConfigured } from "@/lib/etimeoffice";
-import { employeeAttendanceRepository } from "@/domains/hrm/repositories/EmployeeAttendanceRepository";
-import { employeeAttendanceRepository } from "@/domains/hrm/repositories/EmployeeAttendanceRepository";
 import { employeeAttendanceRepository } from "@/domains/hrm/repositories/EmployeeAttendanceRepository";
 
 export class IntegrationsEtimeofficeSyncpunchesApiService {

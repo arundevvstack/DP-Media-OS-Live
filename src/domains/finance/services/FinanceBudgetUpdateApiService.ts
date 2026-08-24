@@ -10,7 +10,7 @@ export class FinanceBudgetUpdateApiService {
     static async handlePOST(req: NextRequest) {
     }
 }
-const prisma = new PrismaClient();
+
 async function updateBudgetHandler(req: NextRequest) {
   try {
     const supabase = await createClient();

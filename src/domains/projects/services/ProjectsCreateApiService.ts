@@ -1,3 +1,4 @@
+import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { ENTERPRISE_TEMPLATES, DEFAULT_TIMELINE_DAYS, EnterpriseStageTemplate } from "@/lib/enterprise-workflow-templates";
 import { TransactionService, DomainError, ErrorCode } from "@/lib/transaction";

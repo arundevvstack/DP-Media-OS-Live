@@ -11,4 +11,3 @@ export class IntelligenceMarketDashboardApiService {
     static async handleGET() {
     }
 }
-const prisma = new PrismaClient();

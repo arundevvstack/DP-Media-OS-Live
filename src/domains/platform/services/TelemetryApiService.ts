@@ -7,4 +7,3 @@ export class TelemetryApiService {
     static async handlePOST(req: Request) {
     }
 }
-const prisma = new PrismaClient();

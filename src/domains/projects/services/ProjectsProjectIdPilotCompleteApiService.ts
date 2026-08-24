@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { projectRepository } from "@/domains/projects/repositories/ProjectRepository";
 import { deliverableRepository } from "@/domains/projects/repositories/DeliverableRepository";
-import { projectRepository } from "@/domains/projects/repositories/ProjectRepository";
 import { requirementChartRepository } from "@/domains/platform/repositories/RequirementChartRepository";
-import { prospectRepository } from "@/domains/crm/repositories/ProspectRepository";
 import { prospectRepository } from "@/domains/crm/repositories/ProspectRepository";
 
 export class ProjectsProjectIdPilotCompleteApiService {

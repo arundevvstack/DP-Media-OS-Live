@@ -5,13 +5,12 @@ import { marketOpportunityRepository } from "@/domains/crm/repositories/MarketOp
 import { industryTrendRepository } from "@/domains/platform/repositories/IndustryTrendRepository";
 import { marketLeadRepository } from "@/domains/crm/repositories/MarketLeadRepository";
 import { marketAlertRepository } from "@/domains/platform/repositories/MarketAlertRepository";
-import { marketAlertRepository } from "@/domains/platform/repositories/MarketAlertRepository";
 
 export class IntelligenceMarketScanApiService {
     static async handlePOST(request: Request) {
     }
 }
-const prisma = new PrismaClient();
+
 async function runMarketScan(companyId: string, industry: string, region: string, jobId: string) {
   try {
     console.log(`[Market Scan] Starting job ${jobId} for ${industry} in ${region}`);

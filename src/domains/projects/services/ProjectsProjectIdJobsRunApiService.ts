@@ -1,3 +1,4 @@
+import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { JobDispatcher } from "@/lib/production/providers/JobDispatcher";
 import { TransactionService, DomainError, ErrorCode } from "@/lib/transaction";

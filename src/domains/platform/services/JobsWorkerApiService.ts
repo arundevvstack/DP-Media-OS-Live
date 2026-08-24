@@ -1,5 +1,6 @@
+import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+
 import { FinancialEngine } from "@/lib/financial-engine";
 import { TransactionService, DomainError, ErrorCode } from "@/lib/transaction";
 import crypto from "crypto";
@@ -9,5 +10,5 @@ export class JobsWorkerApiService {
     static async handlePOST(req: Request) {
     }
 }
-const prisma = new PrismaClient();
+
 const transactionService = new TransactionService(prisma);

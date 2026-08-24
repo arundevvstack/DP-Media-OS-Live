@@ -1,3 +1,4 @@
+import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { TransactionService, DomainError, ErrorCode } from "@/lib/transaction";
 import { withIdempotency } from "@/lib/idempotency";
@@ -13,7 +14,7 @@ export class ProjectsProjectIdObjectivesApiService {
     static async handlePOST(req: NextRequest, ctx: { params: Promise<{ projectId: string }> }) {
     }
 }
-const prisma = new PrismaClient();
+
 const transactionService = new TransactionService(prisma);
 async function objectiveCreateHandler(
   req: NextRequest,

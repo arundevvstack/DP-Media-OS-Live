@@ -6,7 +6,7 @@ export class ProjectsProjectIdChangepipelineApiService {
     static async handlePOST(req: Request, { params }: { params: Promise<{ projectId: string }> }) {
     }
 }
-const prisma = new PrismaClient();
+
 function distributeStageTimelines(
   startDate: Date,
   endDate: Date,

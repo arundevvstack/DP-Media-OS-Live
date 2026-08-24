@@ -1,10 +1,10 @@
+import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { TransactionService, DomainError, ErrorCode } from "@/lib/transaction";
 import { withIdempotency } from "@/lib/idempotency";
 import { logger } from "@/lib/observability/logger";
 import crypto from "crypto";
-import { userRepository } from "@/domains/identity/repositories/UserRepository";
 import { userRepository } from "@/domains/identity/repositories/UserRepository";
 
 export class CrmProspectIdRequirementApiService {

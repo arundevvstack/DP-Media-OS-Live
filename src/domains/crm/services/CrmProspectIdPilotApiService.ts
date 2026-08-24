@@ -5,6 +5,7 @@ import { withIdempotency } from "@/lib/idempotency";
 import { logger } from "@/lib/observability/logger";
 import crypto from "crypto";
 import { userRepository } from "@/domains/identity/repositories/UserRepository";
+import prisma from "@/lib/prisma";
 
 export class CrmProspectIdPilotApiService {
     static async handlePOST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {

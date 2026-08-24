@@ -12,4 +12,3 @@ export class IntelligenceTwinApiService {
     static async handleGET(req: Request) {
     }
 }
-const prisma = new PrismaClient();

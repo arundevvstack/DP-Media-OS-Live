@@ -1,3 +1,4 @@
+import prisma from "@/lib/prisma";
 import { PrismaClient } from '@prisma/client';
 import { TransactionService, DomainError, ErrorCode } from './transaction';
 import { logger } from './observability/logger';
@@ -6,7 +7,7 @@ import { EnterpriseQueueRouter } from './queue/router/EnterpriseQueueRouter';
 import { QueueName } from './queue/registry';
 
 
-const prisma = new PrismaClient();
+
 const transactionService = new TransactionService(prisma);
 
 export class FinancialEngine {

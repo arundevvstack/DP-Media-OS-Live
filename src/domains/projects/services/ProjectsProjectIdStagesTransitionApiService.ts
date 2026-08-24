@@ -11,7 +11,7 @@ export class ProjectsProjectIdStagesTransitionApiService {
     static async handlePOST(req: NextRequest, ctx: { params: Promise<{ projectId: string }> }) {
     }
 }
-const prisma = new PrismaClient();
+
 async function stageTransitionHandler(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
