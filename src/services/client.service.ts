@@ -202,7 +202,7 @@ export const clientService = {
   },
 
   async getById(id: string) {
-    return prisma.client.findUnique({
+    return prisma.client.findFirst({
       where: { id },
       include: {
         projects: true,

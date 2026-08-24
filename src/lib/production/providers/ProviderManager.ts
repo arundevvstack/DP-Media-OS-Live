@@ -24,7 +24,7 @@ export class ProviderManager {
    * Retrieves and decrypts the API key for a specific provider and company.
    */
   static async getDecryptedCredentials(companyId: string, providerId: string): Promise<string> {
-    const cred = await prisma.productionProviderCredential.findUnique({
+    const cred = await prisma.productionProviderCredential.findFirst({
       where: {
         company_id_provider_id: {
           company_id: companyId,
@@ -47,7 +47,7 @@ export class ProviderManager {
     const encrypted = CryptoUtils.encrypt(rawApiKey);
     
     // First, try validating it via the adapter if we know the provider name
-    const providerObj = await prisma.productionAIProvider.findUnique({ where: { id: providerId } });
+    const providerObj = await prisma.productionAIProvider.findFirst({ where: { id: providerId } });
     if (!providerObj) throw new Error("Provider not found in registry");
 
     let status = "Offline";

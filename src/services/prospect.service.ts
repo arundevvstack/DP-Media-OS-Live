@@ -78,7 +78,7 @@ export const prospectService = {
     converted_client_id: string;
   }>, companyId?: string, userId?: string, correlationId: string = crypto.randomUUID()) {
     return transactionService.runInTransaction(correlationId, async (tx) => {
-      const existingProspect = await tx.prospect.findUnique({
+      const existingProspect = await tx.prospect.findFirst({
         where: { id }
       });
       

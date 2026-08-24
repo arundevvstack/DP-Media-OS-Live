@@ -34,7 +34,7 @@ async function payInvoiceHandler(
       correlationId,
       async (tx) => {
         // 1. Fetch the invoice
-        const invoice = await tx.invoice.findUnique({
+        const invoice = await tx.invoice.findFirst({
           where: { id: invoiceId, company_id: companyId }
         });
 
@@ -47,7 +47,7 @@ async function payInvoiceHandler(
         }
 
         // 2. Fetch the bank account
-        const bankAccount = await tx.bankAccount.findUnique({
+        const bankAccount = await tx.bankAccount.findFirst({
           where: { id: bankAccountId, company_id: companyId }
         });
 

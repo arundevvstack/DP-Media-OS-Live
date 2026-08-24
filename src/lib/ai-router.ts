@@ -17,7 +17,7 @@ export class AIRouter {
    */
   static async dispatchJob(payload: AIRequestPayload) {
     // 0. AI Governance & Cost Control Check (PHASE 5)
-    const project = await prisma.project.findUnique({
+    const project = await prisma.project.findFirst({
       where: { id: payload.projectId },
       include: { 
         company: { include: { tenant_subscription: true } }

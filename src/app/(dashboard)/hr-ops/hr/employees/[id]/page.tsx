@@ -18,7 +18,7 @@ export default async function EmployeeProfilePage({ params, searchParams }: { pa
   const { id } = await params;
   const tab = (await searchParams).tab || 'general';
   
-  const employee = await prisma.user.findUnique({
+  const employee = await prisma.user.findFirst({
     where: { id },
     include: {
       ActivityLog: {

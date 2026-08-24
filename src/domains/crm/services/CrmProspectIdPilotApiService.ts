@@ -21,7 +21,7 @@ async function pilotHandler(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const profile = await userRepository.findUnique({
+    const profile = await userRepository.findFirst({
       where: { id: user.id }
     });
 

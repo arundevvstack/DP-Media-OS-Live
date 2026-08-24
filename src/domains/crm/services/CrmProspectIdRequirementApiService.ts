@@ -24,7 +24,7 @@ async function requirementPostHandler(req: NextRequest, { params }: { params: Pr
       return NextResponse.json({ error: 'Unauthorized: Authentication required.' }, { status: 401 });
     }
 
-    const profile = await userRepository.findUnique({
+    const profile = await userRepository.findFirst({
       where: { id: user.id },
     });
 

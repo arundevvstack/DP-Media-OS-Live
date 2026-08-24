@@ -17,7 +17,7 @@ export default async function ProjectAiCooPage({ params }: { params: { projectId
   const { companyId: company_id } = await getUserDetails();
   const projectId = (await params).projectId;
 
-  const project = await prisma.project.findUnique({
+  const project = await prisma.project.findFirst({
     where: { id: projectId, company_id }
   });
 

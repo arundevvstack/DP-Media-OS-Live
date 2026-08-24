@@ -41,7 +41,7 @@ export const approvalService = {
     actorId: string;
     comment?: string;
   }) {
-    const chain = await prisma.approvalChain.findUnique({
+    const chain = await prisma.approvalChain.findFirst({
       where: { id: chainId }
     });
 

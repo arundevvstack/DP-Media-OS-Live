@@ -120,7 +120,7 @@ async function projectCreateHandler(req: NextRequest) {
     let requirementId = null;
 
     if (lead_id) {
-      const prospect = await prospectRepository.findUnique({
+      const prospect = await prospectRepository.findFirst({
         where: { id: lead_id },
         include: {
           requirements: {

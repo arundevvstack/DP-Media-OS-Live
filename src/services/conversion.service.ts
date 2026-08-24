@@ -14,7 +14,7 @@ export const conversionService = {
   async convertProspectToClient(prospectId: string, companyId: string, userId: string, userName: string, correlationId: string = crypto.randomUUID()) {
     return transactionService.runInTransaction(correlationId, async (tx) => {
       // 1. Fetch and validate Prospect
-      const prospect = await tx.prospect.findUnique({
+      const prospect = await tx.prospect.findFirst({
         where: { id: prospectId }
       });
 
