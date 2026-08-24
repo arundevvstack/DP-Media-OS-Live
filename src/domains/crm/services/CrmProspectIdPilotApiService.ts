@@ -36,7 +36,7 @@ async function pilotHandler(request: NextRequest, { params }: { params: Promise<
     const correlationId = request.headers.get("x-correlation-id") || crypto.randomUUID();
 
     const result = await transactionService.runInTransaction(correlationId, async (tx) => {
-      const prospect = await tx.prospect.findUnique({
+      const prospect = await tx.prospect.findFirst({
         where: { id: id, company_id: profile.company_id },
         include: {
           requirements: {
