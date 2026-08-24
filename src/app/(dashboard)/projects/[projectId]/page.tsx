@@ -824,10 +824,11 @@ export default function ProjectWorkspacePage({
       </div>
     );
   }
+
   return (
-    <div className="space-y-0 -mt-4 -mx-4 md:-mt-8 md:-mx-8 lg:-mt-12 lg:-mx-12 bg-white dark:bg-slate-900 min-h-[calc(100vh-2rem)]">
-      {/* ── All-white Header ── */}
-      <div className="bg-white dark:bg-slate-900 px-8 pt-8 pb-0">
+    <div className="space-y-0 bg-transparent min-h-screen">
+      {/* ── Premium Header ── */}
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-border/50 px-8 pt-8 pb-0 sticky top-0 z-10 shadow-sm">
         {/* Top row */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div className="flex items-start gap-5">
@@ -998,23 +999,22 @@ export default function ProjectWorkspacePage({
           </div>
         </div>
 
-        {/* Tab bar — white, bottom-border active indicator */}
-        <div className="mt-8">
+        <div className="mt-8 pb-4">
           <Tabs
             value={currentTab}
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList className="bg-transparent p-0 h-auto flex flex-nowrap overflow-x-auto scrollbar-hide gap-2 border-b border-border w-full justify-start rounded-none">
+            <TabsList className="bg-muted/40 p-1.5 h-auto inline-flex flex-nowrap overflow-x-auto scrollbar-hide gap-1.5 max-w-full justify-start rounded-full border border-border/50 shadow-inner">
               <TabsTrigger
                 value="overview"
-                className="rounded-none px-5 py-3 gap-2 text-muted-foreground font-black text-[10px] uppercase tracking-wider bg-transparent border-0 border-b-2 border-transparent -mb-px data-[state=active]:border-primary data-[state=active]:text-foreground transition-all"
+                className="rounded-full px-5 py-2.5 gap-2 text-muted-foreground font-bold text-[11px] uppercase tracking-wider bg-transparent border-none data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all whitespace-nowrap shrink-0"
               >
                 <Target className="h-3.5 w-3.5" /> Overview
               </TabsTrigger>
               <TabsTrigger
                 value="requirement"
-                className="rounded-none px-5 py-3 gap-2 text-muted-foreground font-black text-[10px] uppercase tracking-wider bg-transparent border-0 border-b-2 border-transparent -mb-px data-[state=active]:border-primary data-[state=active]:text-foreground transition-all"
+                className="rounded-full px-5 py-2.5 gap-2 text-muted-foreground font-bold text-[11px] uppercase tracking-wider bg-transparent border-none data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all whitespace-nowrap shrink-0"
               >
                 <FileText className="h-3.5 w-3.5" /> Requirement
               </TabsTrigger>
@@ -1022,28 +1022,28 @@ export default function ProjectWorkspacePage({
                 <TabsTrigger
                   key={stage.id}
                   value={stage.name}
-                  className="rounded-none px-5 py-3 gap-2 text-muted-foreground font-black text-[10px] uppercase tracking-wider bg-transparent border-0 border-b-2 border-transparent -mb-px data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none transition-all"
+                  className="rounded-full px-5 py-2.5 gap-2 text-muted-foreground font-bold text-[11px] uppercase tracking-wider bg-transparent border-none data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all whitespace-nowrap shrink-0"
                 >
                   {getPhaseIcon(stage.name.toLowerCase())} {stage.name}
                 </TabsTrigger>
               ))}
               <TabsTrigger
                 value="assets"
-                className="rounded-none px-5 py-3 gap-2 text-muted-foreground font-black text-[10px] uppercase tracking-wider bg-transparent border-0 border-b-2 border-transparent -mb-px data-[state=active]:border-primary data-[state=active]:text-foreground transition-all"
+                className="rounded-full px-5 py-2.5 gap-2 text-muted-foreground font-bold text-[11px] uppercase tracking-wider bg-transparent border-none data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all whitespace-nowrap shrink-0"
               >
                 <Package className="h-3.5 w-3.5" /> Assets
               </TabsTrigger>
               {hasFinanceAccess && (
                 <TabsTrigger
                   value="finances"
-                  className="rounded-none px-5 py-3 gap-2 text-muted-foreground font-black text-[10px] uppercase tracking-wider bg-transparent border-0 border-b-2 border-transparent -mb-px data-[state=active]:border-primary data-[state=active]:text-foreground transition-all"
+                  className="rounded-full px-5 py-2.5 gap-2 text-muted-foreground font-bold text-[11px] uppercase tracking-wider bg-transparent border-none data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all whitespace-nowrap shrink-0"
                 >
                   <Receipt className="h-3.5 w-3.5" /> Finances
                 </TabsTrigger>
               )}
               <TabsTrigger
                 value="timeline"
-                className="rounded-none px-5 py-3 gap-2 text-muted-foreground font-black text-[10px] uppercase tracking-wider bg-transparent border-0 border-b-2 border-transparent -mb-px data-[state=active]:border-primary data-[state=active]:text-foreground transition-all"
+                className="rounded-full px-5 py-2.5 gap-2 text-muted-foreground font-bold text-[11px] uppercase tracking-wider bg-transparent border-none data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all whitespace-nowrap shrink-0"
               >
                 <Calendar className="h-3.5 w-3.5" /> Timeline
               </TabsTrigger>

@@ -27,6 +27,9 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
           // If the token is invalid/missing, clear the corrupted local session
           if (userError.message.includes('Refresh Token Not Found') || userError.message.includes('Invalid Refresh Token')) {
             await supabase.auth.signOut();
+            setUser(null);
+            setIsLoading(false);
+            return;
           }
           throw userError;
         }

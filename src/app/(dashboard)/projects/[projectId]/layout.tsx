@@ -19,7 +19,7 @@ export default async function ProjectWorkspaceLayout({
     where: { id: projectId, company_id },
     include: {
       Client: true,
-      Members: { include: { User: true } }
+      ProjectMember: { include: { User: true } }
     }
   });
 
@@ -43,28 +43,8 @@ export default async function ProjectWorkspaceLayout({
   ];
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      <div className="border-b border-border bg-card px-6 py-4 shrink-0">
-        <div className="flex items-center gap-4 mb-4">
-          <Link href="/projects" className="p-2 hover:bg-accent rounded-full">
-            <ChevronLeft className="h-5 w-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">{project.name}</h1>
-            <p className="text-sm text-muted-foreground">{project.Client?.name || 'Internal'} • {project.status}</p>
-          </div>
-        </div>
-        
-        <div className="flex overflow-x-auto no-scrollbar gap-2">
-          {tabs.map(tab => (
-            <Link key={tab.name} href={`/projects/${projectId}${tab.path}`} className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-accent text-sm font-medium whitespace-nowrap">
-              <tab.icon className="h-4 w-4" /> {tab.name}
-            </Link>
-          ))}
-        </div>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto">
+    <div className="flex flex-col h-full w-full bg-background">
+      <div className="flex-1 w-full relative">
         {children}
       </div>
     </div>
