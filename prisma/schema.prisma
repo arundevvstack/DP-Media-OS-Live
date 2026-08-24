@@ -331,7 +331,6 @@ model Company {
   MarketOpportunity            MarketOpportunity[]
   MarketResearchNote           MarketResearchNote[]
   Notification                 Notification[]
-  NotificationQueue            NotificationQueue[]
   OperationalTelemetry         OperationalTelemetry[]
   ProductionProviderCredential ProductionProviderCredential[]
   Project                      Project[]
@@ -426,24 +425,6 @@ model Deliverable {
   RevisionRequest RevisionRequest[]
 }
 
-model DistributedJobQueue {
-  id             String    @id
-  job_type       String
-  payload        Json
-  status         String    @default("pending")
-  priority       Int       @default(0)
-  worker_id      String?
-  started_at     DateTime?
-  completed_at   DateTime?
-  error_log      String?
-  created_at     DateTime  @default(now())
-  max_retries    Int       @default(3)
-  next_retry_at  DateTime?
-  retry_count    Int       @default(0)
-  schema_version String    @default("1.0")
-  trace_id       String?
-  updated_at     DateTime  @default(now())
-}
 
 model Expense {
   id          String   @id
@@ -672,21 +653,6 @@ model NotificationPreference {
   User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-model NotificationQueue {
-  id           String    @id
-  company_id   String
-  user_id      String
-  channel      String
-  title        String
-  body         String
-  priority     String    @default("MEDIUM")
-  status       String    @default("queued")
-  retry_count  Int       @default(0)
-  scheduled_at DateTime  @default(now())
-  sent_at      DateTime?
-  Company      Company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  User         User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-}
 
 model Objective {
   id                                                           String                @id
@@ -1365,7 +1331,6 @@ model User {
   MarketResearchNote                    MarketResearchNote[]
   Notification                          Notification[]
   NotificationPreference                NotificationPreference?
-  NotificationQueue                     NotificationQueue[]
   Objective_Objective_assignee_idToUser Objective[]                   @relation("Objective_assignee_idToUser")
   Objective_Objective_reviewer_idToUser Objective[]                   @relation("Objective_reviewer_idToUser")
   assistant_threads                     ProductionAssistantThread[]

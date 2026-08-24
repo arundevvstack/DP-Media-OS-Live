@@ -1,24 +1,12 @@
-import { NextResponse } from 'next/server';
-// Force Turbopack to recompile
-import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import { UsersApiService } from '../../../../domains/identity/services/UsersApiService';
 
 export async function GET(request: Request) {
   try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        fullName: true,
-        department: true,
-        role_id: true,
-      },
-      orderBy: {
-        fullName: 'asc',
-      }
-    });
-
-    return NextResponse.json({ users });
+    const result = await UsersApiService.handleGET(request);
+    return NextResponse.json(result.payload, { status: result.status || 200 });
   } catch (error: any) {
-    console.error('Error fetching users:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

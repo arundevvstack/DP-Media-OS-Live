@@ -40,7 +40,6 @@ describe('Phase 3A - Distributed Queue Foundation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     QueueConfig.QUEUE_ENABLED = true;
-    QueueConfig.QUEUE_SHADOW_MODE = true;
   });
 
   it('QueueRegistry creates and caches queues', () => {
@@ -52,17 +51,14 @@ describe('Phase 3A - Distributed Queue Foundation', () => {
     expect(q1).not.toBe(q3);
   });
 
-  it('QueueDispatcher respects shadow mode and dispatches to bullmq', async () => {
-    const spy = vi.spyOn(QueueObservability, 'logShadowModeDispatched');
+  it('QueueDispatcher dispatches to bullmq', async () => {
     const jobId = await QueueDispatcher.dispatch(QueueName.AI_JOBS, 'GenerateImage', { prompt: 'test' });
     
     expect(jobId).toBe('test-job-id');
-    expect(spy).toHaveBeenCalledWith(QueueName.AI_JOBS, 'test-job-id');
   });
 
-  it('QueueDispatcher opts out entirely if queues disabled and not in shadow mode', async () => {
+  it('QueueDispatcher opts out entirely if queues disabled', async () => {
     QueueConfig.QUEUE_ENABLED = false;
-    QueueConfig.QUEUE_SHADOW_MODE = false;
     
     const jobId = await QueueDispatcher.dispatch(QueueName.AI_JOBS, 'GenerateImage', { prompt: 'test' });
     expect(jobId).toBeNull();

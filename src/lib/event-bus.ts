@@ -1,5 +1,8 @@
 // @ts-nocheck
 import { PrismaClient } from '@prisma/client';
+import { EnterpriseQueueRouter } from './queue/router/EnterpriseQueueRouter';
+import { QueueName } from './queue/registry';
+
 
 const prisma = new PrismaClient();
 
@@ -45,16 +48,11 @@ export class EventBus {
     }
 
     try {
-      const job = await prisma.distributedJobQueue.create({
-        data: {
-          job_type: eventType,
-          payload: governedPayload,
-          status: 'pending',
-          priority: priority,
-          trace_id: traceId,
-          schema_version: "1.0"
-        }
-      });
+      const job = await EnterpriseQueueRouter.dispatchPrimary(
+        QueueName.WORKFLOW_JOBS, // Defaulting generic events to workflow jobs queue
+        eventType,
+        governedPayload
+      );
       console.log(`[EventBus] Emitted ${eventType} -> Job ${job.id}`);
 
       // --- PHASE 6: PUBLIC API WEBHOOKS ---

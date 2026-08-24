@@ -1,10 +1,16 @@
 export const QueueConfig = {
     // Feature flags
     QUEUE_ENABLED: process.env.QUEUE_ENABLED === 'true',
-    QUEUE_SHADOW_MODE: process.env.QUEUE_SHADOW_MODE === 'true' || true, // Default true as per Phase 3A
-    QUEUE_DUAL_WRITE: process.env.QUEUE_DUAL_WRITE === 'true',
-    QUEUE_PROCESSING: process.env.QUEUE_PROCESSING === 'true',
-  
+    QUEUE_PROCESSING: process.env.QUEUE_PROCESSING === 'true' || true,
+
+    // Health Thresholds for Rollback
+    HEALTH_MAX_FAILURE_RATE: parseFloat(process.env.HEALTH_MAX_FAILURE_RATE || '0.05'), // 5%
+    HEALTH_MAX_RETRY_RATE: parseFloat(process.env.HEALTH_MAX_RETRY_RATE || '0.10'), // 10%
+    HEALTH_MAX_QUEUE_DELAY_MS: parseInt(process.env.HEALTH_MAX_QUEUE_DELAY_MS || '30000', 10), // 30s
+    HEALTH_MAX_DLQ_RATE: parseFloat(process.env.HEALTH_MAX_DLQ_RATE || '0.01'), // 1%
+    HEALTH_MAX_PROCESSING_TIME_MS: parseInt(process.env.HEALTH_MAX_PROCESSING_TIME_MS || '60000', 10), // 60s
+    HEALTH_MAX_WORKER_RESTARTS: parseInt(process.env.HEALTH_MAX_WORKER_RESTARTS || '3', 10),
+
     // Connection
     REDIS_HOST: process.env.REDIS_HOST || 'localhost',
     REDIS_PORT: parseInt(process.env.REDIS_PORT || '6379', 10),

@@ -1,18 +1,12 @@
-import { NextResponse } from "next/dist/server/web/spec-extension/response";
-import prisma from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { ProjectsProjectIdJobsApiService } from '../../../../../../domains/projects/services/ProjectsProjectIdJobsApiService';
 
 export async function GET(req: Request, { params }: { params: { projectId: string } }) {
   try {
-    const jobs = await prisma.productionAIJob.findMany({
-      where: { project_id: params.projectId },
-      orderBy: { created_at: 'desc' },
-      take: 50,
-      include: {
-        provider: true
-      }
-    });
-    return NextResponse.json(jobs);
+    const result = await ProjectsProjectIdJobsApiService.handleGET(req, { params });
+    return NextResponse.json(result.payload, { status: result.status || 200 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

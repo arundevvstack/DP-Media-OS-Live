@@ -1,4 +1,7 @@
 import prisma from '@/lib/prisma';
+import { EnterpriseQueueRouter } from '@/lib/queue/router/EnterpriseQueueRouter';
+import { QueueName } from '@/lib/queue/registry';
+
 
 export const notificationTemplates: Record<string, { title: string; body: string }> = {
   PROSPECT_CONVERTED: {
@@ -69,68 +72,15 @@ export const notificationService = {
 
     // 3. Queue a record for each preferred channel
     for (const channel of channels) {
-      const entry = await prisma.notificationQueue.create({
-        data: {
-          company_id: companyId,
-          user_id: userId,
-          channel,
-          title,
-          body,
-          priority,
-          status: 'queued'
-        }
-      });
+      const entry = await EnterpriseQueueRouter.dispatchPrimary(
+        QueueName.NOTIFICATIONS,
+        `send_notification_${channel.toLowerCase()}`,
+        { companyId, userId, channel, title, body, priority }
+      );
       queuedEntries.push(entry);
     }
 
     return queuedEntries;
-  },
-
-  /**
-   * Processes and dispatches the queued notifications
-   */
-  async processQueue(batchSize = 50) {
-    const queuedItems = await prisma.notificationQueue.findMany({
-      where: {
-        status: 'queued',
-        scheduled_at: { lte: new Date() },
-        retry_count: { lt: 3 }
-      },
-      take: batchSize,
-      orderBy: { priority: 'desc' } // Process high priority first
-    });
-
-    let processedCount = 0;
-
-    for (const item of queuedItems) {
-      try {
-        // Dispatch to appropriate channels
-        await this.dispatch(item);
-
-        // Mark as sent
-        await prisma.notificationQueue.update({
-          where: { id: item.id },
-          data: {
-            status: 'sent',
-            sent_at: new Date()
-          }
-        });
-        processedCount++;
-      } catch (err: any) {
-        console.error(`Failed to dispatch notification ID ${item.id}:`, err.message);
-
-        const isLastAttempt = item.retry_count >= 2;
-        await prisma.notificationQueue.update({
-          where: { id: item.id },
-          data: {
-            retry_count: item.retry_count + 1,
-            status: isLastAttempt ? 'failed' : 'queued'
-          }
-        });
-      }
-    }
-
-    return processedCount;
   },
 
   /**

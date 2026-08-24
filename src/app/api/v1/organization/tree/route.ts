@@ -1,46 +1,12 @@
-// @ts-nocheck
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import { OrganizationTreeApiService } from '../../../../../domains/platform/services/OrganizationTreeApiService';
 
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const company_id = searchParams.get('company_id');
-
-    if (!company_id) {
-      return NextResponse.json({ error: 'company_id is required' }, { status: 400 });
-    }
-
-    const allUnits = await prisma.organizationUnit.findMany({
-      where: {
-        company_id,
-        is_active: true,
-      },
-      orderBy: [
-        { level: 'asc' },
-        { sort_order: 'asc' },
-        { name: 'asc' }
-      ]
-    });
-
-    // Build tree
-    const map = new Map<string, any>();
-    const tree: any[] = [];
-
-    allUnits.forEach(unit => {
-      map.set(unit.id, { ...unit, children: [] });
-    });
-
-    allUnits.forEach(unit => {
-      if (unit.parent_id && map.has(unit.parent_id)) {
-        map.get(unit.parent_id).children.push(map.get(unit.id));
-      } else {
-        tree.push(map.get(unit.id));
-      }
-    });
-
-    return NextResponse.json(tree);
+    const result = await OrganizationTreeApiService.handleGET(req);
+    return NextResponse.json(result.payload, { status: result.status || 200 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

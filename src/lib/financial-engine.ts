@@ -2,6 +2,9 @@ import { PrismaClient } from '@prisma/client';
 import { TransactionService, DomainError, ErrorCode } from './transaction';
 import { logger } from './observability/logger';
 import { PrismaTransactionClient } from './transaction/TransactionExecutor';
+import { EnterpriseQueueRouter } from './queue/router/EnterpriseQueueRouter';
+import { QueueName } from './queue/registry';
+
 
 const prisma = new PrismaClient();
 const transactionService = new TransactionService(prisma);
@@ -109,16 +112,18 @@ export class FinancialEngine {
     });
 
     if (pm) {
-      await tx.notificationQueue.create({
-        data: {
-          company_id: project.company_id,
-          user_id: pm.user_id,
+      await EnterpriseQueueRouter.dispatchPrimary(
+        QueueName.NOTIFICATIONS,
+        'budget_alert',
+        { 
+          companyId: project.company_id,
+          userId: pm.user_id,
           channel: 'IN_APP',
           title: 'Budget Alert',
           body: `Project "${project.project_name}" has reached ${burnRate.toFixed(1)}% of its approved budget.`,
           priority: 'HIGH'
         }
-      });
+      );
     }
   }
 }

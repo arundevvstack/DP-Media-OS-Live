@@ -6,8 +6,5 @@ export * from './dlq';
 export * from './locks';
 export * from './dispatcher';
 export * from './serialization';
-export * from './workers/BaseWorker';
 export * from './retry';
 export * from './health';
-export * from './parity';
-export * from './dual-write';

@@ -27,7 +27,5 @@ export class QueueObservability {
     logger.warn('Job Routed to DLQ', { ...metrics, eventType: 'QUEUE_JOB_DLQ' });
   }
 
-  static logShadowModeDispatched(queueName: string, jobId: string) {
-    logger.info(`Shadow mode job dispatched to ${queueName}`, { jobId, eventType: 'QUEUE_JOB_SHADOW_DISPATCH' });
-  }
+
 }
