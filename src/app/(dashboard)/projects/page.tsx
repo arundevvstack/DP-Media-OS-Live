@@ -735,6 +735,9 @@ function ProjectCard({ project, view, index, onArchive, companyUsers, clients }:
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="rounded-[10px] bg-white dark:bg-slate-900 border border-border shadow-xl p-2 z-[100]">
+                    <DropdownMenuItem className="font-bold gap-3 rounded-xl m-1 py-3 cursor-pointer" onClick={handleUpdateThumbnail}>
+                      <ImageIcon className="h-4 w-4" /> Change Thumbnail
+                    </DropdownMenuItem>
                     <DropdownMenuItem className="text-accent font-bold gap-3 rounded-xl m-1 py-3 cursor-pointer focus:bg-accent/10" onClick={() => onArchive(project)}>
                       <Archive className="h-4 w-4" /> Archive Project
                     </DropdownMenuItem>
@@ -896,6 +899,9 @@ function ProjectCard({ project, view, index, onArchive, companyUsers, clients }:
                     <Link href={`/projects/${project.id}`} className="flex items-center gap-4">
                       <ExternalLink className="h-4 w-4 text-foreground" /> View Details
                     </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="font-bold gap-4 rounded-xl m-1 py-3.5 cursor-pointer" onClick={handleUpdateThumbnail}>
+                    <ImageIcon className="h-4 w-4 text-foreground" /> Change Thumbnail
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-muted/50 my-1 mx-2" />
                   <DropdownMenuItem className="rounded-xl m-1 py-3.5 font-bold cursor-pointer text-accent focus:bg-accent/10" onClick={() => onArchive(project)}>
