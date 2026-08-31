@@ -411,6 +411,7 @@ function ProposalsContent() {
 
   const [proposals, setProposals] = useState<any[]>([]);
   const [isProposalsLoading, setIsProposalsLoading] = useState(true);
+  const [prospectRequirement, setProspectRequirement] = useState<any>(null);
 
   const reloadProposals = async () => {
     setIsProposalsLoading(true);
@@ -448,7 +449,7 @@ function ProposalsContent() {
       const services = searchParams.get('services') || searchParams.get('vertical') || '';
       const context = searchParams.get('context') || '';
       const location = searchParams.get('location') || '';
-      const leadId = searchParams.get('leadId') || '';
+      const leadId = searchParams.get('leadId') || searchParams.get('prospectId') || '';
 
       setAIInputs(prev => ({
         ...prev,
@@ -462,6 +463,29 @@ function ProposalsContent() {
       setIsAddOpen(true);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (aiInputs.leadId) {
+      fetch(`/api/v1/crm/prospect/${aiInputs.leadId}/requirement`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.requirement) {
+            setProspectRequirement(data.requirement);
+            setAIInputs(prev => ({
+              ...prev,
+              project_description: data.requirement.objective || prev.project_description,
+              project_duration: data.requirement.timeline || prev.project_duration
+            }));
+            toast({ title: "Requirements Synced", description: "Requirement analysis data has been linked to this proposal." });
+          } else {
+            setProspectRequirement(null);
+          }
+        })
+        .catch(() => setProspectRequirement(null));
+    } else {
+      setProspectRequirement(null);
+    }
+  }, [aiInputs.leadId]);
 
   useEffect(() => {
     const propId = searchParams.get('id');
@@ -509,14 +533,24 @@ function ProposalsContent() {
 
     setIsGenerating(true);
     try {
+      const selectedLead = leads?.find((l: any) => l.id === aiInputs.leadId);
+      const companyName = selectedLead?.company_name || aiInputs.client_type || "Client";
+      const prospectName = selectedLead?.primary_contact || "Prospect Representative";
+
       const result = await generateProposalContent({
-        service_vertical: aiInputs.service_vertical,
-        client_type: aiInputs.client_type,
-        location: aiInputs.location,
-        project_description: aiInputs.project_description,
-        project_duration: aiInputs.project_duration,
-        target_market: aiInputs.target_market,
-        budget: aiInputs.budget
+        prospect_name: prospectName,
+        company_name: companyName,
+        industry: aiInputs.client_type || aiInputs.service_vertical,
+        project_name: aiInputs.project_description ? aiInputs.project_description.substring(0, 50) : "Campaign Project",
+        objective: prospectRequirement?.objective || aiInputs.project_description || "Increase brand awareness and ROI.",
+        scope_of_work: prospectRequirement?.scope_of_work || `End-to-end ${aiInputs.service_vertical || 'production'} including strategy and execution.`,
+        deliverables: Array.isArray(prospectRequirement?.universal_deliverables) && prospectRequirement.universal_deliverables.length > 0
+            ? prospectRequirement.universal_deliverables 
+            : prospectRequirement?.deliverables_summary 
+                ? [prospectRequirement.deliverables_summary] 
+                : ["Strategy Document", "Primary Asset", "Revisions"],
+        timeline: prospectRequirement?.timeline || aiInputs.project_duration || "4 Weeks",
+        budget: selectedLead?.deal_value ? `₹${selectedLead.deal_value}` : (aiInputs.budget || "Standard Rates")
       });
       setGeneratedDraft(result);
       setGenerationStep('preview');

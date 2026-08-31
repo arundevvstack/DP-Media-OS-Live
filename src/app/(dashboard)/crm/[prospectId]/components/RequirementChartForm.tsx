@@ -11,7 +11,8 @@ import { toast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Check, Target, Sparkles, Bot, Briefcase, Palette, Video, Calendar, Upload, Settings, FileText, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft, X } from "lucide-react";
+import { Loader2, Save, Check, Target, Sparkles, Bot, Briefcase, Palette, Video, Calendar, Upload, Settings, FileText, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft, X, ChevronsUpDown, Plus } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { generateRequirementScope } from "@/ai/flows/generate-requirements";
 import { cn } from "@/lib/utils";
 
@@ -44,22 +45,125 @@ const PRODUCTION_TYPES = [
 const ASPECT_RATIOS = ["16:9", "9:16", "1:1", "4:5"];
 
 const FINAL_DELIVERABLES = [
-  "Script", "Storyboard", "Voice Over", "Photography", "Video", "Social Media Versions", "Master Export", "Source Files", "Project Files", "Thumbnail"
+  "Master Video (4K/UHD)",
+  "Master Video (1080p/HD)",
+  "Vertical Cutdowns (9:16)",
+  "Square Cutdowns (1:1)",
+  "Teaser / Trailer (15s/30s)",
+  "Textless Master (Clean Version)",
+  "Subtitles (SRT/VTT Files)",
+  "Subtitles (Burned-in)",
+  "Raw Footage (Unedited/Log)",
+  "Audio Stems (Dialog, Music, SFX)",
+  "Final Audio Mixdown (WAV/MP3)",
+  "Source Project Files (Premiere, Ae, DaVinci)",
+  "Motion Graphics / Toolkit (.mogrt)",
+  "Photography (Edited/Retouched)",
+  "Photography (RAW Files)",
+  "Thumbnails / Cover Art",
+  "Behind the Scenes (BTS) Video",
+  "GIFs / Looping Assets",
+  "Final Script / Transcripts",
+  "B-Roll / Highlight Package"
 ];
 
-function CheckboxGroup({ options, selected, onChange }: { options: string[], selected: string[], onChange: (val: string[]) => void }) {
+function MultiSelectCombobox({ 
+  options, 
+  selected, 
+  onChange,
+  placeholder = "Select or type to add custom..."
+}: { 
+  options: string[], 
+  selected: string[], 
+  onChange: (val: string[]) => void,
+  placeholder?: string
+}) {
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+
   const toggle = (opt: string) => {
     if (selected.includes(opt)) onChange(selected.filter(x => x !== opt));
     else onChange([...selected, opt]);
   }
+
+  const handleUnselect = (item: string) => {
+    onChange(selected.filter((i) => i !== item));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && inputValue.trim() !== "") {
+      const newVal = inputValue.trim();
+      if (!selected.includes(newVal)) {
+        onChange([...selected, newVal]);
+      }
+      setInputValue("");
+      e.preventDefault();
+    }
+  };
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      {options.map(opt => (
-        <div key={opt} className="flex items-center space-x-2">
-          <Checkbox id={opt} checked={selected.includes(opt)} onCheckedChange={() => toggle(opt)} />
-          <label htmlFor={opt} className="text-sm font-medium leading-none">{opt}</label>
+    <div className="space-y-3">
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selected.map((item) => (
+            <Badge key={item} variant="secondary" className="px-3 py-1.5 text-sm bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-1.5 rounded-full border border-primary/20 transition-all">
+              {item}
+              <X className="w-3.5 h-3.5 cursor-pointer hover:text-red-500 rounded-full" onClick={() => handleUnselect(item)} />
+            </Badge>
+          ))}
         </div>
-      ))}
+      )}
+      
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between rounded-xl bg-slate-50/50 text-slate-500 font-normal border-slate-200 hover:bg-slate-100 transition-colors">
+            {placeholder}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-xl overflow-hidden" align="start">
+          <div className="flex flex-col w-full">
+            <div className="flex items-center border-b px-2">
+              <Input 
+                placeholder="Search or type custom..." 
+                className="border-0 focus-visible:ring-0 shadow-none h-10 px-2"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
+            <div className="max-h-64 overflow-y-auto py-1">
+              {inputValue.trim() !== "" && !options.includes(inputValue.trim()) && !selected.includes(inputValue.trim()) && (
+                <div 
+                  className="px-4 py-2 text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 text-primary font-medium"
+                  onClick={() => {
+                    onChange([...selected, inputValue.trim()]);
+                    setInputValue("");
+                  }}
+                >
+                  <Plus className="w-4 h-4" /> Add "{inputValue.trim()}"
+                </div>
+              )}
+              {options.filter(opt => opt.toLowerCase().includes(inputValue.toLowerCase())).map(opt => {
+                const isSelected = selected.includes(opt);
+                return (
+                  <div 
+                    key={opt}
+                    className="px-4 py-2 text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between"
+                    onClick={() => toggle(opt)}
+                  >
+                    <span className={isSelected ? "font-semibold text-primary" : ""}>{opt}</span>
+                    {isSelected && <Check className="w-4 h-4 text-primary" />}
+                  </div>
+                )
+              })}
+              {options.filter(opt => opt.toLowerCase().includes(inputValue.toLowerCase())).length === 0 && inputValue.trim() === "" && (
+                <div className="px-4 py-3 text-sm text-slate-500 text-center">No matching options.</div>
+              )}
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   )
 }
@@ -72,9 +176,10 @@ interface RequirementChartFormProps {
   subVertical?: string;
   projectType?: string;
   notes?: string;
+  onComplete?: () => void;
 }
 
-export function RequirementChartForm({ prospectId, companyName, serviceVertical, industry, subVertical, projectType, notes }: RequirementChartFormProps) {
+export function RequirementChartForm({ prospectId, companyName, serviceVertical, industry, subVertical, projectType, notes, onComplete }: RequirementChartFormProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -95,8 +200,8 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
     const showCustom = isCustom || value === "Custom";
     
     return (
-      <div className="space-y-3">
-        <Label>{label}</Label>
+      <div className="space-y-2.5">
+        <Label className="text-slate-500">{label}</Label>
         {!showCustom ? (
           <Select value={value || ""} onValueChange={v => {
             if (v === "Custom") {
@@ -105,7 +210,7 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
               onChange(v);
             }
           }}>
-            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+            <SelectTrigger className="rounded-xl bg-slate-50/50"><SelectValue placeholder="Select..." /></SelectTrigger>
             <SelectContent>
               {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
               <SelectItem value="Custom">Custom / Other</SelectItem>
@@ -117,6 +222,7 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
               value={value === "Custom" ? "" : value} 
               onChange={e => onChange(e.target.value)} 
               placeholder={`Enter custom ${label.toLowerCase()}...`}
+              className="rounded-xl bg-slate-50/50"
               autoFocus
             />
             <Button variant="ghost" size="icon" onClick={() => onChange("")} title="Back to presets">
@@ -221,9 +327,8 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
       
       const prodType = updated.project_details?.production_type;
       if (prodType === 'ai') {
-        if (updated.ai_style) score += 10;
-        if (updated.notes) score += 10; // Prompt notes
-        if (updated.production_requirements?.voice_over || updated.production_requirements?.ai_language) score += 10;
+        if (updated.ai_style) score += 15;
+        if (updated.production_requirements?.voice_over || updated.production_requirements?.ai_language) score += 15;
       } else if (prodType === 'hybrid') {
         if (updated.live_shoot_details?.locations) score += 15;
         if (updated.hybrid_details?.ai_components?.length > 0) score += 15;
@@ -281,74 +386,62 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
   const assetsStatusOk = hasAssets || assetsNotRequired;
 
   return (
-    <div className="space-y-10 pb-32 max-w-6xl mx-auto px-4 md:px-8 pt-8">
+    <div className="space-y-6 pb-24 max-w-5xl mx-auto px-4 md:px-6 pt-4">
       {/* Top Header & Completeness (Always Visible) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="md:col-span-3 flex flex-col justify-center space-y-5 p-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-800 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
-          <div className="flex justify-between items-end">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2 text-slate-800 dark:text-slate-100">
-                {data.completeness_score >= 100 ? (
-                  <Sparkles className="h-6 w-6 text-emerald-500" />
-                ) : (
-                  <Target className="h-6 w-6 text-primary" /> 
-                )}
-                Requirement Analysis
-              </h2>
-              <p className="text-sm text-slate-500 mt-1">
-                {data.completeness_score >= 100 ? "All required information has been successfully provided." : "Complete all necessary information to proceed."}
-              </p>
-            </div>
-            <div className="flex flex-col items-end">
+      <div className="flex flex-col p-6 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 transition-all">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight flex items-center gap-2 text-slate-800 dark:text-slate-100">
               {data.completeness_score >= 100 ? (
-                <div className="px-4 py-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-2xl border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 shadow-sm font-bold text-xl uppercase tracking-wider animate-in zoom-in duration-300">
-                  <CheckCircle2 className="h-5 w-5" /> Finished
-                </div>
+                <Sparkles className="h-5 w-5 text-emerald-500" />
               ) : (
-                <span className="text-4xl font-black text-primary tracking-tighter drop-shadow-sm">{Math.round(data.completeness_score || 0)}%</span>
+                <Target className="h-5 w-5 text-primary" /> 
               )}
+              Requirement Analysis
+            </h2>
+            <div className="flex items-center gap-3 mt-1.5">
+              <p className="text-xs text-slate-500">
+                {data.completeness_score >= 100 ? "All required information provided." : "Complete necessary information."}
+              </p>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+                {saveStatus === "saving" ? (
+                  <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                ) : saveStatus === "saved" ? (
+                  <Check className="h-3 w-3 text-emerald-500" />
+                ) : (
+                  <Save className="h-3 w-3 text-slate-400" />
+                )}
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
+                  {saveStatus === "saving" ? "Saving" : saveStatus === "saved" ? "Saved" : "Waiting"}
+                </span>
+              </div>
             </div>
           </div>
-          
-          <Progress value={data.completeness_score || 0} className="h-4 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/50" indicatorColor={data.completeness_score >= 100 ? "bg-emerald-500" : "bg-primary"} />
-          
-          <div className="flex flex-wrap gap-6 pt-2">
-            <div className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-300 ${hasClient ? 'text-emerald-600' : 'text-slate-400'}`}>
-              {hasClient ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />} Client
-            </div>
-            <div className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-300 ${hasProject ? 'text-emerald-600' : 'text-slate-400'}`}>
-              {hasProject ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />} Project
-            </div>
-            <div className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-300 ${hasTimeline ? 'text-emerald-600' : 'text-slate-400'}`}>
-              {hasTimeline ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />} Timeline
-            </div>
-            <div className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-300 ${assetsStatusOk ? 'text-emerald-600' : 'text-amber-500'}`}>
-              {assetsStatusOk ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />} {assetsNotRequired ? 'Assets Not Required' : hasAssets ? 'Assets Provided' : 'Assets Missing'}
-            </div>
+          <div className="flex items-center">
+            {data.completeness_score >= 100 ? (
+              <div className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 shadow-sm font-bold text-sm uppercase tracking-wider">
+                <CheckCircle2 className="h-4 w-4" /> Finished
+              </div>
+            ) : (
+              <span className="text-3xl font-black text-primary tracking-tighter drop-shadow-sm">{Math.round(data.completeness_score || 0)}%</span>
+            )}
           </div>
         </div>
-
-        <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-slate-900 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-800 h-full relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="text-center space-y-3 z-10">
-            <div className="mx-auto w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700 shadow-sm">
-              {saveStatus === "saving" ? (
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              ) : saveStatus === "saved" ? (
-                <Check className="h-5 w-5 text-emerald-500" />
-              ) : (
-                <Save className="h-5 w-5 text-slate-400" />
-              )}
-            </div>
-            <div>
-              <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 uppercase tracking-wider">Sync Status</h3>
-              <p className="text-xs font-medium text-slate-500 mt-1">
-                {saveStatus === "saving" && "Saving changes..."}
-                {saveStatus === "saved" && "All changes saved"}
-                {saveStatus === "idle" && lastSaved && `Last saved ${lastSaved.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`}
-                {saveStatus === "idle" && !lastSaved && "Waiting to save"}
-              </p>
-            </div>
+        
+        <Progress value={data.completeness_score || 0} className="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/50" indicatorColor={data.completeness_score >= 100 ? "bg-emerald-500" : "bg-primary"} />
+        
+        <div className="flex flex-wrap gap-5 pt-4">
+          <div className={`flex items-center gap-1.5 text-xs font-semibold transition-colors duration-300 ${hasClient ? 'text-emerald-600' : 'text-slate-400'}`}>
+            {hasClient ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />} Client
+          </div>
+          <div className={`flex items-center gap-1.5 text-xs font-semibold transition-colors duration-300 ${hasProject ? 'text-emerald-600' : 'text-slate-400'}`}>
+            {hasProject ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />} Project
+          </div>
+          <div className={`flex items-center gap-1.5 text-xs font-semibold transition-colors duration-300 ${hasTimeline ? 'text-emerald-600' : 'text-slate-400'}`}>
+            {hasTimeline ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />} Timeline
+          </div>
+          <div className={`flex items-center gap-1.5 text-xs font-semibold transition-colors duration-300 ${assetsStatusOk ? 'text-emerald-600' : 'text-amber-500'}`}>
+            {assetsStatusOk ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />} {assetsNotRequired ? 'Assets Not Required' : hasAssets ? 'Assets Provided' : 'Assets Missing'}
           </div>
         </div>
       </div>
@@ -362,45 +455,45 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
           return (
             <div key={idx} className="flex items-center w-full md:w-auto">
               <div className={cn(
-                "flex items-center justify-center w-14 h-14 rounded-full transition-all duration-500 shrink-0",
-                isActive ? "bg-primary text-white scale-110 shadow-[0_0_20px_rgba(225,29,72,0.3)] ring-4 ring-primary/10" 
+                "flex items-center justify-center w-10 h-10 rounded-full transition-all duration-500 shrink-0",
+                isActive ? "bg-primary text-white scale-110 shadow-[0_0_15px_rgba(225,29,72,0.3)] ring-2 ring-primary/10" 
                   : isPast ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
                   : "bg-slate-50 text-slate-400 border border-slate-100"
               )}>
-                {isPast ? <Check className="w-6 h-6" /> : <Icon className={cn("w-6 h-6", isActive ? "animate-in zoom-in duration-300" : "")} />}
+                {isPast ? <Check className="w-5 h-5" /> : <Icon className={cn("w-5 h-5", isActive ? "animate-in zoom-in duration-300" : "")} />}
               </div>
               <span className={cn(
-                "ml-5 font-bold text-base whitespace-nowrap transition-colors duration-300",
+                "ml-3 font-bold text-sm whitespace-nowrap transition-colors duration-300",
                 isActive ? "text-slate-900 dark:text-slate-50" : isPast ? "text-emerald-600" : "text-slate-400"
               )}>{step.label}</span>
-              {idx < steps.length - 1 && <div className={cn("hidden md:block h-[2px] w-12 lg:w-24 mx-6 lg:mx-8 transition-colors duration-500 rounded-full", isPast ? "bg-emerald-400" : "bg-slate-200 dark:bg-slate-800")} />}
+              {idx < steps.length - 1 && <div className={cn("hidden md:block h-[1px] w-8 lg:w-16 mx-4 transition-colors duration-500", isPast ? "bg-emerald-300" : "bg-slate-200 dark:bg-slate-800")} />}
             </div>
           )
         })}
       </div>
 
-      <div className="min-h-[500px] mt-6">
+      <div className="mt-4">
         {/* Step 0: Classification */}
         {activeStep === 0 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-            <Card className="shadow-lg rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
-              <div className="bg-gradient-to-r from-primary/5 to-transparent p-8 border-b border-primary/10">
-                <h3 className="font-bold text-2xl flex items-center gap-3 text-slate-800 dark:text-slate-100">
-                  <div className="p-2 bg-primary/10 rounded-xl"><Target className="h-6 w-6 text-primary" /></div>
-                  1. Project Category
-                </h3>
-                <p className="text-muted-foreground text-base mt-2 ml-14">Select the overarching vertical for this project.</p>
+            <Card className="shadow-sm rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
+              <div className="bg-slate-50/50 dark:bg-slate-900/50 px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                <div className="p-1.5 bg-primary/10 rounded-lg"><Target className="h-5 w-5 text-primary" /></div>
+                <div>
+                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">1. Project Category</h3>
+                  <p className="text-muted-foreground text-xs">Select the overarching vertical for this project.</p>
+                </div>
               </div>
-              <div className="p-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-6 flex flex-wrap gap-2.5">
                 {PROJECT_CATEGORIES.map(cat => (
                   <div 
                     key={cat} 
                     onClick={() => updateField('project_details', 'project_category', cat)}
                     className={cn(
-                      "p-3 text-center rounded-xl border-2 cursor-pointer transition-all font-semibold text-sm",
+                      "px-3 py-2 rounded-lg border cursor-pointer transition-all font-medium text-xs",
                       data.project_details?.project_category === cat 
                         ? "border-primary bg-primary/5 text-primary shadow-sm" 
-                        : "border-slate-200 hover:border-primary/30"
+                        : "border-slate-200 hover:border-primary/30 text-slate-600 dark:text-slate-300 bg-slate-50/50 dark:bg-slate-900/50"
                     )}
                   >
                     {cat}
@@ -409,24 +502,24 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
               </div>
             </Card>
 
-            <Card className="shadow-lg rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
-              <div className="bg-gradient-to-r from-primary/5 to-transparent p-8 border-b border-primary/10">
-                <h3 className="font-bold text-2xl flex items-center gap-3 text-slate-800 dark:text-slate-100">
-                  <div className="p-2 bg-primary/10 rounded-xl"><Video className="h-6 w-6 text-primary" /></div>
-                  2. Production Workflow
-                </h3>
-                <p className="text-muted-foreground text-base mt-2 ml-14">This determines the dynamic fields you'll need to fill out.</p>
+            <Card className="shadow-sm rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
+              <div className="bg-slate-50/50 dark:bg-slate-900/50 px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                <div className="p-1.5 bg-primary/10 rounded-lg"><Video className="h-5 w-5 text-primary" /></div>
+                <div>
+                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">2. Production Workflow</h3>
+                  <p className="text-muted-foreground text-xs">This determines the dynamic fields you'll need to fill out.</p>
+                </div>
               </div>
-              <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-6 flex flex-wrap gap-3">
                 {PRODUCTION_TYPES.map(type => (
                   <div 
                     key={type.id} 
                     onClick={() => updateField('project_details', 'production_type', type.id)}
                     className={cn(
-                      "p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-3 font-semibold",
+                      "px-4 py-2.5 rounded-xl border cursor-pointer transition-all flex items-center gap-2 font-medium text-sm",
                       prodType === type.id 
-                        ? "border-primary bg-primary/5 text-primary shadow-md scale-[1.02]" 
-                        : "border-slate-200 hover:border-primary/30"
+                        ? "border-primary bg-primary/5 text-primary shadow-sm" 
+                        : "border-slate-200 hover:border-primary/30 text-slate-600 dark:text-slate-300 bg-slate-50/50 dark:bg-slate-900/50"
                     )}
                   >
                     {type.label}
@@ -440,35 +533,85 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
         {/* Step 1: Core Info & Deliverables */}
         {activeStep === 1 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-            <Card className="shadow-md rounded-3xl border-slate-200/60 dark:border-slate-800 bg-white p-8">
-              <h3 className="font-bold text-lg border-b pb-2 mb-6">Common Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-3"><Label>Client Name</Label><Input value={data.client_details?.client_name || ""} onChange={e => updateField('client_details', 'client_name', e.target.value)} /></div>
-                <div className="space-y-3"><Label>Project Name</Label><Input value={data.project_details?.project_name || ""} onChange={e => updateField('project_details', 'project_name', e.target.value)} /></div>
-                <div className="space-y-3"><Label>Project Objective</Label><Input value={data.objective || ""} onChange={e => updateField('root', 'objective', e.target.value)} /></div>
-                <div className="space-y-3"><Label>Project Type (Sub-category)</Label><Input value={data.project_details?.project_type || ""} onChange={e => updateField('project_details', 'project_type', e.target.value)} /></div>
-                <div className="space-y-3"><Label>Duration</Label><Input value={data.timeline?.duration || ""} onChange={e => updateField('timeline', 'duration', e.target.value)} /></div>
-                <div className="space-y-3"><Label>Deadline</Label><Input type="date" value={data.timeline?.delivery_date || ""} onChange={e => updateField('timeline', 'delivery_date', e.target.value)} /></div>
-                <div className="space-y-3"><Label>Aspect Ratio</Label>
-                  <Select value={data.technical_specs?.aspect_ratio || ""} onValueChange={v => updateField('technical_specs', 'aspect_ratio', v)}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>{ASPECT_RATIOS.map(ar => <SelectItem key={ar} value={ar}>{ar}</SelectItem>)}</SelectContent>
-                  </Select>
+            <Card className="shadow-sm rounded-2xl border-slate-200/60 dark:border-slate-800 bg-white p-6">
+              <h3 className="font-bold text-xl flex items-center gap-2 border-b pb-3 mb-6 text-slate-800 dark:text-slate-100">
+                <Briefcase className="w-5 h-5 text-primary" /> Core Information
+              </h3>
+              
+              <div className="space-y-8">
+                {/* Identity Section */}
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <Target className="w-4 h-4" /> Identity & Objectives
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2.5"><Label className="text-slate-500">Client Name</Label><Input value={data.client_details?.client_name || ""} onChange={e => updateField('client_details', 'client_name', e.target.value)} className="rounded-xl bg-slate-50/50" /></div>
+                    <div className="space-y-2.5"><Label className="text-slate-500">Project Name</Label><Input value={data.project_details?.project_name || ""} onChange={e => updateField('project_details', 'project_name', e.target.value)} className="rounded-xl bg-slate-50/50" /></div>
+                    
+                    {renderDropdownWithCustom(
+                      "Project Type (Sub-category)", 
+                      data.project_details?.project_type || "", 
+                      ["Commercial", "Explainer Video", "Promo", "Documentary", "Music Video", "Short Film", "Social Reel", "Corporate Overview", "Training/Educational"], 
+                      v => updateField('project_details', 'project_type', v)
+                    )}
+                    
+                    {renderDropdownWithCustom(
+                      "Project Objective", 
+                      data.objective || "", 
+                      ["Brand Awareness", "Lead Generation", "Product Launch", "Educational/Training", "Event Coverage", "Internal Comms", "Sales Enablement"], 
+                      v => updateField('root', 'objective', v)
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-3"><Label>Reference Links</Label><Input value={data.assets?.reference_links || ""} onChange={e => updateField('assets', 'reference_links', e.target.value)} /></div>
-                <div className="space-y-3"><Label>Brand Guidelines</Label><Input value={data.assets?.brand_guidelines || ""} onChange={e => updateField('assets', 'brand_guidelines', e.target.value)} /></div>
-                <div className="space-y-3"><Label>Notes</Label><Textarea value={data.notes || ""} onChange={e => updateField('root', 'notes', e.target.value)} /></div>
+
+                {/* Timeline & Formatting */}
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <Calendar className="w-4 h-4" /> Timeline & Format
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {renderDropdownWithCustom(
+                      "Duration", 
+                      data.timeline?.duration || "", 
+                      ["15 Seconds", "30 Seconds", "60 Seconds", "90 Seconds", "2-3 Minutes", "5+ Minutes", "Feature Length"], 
+                      v => updateField('timeline', 'duration', v)
+                    )}
+                    <div className="space-y-2.5"><Label className="text-slate-500">Deadline</Label><Input type="date" value={data.timeline?.delivery_date || ""} onChange={e => updateField('timeline', 'delivery_date', e.target.value)} className="rounded-xl bg-slate-50/50" /></div>
+                    <div className="space-y-2.5"><Label className="text-slate-500">Aspect Ratio</Label>
+                      <Select value={data.technical_specs?.aspect_ratio || ""} onValueChange={v => updateField('technical_specs', 'aspect_ratio', v)}>
+                        <SelectTrigger className="rounded-xl bg-slate-50/50"><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>{ASPECT_RATIOS.map(ar => <SelectItem key={ar} value={ar}>{ar}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* References */}
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <FileText className="w-4 h-4" /> References & Notes
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2.5"><Label className="text-slate-500">Reference Links</Label><Input value={data.assets?.reference_links || ""} onChange={e => updateField('assets', 'reference_links', e.target.value)} className="rounded-xl bg-slate-50/50" placeholder="YouTube, Vimeo, etc." /></div>
+                    <div className="space-y-2.5"><Label className="text-slate-500">Brand Guidelines</Label><Input value={data.assets?.brand_guidelines || ""} onChange={e => updateField('assets', 'brand_guidelines', e.target.value)} className="rounded-xl bg-slate-50/50" placeholder="Link to guidelines..." /></div>
+                    <div className="space-y-2.5 md:col-span-2"><Label className="text-slate-500">Additional Notes</Label><Textarea value={data.notes || ""} onChange={e => updateField('root', 'notes', e.target.value)} className="rounded-xl bg-slate-50/50 min-h-[80px]" placeholder="Any other specific requirements..." /></div>
+                  </div>
+                </div>
               </div>
             </Card>
 
-            <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
-              <h3 className="font-bold text-lg border-b pb-2 mb-6">Universal Deliverables</h3>
-              <CheckboxGroup options={FINAL_DELIVERABLES} selected={data.universal_deliverables?.list || []} onChange={v => updateField('universal_deliverables', 'list', v)} />
+            <Card className="shadow-sm rounded-2xl border-slate-200/60 p-6 bg-white">
+              <h3 className="font-bold text-xl flex items-center gap-2 border-b pb-3 mb-6 text-slate-800 dark:text-slate-100">
+                <CheckCircle2 className="w-5 h-5 text-primary" /> Universal Deliverables
+              </h3>
+              <MultiSelectCombobox options={FINAL_DELIVERABLES} selected={data.universal_deliverables?.list || []} onChange={v => updateField('universal_deliverables', 'list', v)} placeholder="Search standard deliverables or add custom..." />
             </Card>
 
-            <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
-              <div className="flex justify-between items-center border-b pb-2 mb-6">
-                <h3 className="font-bold text-lg">Client Assets</h3>
+            <Card className="shadow-sm rounded-2xl border-slate-200/60 p-6 bg-white">
+              <div className="flex justify-between items-center border-b pb-3 mb-6">
+                <h3 className="font-bold text-xl flex items-center gap-2 text-slate-800 dark:text-slate-100">
+                  <Upload className="w-5 h-5 text-primary" /> Client Assets
+                </h3>
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="no-assets" 
@@ -479,22 +622,26 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-3">
-                  <Label>Asset Links (Google Drive, Dropbox, etc.)</Label>
+                <div className="space-y-2.5">
+                  <Label className="text-slate-500">Asset Links (Google Drive, Dropbox, etc.)</Label>
                   <Input 
                     value={data.assets?.custom_asset_links || ""} 
                     onChange={e => updateField('assets', 'custom_asset_links', e.target.value)} 
                     placeholder="https://drive.google.com/..."
+                    className="rounded-xl bg-slate-50/50"
                   />
                 </div>
-                <div className="space-y-3">
-                  <Label>Upload Files</Label>
+                <div className="space-y-2.5">
+                  <Label className="text-slate-500">Upload Files</Label>
                   <div 
                     onClick={() => document.getElementById('asset-upload')?.click()} 
-                    className="border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors"
+                    className="border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-primary/50 transition-all group"
                   >
-                    <Upload className="h-6 w-6 text-slate-400 mb-2" />
-                    <p className="text-sm font-medium text-slate-600">Click to select files</p>
+                    <div className="w-12 h-12 bg-white dark:bg-slate-800 shadow-sm rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <Upload className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Click to upload files</p>
+                    <p className="text-xs text-slate-400 mt-1">SVG, PNG, JPG or PDF (max. 10MB)</p>
                     <input 
                       id="asset-upload" 
                       type="file" 
@@ -537,19 +684,19 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
         {activeStep === 2 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             {prodType === 'ai' && (
-              <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
+              <Card className="shadow-sm rounded-2xl border-slate-200/60 p-6 bg-white">
                 <h3 className="font-bold text-xl flex items-center gap-2 mb-6"><Bot className="h-5 w-5 text-primary" /> AI Production</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-3"><Label>AI Style</Label>
+                  <div className="space-y-2.5"><Label className="text-slate-500">AI Style</Label>
                     <Select value={data.ai_style || ""} onValueChange={v => updateField('root', 'ai_style', v)}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectTrigger className="rounded-xl bg-slate-50/50"><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent><SelectItem value="Realistic">Realistic</SelectItem><SelectItem value="Stylized">Stylized</SelectItem><SelectItem value="Animation">Animation</SelectItem><SelectItem value="Cinematic">Cinematic</SelectItem></SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-3 md:col-span-2"><Label>AI Assets Required</Label>
-                    <CheckboxGroup options={["Images", "Video", "Avatar", "Voice", "Music", "Motion Graphics"]} selected={data.ai_assets_required || []} onChange={v => updateField('root', 'ai_assets_required', v)} />
+                  <div className="space-y-2.5 md:col-span-2"><Label className="text-slate-500">AI Assets Required</Label>
+                    <MultiSelectCombobox options={["Images", "Video", "Avatar", "Voice", "Music", "Motion Graphics"]} selected={data.ai_assets_required || []} onChange={v => updateField('root', 'ai_assets_required', v)} placeholder="Select assets..." />
                   </div>
-                  <div className="space-y-3 md:col-span-2"><Label>Prompt Notes</Label><Textarea value={data.notes || ""} onChange={e => updateField('root', 'notes', e.target.value)} /></div>
+                  <div className="space-y-2.5 md:col-span-2"><Label className="text-slate-500">Prompt Notes</Label><Textarea value={data.notes || ""} onChange={e => updateField('root', 'notes', e.target.value)} className="rounded-xl bg-slate-50/50 min-h-[80px]" /></div>
                   
                   {renderDropdownWithCustom(
                     "Voice Over", 
@@ -574,52 +721,52 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
             )}
 
             {prodType === 'hybrid' && (
-              <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
+              <Card className="shadow-sm rounded-2xl border-slate-200/60 p-6 bg-white">
                 <h3 className="font-bold text-xl flex items-center gap-2 mb-6"><Video className="h-5 w-5 text-primary" /> Hybrid Production (Live Shoot)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-3"><Label>Locations</Label><Input value={data.live_shoot_details?.locations || ""} onChange={e => updateField('live_shoot_details', 'locations', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Crew</Label><Input value={data.live_shoot_details?.crew || ""} onChange={e => updateField('live_shoot_details', 'crew', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Equipment</Label><Input value={data.live_shoot_details?.equipment || ""} onChange={e => updateField('live_shoot_details', 'equipment', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Shoot Days</Label><Input value={data.live_shoot_details?.shoot_days || ""} onChange={e => updateField('live_shoot_details', 'shoot_days', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Actors</Label><Input value={data.live_shoot_details?.actors || ""} onChange={e => updateField('live_shoot_details', 'actors', e.target.value)} /></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {renderDropdownWithCustom("Locations", data.live_shoot_details?.locations || "", ["Studio", "On-Location (Indoor)", "On-Location (Outdoor)", "Multiple Locations", "TBD"], v => updateField('live_shoot_details', 'locations', v))}
+                  {renderDropdownWithCustom("Crew", data.live_shoot_details?.crew || "", ["Skeleton Crew (1-2)", "Small Crew (3-5)", "Full Crew (6+)", "TBD"], v => updateField('live_shoot_details', 'crew', v))}
+                  {renderDropdownWithCustom("Equipment", data.live_shoot_details?.equipment || "", ["Basic", "Standard", "Cinema Grade", "TBD"], v => updateField('live_shoot_details', 'equipment', v))}
+                  {renderDropdownWithCustom("Shoot Days", data.live_shoot_details?.shoot_days || "", ["1 Day", "2 Days", "3 Days", "4+ Days", "TBD"], v => updateField('live_shoot_details', 'shoot_days', v))}
+                  {renderDropdownWithCustom("Actors", data.live_shoot_details?.actors || "", ["None", "Employees/Real People", "1-2 Actors", "Large Cast", "Voiceover Only"], v => updateField('live_shoot_details', 'actors', v))}
                 </div>
                 <h3 className="font-bold text-xl flex items-center gap-2 mt-8 mb-6"><Bot className="h-5 w-5 text-primary" /> Hybrid Production (AI Components)</h3>
-                <CheckboxGroup options={["AI Cleanup", "AI Enhancement", "AI VFX", "AI Voice", "AI Background"]} selected={data.hybrid_details?.ai_components || []} onChange={v => updateField('hybrid_details', 'ai_components', v)} />
+                <MultiSelectCombobox options={["AI Cleanup", "AI Enhancement", "AI VFX", "AI Voice", "AI Background"]} selected={data.hybrid_details?.ai_components || []} onChange={v => updateField('hybrid_details', 'ai_components', v)} placeholder="Select AI components..." />
               </Card>
             )}
 
             {prodType === 'live' && (
-              <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
+              <Card className="shadow-sm rounded-2xl border-slate-200/60 p-6 bg-white">
                 <h3 className="font-bold text-xl flex items-center gap-2 mb-6"><Video className="h-5 w-5 text-primary" /> Live Production</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-3"><Label>Shoot Days</Label><Input value={data.live_shoot_details?.shoot_days || ""} onChange={e => updateField('live_shoot_details', 'shoot_days', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Locations</Label><Input value={data.live_shoot_details?.locations || ""} onChange={e => updateField('live_shoot_details', 'locations', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Crew</Label><Input value={data.live_shoot_details?.crew || ""} onChange={e => updateField('live_shoot_details', 'crew', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Equipment</Label><Input value={data.live_shoot_details?.equipment || ""} onChange={e => updateField('live_shoot_details', 'equipment', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Lighting</Label><Input value={data.live_shoot_details?.lighting || ""} onChange={e => updateField('live_shoot_details', 'lighting', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Camera</Label><Input value={data.live_shoot_details?.camera || ""} onChange={e => updateField('live_shoot_details', 'camera', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Drone</Label><Input value={data.live_shoot_details?.drone || ""} onChange={e => updateField('live_shoot_details', 'drone', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Talent</Label><Input value={data.live_shoot_details?.talent || ""} onChange={e => updateField('live_shoot_details', 'talent', e.target.value)} /></div>
-                  <div className="space-y-3 md:col-span-2"><Label>Permissions</Label><Input value={data.live_shoot_details?.permissions || ""} onChange={e => updateField('live_shoot_details', 'permissions', e.target.value)} /></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {renderDropdownWithCustom("Shoot Days", data.live_shoot_details?.shoot_days || "", ["1 Day", "2 Days", "3 Days", "4+ Days", "TBD"], v => updateField('live_shoot_details', 'shoot_days', v))}
+                  {renderDropdownWithCustom("Locations", data.live_shoot_details?.locations || "", ["Studio", "On-Location (Indoor)", "On-Location (Outdoor)", "Multiple Locations", "TBD"], v => updateField('live_shoot_details', 'locations', v))}
+                  {renderDropdownWithCustom("Crew", data.live_shoot_details?.crew || "", ["Skeleton Crew (1-2)", "Small Crew (3-5)", "Full Crew (6+)", "TBD"], v => updateField('live_shoot_details', 'crew', v))}
+                  {renderDropdownWithCustom("Equipment", data.live_shoot_details?.equipment || "", ["Basic", "Standard", "Cinema Grade", "TBD"], v => updateField('live_shoot_details', 'equipment', v))}
+                  {renderDropdownWithCustom("Lighting", data.live_shoot_details?.lighting || "", ["Natural", "Basic Kit", "Full Grid", "TBD"], v => updateField('live_shoot_details', 'lighting', v))}
+                  {renderDropdownWithCustom("Camera", data.live_shoot_details?.camera || "", ["Mirrorless", "Cinema Camera (RED/ARRI)", "Multi-cam", "TBD"], v => updateField('live_shoot_details', 'camera', v))}
+                  {renderDropdownWithCustom("Drone", data.live_shoot_details?.drone || "", ["None", "FPV", "Standard Drone", "Heavy Lift"], v => updateField('live_shoot_details', 'drone', v))}
+                  {renderDropdownWithCustom("Talent", data.live_shoot_details?.talent || "", ["None", "Employees/Real People", "1-2 Actors", "Large Cast", "Voiceover Only"], v => updateField('live_shoot_details', 'talent', v))}
+                  {renderDropdownWithCustom("Permissions", data.live_shoot_details?.permissions || "", ["Client Handled", "Agency Handled", "None Required"], v => updateField('live_shoot_details', 'permissions', v))}
                 </div>
               </Card>
             )}
 
             {prodType === 'photo' && (
-              <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
+              <Card className="shadow-sm rounded-2xl border-slate-200/60 p-6 bg-white">
                 <h3 className="font-bold text-xl flex items-center gap-2 mb-6"><Palette className="h-5 w-5 text-primary" /> Photography</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-3"><Label>Shoot Type</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2.5"><Label className="text-slate-500">Shoot Type</Label>
                     <Select value={data.photography_details?.shoot_type || ""} onValueChange={v => updateField('photography_details', 'shoot_type', v)}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectTrigger className="rounded-xl bg-slate-50/50"><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent><SelectItem value="Product">Product</SelectItem><SelectItem value="Fashion">Fashion</SelectItem><SelectItem value="Corporate">Corporate</SelectItem><SelectItem value="Event">Event</SelectItem><SelectItem value="Food">Food</SelectItem></SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-3"><Label>Number of Photos</Label><Input type="number" value={data.photography_details?.number_of_photos || ""} onChange={e => updateField('photography_details', 'number_of_photos', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Retouching</Label><Input value={data.photography_details?.retouching || ""} onChange={e => updateField('photography_details', 'retouching', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Album Required</Label>
+                  {renderDropdownWithCustom("Number of Photos", data.photography_details?.number_of_photos || "", ["10-20", "20-50", "50-100", "100+"], v => updateField('photography_details', 'number_of_photos', v))}
+                  {renderDropdownWithCustom("Retouching", data.photography_details?.retouching || "", ["Basic", "Standard", "High-end/Magazine"], v => updateField('photography_details', 'retouching', v))}
+                  <div className="space-y-2.5"><Label className="text-slate-500">Album Required</Label>
                     <Select value={data.photography_details?.album || "No"} onValueChange={v => updateField('photography_details', 'album', v)}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectTrigger className="rounded-xl bg-slate-50/50"><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent>
                     </Select>
                   </div>
@@ -628,14 +775,14 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
             )}
 
             {prodType === 'post' && (
-              <Card className="shadow-md rounded-3xl border-slate-200/60 p-8 bg-white">
+              <Card className="shadow-sm rounded-2xl border-slate-200/60 p-6 bg-white">
                 <h3 className="font-bold text-xl flex items-center gap-2 mb-6"><Settings className="h-5 w-5 text-primary" /> Post Production</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-3"><Label>Editing Style</Label><Input value={data.post_production_details?.editing_style || ""} onChange={e => updateField('post_production_details', 'editing_style', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Motion Graphics</Label><Input value={data.post_production_details?.motion_graphics || ""} onChange={e => updateField('post_production_details', 'motion_graphics', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>VFX</Label><Input value={data.post_production_details?.vfx || ""} onChange={e => updateField('post_production_details', 'vfx', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Color Grade</Label><Input value={data.post_production_details?.color_grade || ""} onChange={e => updateField('post_production_details', 'color_grade', e.target.value)} /></div>
-                  <div className="space-y-3"><Label>Sound Design</Label><Input value={data.post_production_details?.sound_design || ""} onChange={e => updateField('post_production_details', 'sound_design', e.target.value)} /></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {renderDropdownWithCustom("Editing Style", data.post_production_details?.editing_style || "", ["Fast-paced", "Cinematic", "Corporate/Clean", "Documentary style", "Trendy/Social"], v => updateField('post_production_details', 'editing_style', v))}
+                  {renderDropdownWithCustom("Motion Graphics", data.post_production_details?.motion_graphics || "", ["None", "Basic Text/Lower Thirds", "Moderate (Animations/Charts)", "Heavy (Full 2D/3D)"], v => updateField('post_production_details', 'motion_graphics', v))}
+                  {renderDropdownWithCustom("VFX", data.post_production_details?.vfx || "", ["None", "Basic Cleanup", "Advanced VFX (CGI/Compositing)"], v => updateField('post_production_details', 'vfx', v))}
+                  {renderDropdownWithCustom("Color Grade", data.post_production_details?.color_grade || "", ["Standard", "Stylized/Creative", "Match Reference", "HDR"], v => updateField('post_production_details', 'color_grade', v))}
+                  {renderDropdownWithCustom("Sound Design", data.post_production_details?.sound_design || "", ["Basic Mixing", "Advanced Foley/SFX", "Original Score", "Stock Music Only"], v => updateField('post_production_details', 'sound_design', v))}
                 </div>
               </Card>
             )}
@@ -661,8 +808,11 @@ export function RequirementChartForm({ prospectId, companyName, serviceVertical,
                 });
                 setLastSaved(new Date());
                 setSaveStatus("saved");
-                toast({ title: "Requirement Chart Completed!", description: "You can now proceed to Proposal Generation." });
-                setTimeout(() => setSaveStatus("idle"), 2000);
+                toast({ title: "Requirement Chart Completed!", description: "Ready for Proposal Generation." });
+                setTimeout(() => {
+                  setSaveStatus("idle");
+                  if (onComplete) onComplete();
+                }, 1000);
               } catch (e: any) {
                 toast({ variant: "destructive", title: "Error Saving", description: e.message });
               }

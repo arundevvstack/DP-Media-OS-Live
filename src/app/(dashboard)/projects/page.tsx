@@ -26,7 +26,8 @@ import {
   Database,
   Trash2,
   Archive,
-  Film
+  Film,
+  ImageIcon
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -589,6 +590,19 @@ function ProjectCard({ project, view, index, onArchive, companyUsers, clients }:
     </DropdownMenu>
   );
 
+  const handleUpdateThumbnail = async () => {
+    const url = window.prompt('Enter image URL for the thumbnail:', project.thumbnail_url || '');
+    if (url !== null) {
+      try {
+        const { error } = await supabase.from('Project').update({ thumbnail_url: url }).eq('id', project.id);
+        if (error) throw error;
+        toast({ title: "Thumbnail Updated", description: "Project thumbnail has been successfully updated." });
+        broadcastTableUpdate('Project');
+      } catch (e: any) {
+        toast({ variant: 'destructive', title: 'Error', description: e.message });
+      }
+    }
+  };
 
   if (view === 'grid') {
     return (
@@ -596,12 +610,12 @@ function ProjectCard({ project, view, index, onArchive, companyUsers, clients }:
         <div 
           className={cn(
             "p-6 flex flex-col gap-6 relative overflow-hidden", 
-            !wallpaperUrl && (project.color || 'card-red'),
-            wallpaperUrl && "bg-cover bg-center"
+            !(project.thumbnail_url || wallpaperUrl) && (project.color || 'card-red'),
+            (project.thumbnail_url || wallpaperUrl) && "bg-cover bg-center"
           )}
-          style={{ backgroundImage: wallpaperUrl ? `url(${wallpaperUrl})` : undefined }}
+          style={{ backgroundImage: (project.thumbnail_url || wallpaperUrl) ? `url(${project.thumbnail_url || wallpaperUrl})` : undefined }}
         >
-          {wallpaperUrl && <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-500 group-hover:bg-black/50" />}
+          {(project.thumbnail_url || wallpaperUrl) && <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-500 group-hover:bg-black/50" />}
           
           <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12 group-hover:scale-125 transition-transform duration-1000 z-0">
             <Film className="h-20 w-20" />
@@ -633,6 +647,9 @@ function ProjectCard({ project, view, index, onArchive, companyUsers, clients }:
                   <Link href={`/projects/${project.id}`} className="gap-3">
                     <ExternalLink className="h-4 w-4" /> View Details
                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="font-bold gap-3 rounded-xl m-1 py-3 cursor-pointer" onClick={handleUpdateThumbnail}>
+                  <ImageIcon className="h-4 w-4" /> Change Thumbnail
                 </DropdownMenuItem>
                 <DropdownMenuItem className="text-accent font-bold gap-3 rounded-xl m-1 py-3 cursor-pointer focus:bg-accent/10" onClick={() => onArchive(project)}>
                   <Archive className="h-4 w-4" /> Archive Project

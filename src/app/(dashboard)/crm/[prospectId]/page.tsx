@@ -28,7 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useTenant } from "@/hooks/use-tenant";
 import { useSupabaseDoc } from "@/supabase/hooks/use-doc";
-import { useSupabaseCollection } from "@/supabase/hooks/use-collection";
+import { useSupabaseCollection, broadcastTableUpdate } from "@/supabase/hooks/use-collection";
 import { supabase } from "@/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -53,6 +53,7 @@ export default function ProspectDetailPage({ params }: { params: Promise<{ prosp
   
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   const [manualProposal, setManualProposal] = useState<File | null>(null);
   const [editForm, setEditForm] = useState({
     company_name: "",
@@ -119,7 +120,11 @@ export default function ProspectDetailPage({ params }: { params: Promise<{ prosp
     if (newStage === 'won') {
       await handleConvertToClient();
     } else {
+      if (newStage === 'requirement_analysis') {
+        setActiveTab('requirement');
+      }
       await supabase.from('Prospect').update({ stage: newStage }).eq('id', prospectId);
+      broadcastTableUpdate('Prospect', { id: prospectId, stage: newStage });
       toast({ title: "Deal Progressed", description: `Prospect moved to ${newStage.toUpperCase()}` });
     }
   };
@@ -128,19 +133,16 @@ export default function ProspectDetailPage({ params }: { params: Promise<{ prosp
     e.preventDefault();
     if (!prospect) return;
     const formData = new FormData(e.currentTarget);
-    const address = formData.get('billing_address') as string;
-    const gstin = formData.get('gstin') as string;
-    const legalName = formData.get('legal_business_name') as string;
-    const state = formData.get('state') as string;
-    const gstType = formData.get('gst_type') as string;
+    const updates = {
+      billing_address: formData.get('billing_address') as string,
+      gstin: formData.get('gstin') as string,
+      legal_business_name: formData.get('legal_business_name') as string,
+      state: formData.get('state') as string,
+      gst_type: formData.get('gst_type') as string
+    };
 
-    await supabase.from('Prospect').update({ 
-      billing_address: address,
-      gstin: gstin,
-      legal_business_name: legalName,
-      state: state,
-      gst_type: gstType
-    }).eq('id', prospectId);
+    await supabase.from('Prospect').update(updates).eq('id', prospectId);
+    broadcastTableUpdate('Prospect', { id: prospectId, ...updates });
     
     toast({ title: "Client Data Saved", description: "Billing address and GST updated." });
   };
@@ -151,13 +153,16 @@ export default function ProspectDetailPage({ params }: { params: Promise<{ prosp
     e.preventDefault();
     if (!prospect) return;
 
-    await supabase.from('Prospect').update({
+    const updates = {
       company_name: editForm.company_name,
       service_vertical: editForm.service_vertical,
       sub_vertical: editForm.sub_vertical,
       industry: editForm.industry,
       deal_value: parseFloat(editForm.deal_value) || 0,
-    }).eq('id', prospectId);
+    };
+
+    await supabase.from('Prospect').update(updates).eq('id', prospectId);
+    broadcastTableUpdate('Prospect', { id: prospectId, ...updates });
     
     toast({ title: "Details Updated", description: "Prospect record has been synced." });
     setIsEditOpen(false);
@@ -229,7 +234,7 @@ export default function ProspectDetailPage({ params }: { params: Promise<{ prosp
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-white dark:bg-slate-900 border shadow-sm p-1 rounded-xl h-12 w-full max-w-sm grid grid-cols-2">
           <TabsTrigger value="overview" className="rounded-lg h-9">Overview</TabsTrigger>
           <TabsTrigger value="requirement" className="rounded-lg h-9">Requirement Analysis</TabsTrigger>
@@ -245,8 +250,8 @@ export default function ProspectDetailPage({ params }: { params: Promise<{ prosp
                   <CardTitle className="text-lg">Deal Progression</CardTitle>
                   <CardDescription>Current stage in the sales lifecycle</CardDescription>
                 </div>
-                <Select onValueChange={handleUpdateStage} defaultValue={prospect.stage}>
-                  <SelectTrigger className="w-[180px] rounded-xl h-10">
+                <Select onValueChange={handleUpdateStage} value={prospect.stage}>
+                  <SelectTrigger className="w-[240px] rounded-xl h-10">
                     <SelectValue placeholder="Move Stage" />
                   </SelectTrigger>
                   <SelectContent>
@@ -548,6 +553,10 @@ export default function ProspectDetailPage({ params }: { params: Promise<{ prosp
           industry={prospect.industry || ""}
           projectType={prospect.project_type || ""}
           notes={prospect.notes || ""}
+          onComplete={() => {
+            setActiveTab('overview');
+            handleUpdateStage('proposal_draft');
+          }}
         />
       </TabsContent>
       </Tabs>
