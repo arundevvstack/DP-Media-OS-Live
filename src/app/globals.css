@@ -203,3 +203,8 @@
 }
 .scrollbar-hide::-webkit-scrollbar { display: none; } 
  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+.card-purple {
+  background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+  @apply shadow-[0_15px_40px_-10px_rgba(168,85,247,0.3)] text-white;
+}

@@ -135,7 +135,7 @@ export const conversionService = {
           project_name: `${prospect.company_name} Workspace`,
           project_ref: projectRefCode,
           budget: prospect.deal_value || 0,
-          status: 'active',
+          status: 'planning',
           progress: 0,
           color: 'card-purple',
           project_type: prospect.project_type || 'Normal Production',

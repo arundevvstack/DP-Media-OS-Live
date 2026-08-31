@@ -1306,11 +1306,18 @@ export default function CRMPage() {
                               {/* Proposal Status Indicator / Button */}
                               {stage.id === 'proposal_draft' && (
                                 <div className="mt-2">
-                                  {(lead.proposal_details?.status || lead.proposal_status === 'created') ? (
+                                  {(lead.proposal_details?.status === 'approved') ? (
                                     <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20 flex flex-col gap-1.5">
                                       <div className="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 uppercase tracking-wider">
                                         <CheckCircle2 className="h-3 w-3" />
-                                        Proposal Created
+                                        Proposal Ready to Send
+                                      </div>
+                                    </div>
+                                  ) : (lead.proposal_details?.status || lead.proposal_status === 'created') ? (
+                                    <div className="p-2 bg-yellow-500/10 rounded-lg border border-yellow-500/20 flex flex-col gap-1.5">
+                                      <div className="flex items-center gap-1.5 text-[10px] font-black text-yellow-600 uppercase tracking-wider">
+                                        <CheckCircle2 className="h-3 w-3" />
+                                        Ready for Review
                                       </div>
                                     </div>
                                   ) : (

@@ -1044,7 +1044,7 @@ model ProductionWorkflowTemplate {
   ProductionWorkflowStage ProductionWorkflowStage[]
 }
 
-model Project {
+model Project {`n    thumbnail_url            String?
   id                       String                        @id
   company_id               String
   client_id                String?
