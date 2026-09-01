@@ -143,6 +143,16 @@ export const conversionService = {
         },
       });
 
+      // Add the user who converted it as a Project Manager so they have access
+      await tx.projectMember.create({
+        data: {
+          id: crypto.randomUUID(),
+          project_id: project.id,
+          user_id: userId,
+          role: 'Project Manager',
+        }
+      });
+
       // 5. Create onboarding workflow (Objectives)
       const onboardingObjectives = [
         { title: `[Onboarding] Kickoff Session & Brand Alignment`, stage: 'Pre-Production', status: 'Pending', priority: 'High', department: 'Creative' },

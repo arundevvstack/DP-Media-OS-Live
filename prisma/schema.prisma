@@ -1134,6 +1134,8 @@ model Proposal {
   proposal_number String?
   content         String
   status          String
+  prospect_id     String?
+  requirement_id  String?
   created_at      DateTime @default(now())
   Company         Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
 }
@@ -1168,6 +1170,8 @@ model Prospect {
   pilot_project_id    String?
   pilot_status        String?
   requirement_status  String?
+  proposal_status     String?
+  proposal_details    Json?
   project_type        String             @default("Normal Production")
   Comment             Comment[]
   CommunicationLog    CommunicationLog[]

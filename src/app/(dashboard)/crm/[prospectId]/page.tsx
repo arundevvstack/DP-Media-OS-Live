@@ -31,7 +31,7 @@ import { useSupabaseDoc } from "@/supabase/hooks/use-doc";
 import { useSupabaseCollection, broadcastTableUpdate } from "@/supabase/hooks/use-collection";
 import { supabase } from "@/supabase/client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PIPELINE_STAGES } from "@/lib/constants";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
@@ -48,12 +48,21 @@ import { RequirementChartForm } from "./components/RequirementChartForm";
 
 export default function ProspectDetailPage({ params }: { params: Promise<{ prospectId: string }> }) {
   const { prospectId } = use(params);
-  const { companyId, isLoading: isTenantLoading, profile } = useTenant();
+  const { companyId, isLoading: isTenantLoading, profile, roleId, isSuperAdmin } = useTenant();
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "overview");
+  
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
   const [manualProposal, setManualProposal] = useState<File | null>(null);
   const [editForm, setEditForm] = useState({
     company_name: "",
@@ -120,12 +129,28 @@ export default function ProspectDetailPage({ params }: { params: Promise<{ prosp
     if (newStage === 'won') {
       await handleConvertToClient();
     } else {
+      if (newStage === 'proposal_sent' && prospect.proposal_status !== 'approved') {
+        toast({ variant: "destructive", title: "Approval Required", description: "Proposal requires Marketing approval before sending." });
+        return;
+      }
+
       if (newStage === 'requirement_analysis') {
         setActiveTab('requirement');
       }
       await supabase.from('Prospect').update({ stage: newStage }).eq('id', prospectId);
       broadcastTableUpdate('Prospect', { id: prospectId, stage: newStage });
       toast({ title: "Deal Progressed", description: `Prospect moved to ${newStage.toUpperCase()}` });
+    }
+  };
+
+  const handleMarketingApprove = async () => {
+    if (!prospectId) return;
+    try {
+      await supabase.from('Prospect').update({ proposal_status: 'approved' }).eq('id', prospectId);
+      broadcastTableUpdate('Prospect', { id: prospectId, proposal_status: 'approved' });
+      toast({ title: "Proposal Approved", description: "Marketing has approved the proposal." });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Action Failed", description: err.message });
     }
   };
 
@@ -424,10 +449,28 @@ export default function ProspectDetailPage({ params }: { params: Promise<{ prosp
           {(proposals && proposals.length > 0) || currentStageIndex >= PIPELINE_STAGES.findIndex(s => s.id === 'proposal_draft') ? (
           <Card className="border-none shadow-sm rounded-[10px] bg-white dark:bg-slate-900 overflow-hidden">
             <CardHeader className="bg-accent/10/30">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="h-5 w-5 text-foreground" /> Drafted Proposals
-              </CardTitle>
-              <CardDescription>AI-generated proposals linked to this prospect.</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-foreground" /> Drafted Proposals
+                  </CardTitle>
+                  <CardDescription>AI-generated proposals linked to this prospect.</CardDescription>
+                </div>
+                {(roleId === 'MARKETING_SALES' || isSuperAdmin) && prospect.proposal_status !== 'approved' && (
+                  <Button 
+                    size="sm" 
+                    onClick={handleMarketingApprove}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-8 text-[10px] uppercase tracking-wider"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve Proposal (Marketing)
+                  </Button>
+                )}
+                {prospect.proposal_status === 'approved' && (
+                  <Badge className="bg-emerald-50 text-emerald-600 border-none font-bold text-[10px] h-6">
+                    <CheckCircle2 className="h-3 w-3 mr-1" /> MARKETING APPROVED
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               {isProposalsLoading ? (

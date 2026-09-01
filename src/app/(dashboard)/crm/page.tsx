@@ -121,8 +121,8 @@ export default function CRMPage() {
   // Requirement Analysis State
   const [leadToPromoteToRequirement, setLeadToPromoteToRequirement] = useState<any>(null);
   const [leadBlockedByRequirement, setLeadBlockedByRequirement] = useState<any>(null);
-  // Proposal State
   const [leadToPromoteToProposal, setLeadToPromoteToProposal] = useState<any>(null);
+  const [leadBlockedByUnapprovedProposal, setLeadBlockedByUnapprovedProposal] = useState<any>(null);
   const router = useRouter();
 
   const [newLead, setNewLead] = useState({
@@ -468,11 +468,19 @@ export default function CRMPage() {
     }
 
     if (targetStageId === 'proposal_draft' && isMovingForward) {
-      const hasProposal = lead.proposal_details?.status || lead.proposal_status === 'created';
+      const hasProposal = lead.proposal_status === 'created' || lead.proposal_status === 'approved';
       if (!hasProposal) {
         setLeadToPromoteToProposal(lead);
         setDraggedLeadId(null);
         return; // Stop here, wait for dialog
+      }
+    }
+
+    if (targetStageId === 'proposal_sent' && isMovingForward) {
+      if (lead.proposal_status !== 'approved') {
+        setLeadBlockedByUnapprovedProposal(lead);
+        setDraggedLeadId(null);
+        return; // Block
       }
     }
 
@@ -1306,20 +1314,24 @@ export default function CRMPage() {
                               {/* Proposal Status Indicator / Button */}
                               {stage.id === 'proposal_draft' && (
                                 <div className="mt-2">
-                                  {(lead.proposal_details?.status === 'approved') ? (
-                                    <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20 flex flex-col gap-1.5">
-                                      <div className="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 uppercase tracking-wider">
-                                        <CheckCircle2 className="h-3 w-3" />
-                                        Proposal Ready to Send
+                                  {(lead.proposal_status === 'approved') ? (
+                                    <Link href={`/crm/${lead.id}?tab=requirement`}>
+                                      <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20 flex flex-col gap-1.5 hover:bg-emerald-500/20 transition-colors cursor-pointer">
+                                        <div className="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 uppercase tracking-wider">
+                                          <CheckCircle2 className="h-3 w-3" />
+                                          Proposal Ready to Send
+                                        </div>
                                       </div>
-                                    </div>
-                                  ) : (lead.proposal_details?.status || lead.proposal_status === 'created') ? (
-                                    <div className="p-2 bg-yellow-500/10 rounded-lg border border-yellow-500/20 flex flex-col gap-1.5">
-                                      <div className="flex items-center gap-1.5 text-[10px] font-black text-yellow-600 uppercase tracking-wider">
-                                        <CheckCircle2 className="h-3 w-3" />
-                                        Ready for Review
+                                    </Link>
+                                  ) : (lead.proposal_status === 'created') ? (
+                                    <Link href={`/crm/${lead.id}?tab=requirement`}>
+                                      <div className="p-2 bg-yellow-500/10 rounded-lg border border-yellow-500/20 flex flex-col gap-1.5 hover:bg-yellow-500/20 transition-colors cursor-pointer">
+                                        <div className="flex items-center gap-1.5 text-[10px] font-black text-yellow-600 uppercase tracking-wider">
+                                          <CheckCircle2 className="h-3 w-3" />
+                                          Proposal Generated - In Review
+                                        </div>
                                       </div>
-                                    </div>
+                                    </Link>
                                   ) : (
                                     <Button 
                                       className="w-full h-8 text-[10px] font-bold bg-accent hover:bg-accent/90 text-white"
@@ -1675,6 +1687,23 @@ export default function CRMPage() {
             <AlertDialogTitle className="text-2xl font-bold">Requirement Analysis Incomplete</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground font-medium">
               Please complete the Requirement Chart before continuing to Proposal Generation, Pilot Video, or Project Creation.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="pt-6">
+            <AlertDialogCancel className="rounded-xl h-11 font-bold w-full bg-accent text-white hover:bg-accent/90 hover:text-white">Understood</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!leadBlockedByUnapprovedProposal} onOpenChange={(open) => !open && setLeadBlockedByUnapprovedProposal(null)}>
+        <AlertDialogContent className="rounded-3xl p-8 max-w-md border-0 bg-white dark:bg-slate-900">
+          <AlertDialogHeader>
+            <div className="h-12 w-12 bg-accent/10 rounded-[10px] flex items-center justify-center text-accent mb-4">
+              <Lock className="h-6 w-6" />
+            </div>
+            <AlertDialogTitle className="text-2xl font-bold">Marketing Approval Required</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-medium">
+              The proposal for this lead must be approved by Marketing before it can be moved to the Proposal Sent stage.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-6">

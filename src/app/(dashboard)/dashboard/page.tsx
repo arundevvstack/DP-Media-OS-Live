@@ -196,6 +196,14 @@ export default function DashboardPage() {
     return map;
   }, [allProjects]);
 
+  const pendingApprovals = useMemo(() => {
+    if (!prospects) return [];
+    return prospects.filter(p => 
+      p.proposal_status !== 'approved' && 
+      (p.proposal_details?.status || p.proposal_status === 'created')
+    );
+  }, [prospects]);
+
   if (isTenantLoading || isProjectsLoading || isObjectivesLoading || isInvoicesLoading || isProspectsLoading || !hasMounted) {
     return (
       <div className="flex items-center justify-center h-[80vh]">
@@ -551,6 +559,41 @@ export default function DashboardPage() {
                       </div>
                       <p className="font-black text-foreground pl-2 text-[11px]">{log.action}</p>
                       {log.details && <p className="text-[10px] text-muted-foreground font-medium pl-2">{log.details}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Pending Approvals */}
+        <div className="grid grid-cols-1 gap-6">
+          <Card className="border border-white/60 dark:border-slate-700/60 shadow-premium rounded-[12px] bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
+            <CardHeader className="p-6 border-b border-white/40 dark:border-slate-700/40 relative z-10">
+              <CardTitle className="text-base font-black flex items-center gap-2 text-foreground">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                </div>
+                Pending Marketing Approvals
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 relative z-10">
+              {pendingApprovals.length === 0 ? (
+                <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider text-center py-8">Zero pending approvals.</p>
+              ) : (
+                <div className="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                  {pendingApprovals.map((p) => (
+                    <div key={p.id} className="flex justify-between items-center p-3 rounded-[10px] bg-white/60 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/60 hover:shadow-md transition-all group relative overflow-hidden">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500/20 group-hover:bg-emerald-500 transition-colors" />
+                      <div className="min-w-0 pl-2">
+                        <p className="text-xs font-black text-foreground truncate">{p.company_name}</p>
+                        <p className="text-[10px] text-muted-foreground font-medium truncate">₹{p.deal_value?.toLocaleString() || 0}</p>
+                      </div>
+                      <Link href={`/crm/${p.id}`}>
+                        <Button className="h-8 px-3 rounded-lg font-bold text-[10px] bg-emerald-500/10 text-emerald-600 hover:bg-emerald-600 hover:text-white shadow-none border border-emerald-500/20 hover:border-transparent transition-all">Review</Button>
+                      </Link>
                     </div>
                   ))}
                 </div>
@@ -992,26 +1035,36 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Secure lock warning for sales */}
+          {/* Pending Approvals */}
           <Card className="border border-white/60 dark:border-slate-700/60 shadow-premium rounded-[10px] bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
             <CardHeader className="p-6 border-b border-white/40 dark:border-slate-700/40 relative z-10">
               <CardTitle className="text-base font-black flex items-center gap-2 text-foreground">
-                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Lock className="h-4 w-4 text-primary" />
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 </div>
-                Operational Boundary
+                Pending Approvals
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 relative z-10 pt-4 space-y-4">
-              <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                As a marketing strategist, your profile is locked under strict tenant isolation policies. You do not have permissions to access:
-              </p>
-              <ul className="text-[10px] font-black uppercase tracking-wider text-muted-foreground space-y-3">
-                <li className="flex items-center gap-2"><div className="h-4 w-4 bg-accent/10 rounded flex items-center justify-center"><Ban className="h-3 w-3 text-accent" /></div> Detailed Invoice edits</li>
-                <li className="flex items-center gap-2"><div className="h-4 w-4 bg-accent/10 rounded flex items-center justify-center"><Ban className="h-3 w-3 text-accent" /></div> Expenses ledger and tax filing</li>
-                <li className="flex items-center gap-2"><div className="h-4 w-4 bg-accent/10 rounded flex items-center justify-center"><Ban className="h-3 w-3 text-accent" /></div> Platform configurations</li>
-              </ul>
+            <CardContent className="p-6 relative z-10">
+              {pendingApprovals.length === 0 ? (
+                <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider text-center py-8">Zero pending approvals.</p>
+              ) : (
+                <div className="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                  {pendingApprovals.map((p) => (
+                    <div key={p.id} className="flex justify-between items-center p-3 rounded-[10px] bg-white/60 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/60 hover:shadow-md transition-all group relative overflow-hidden">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500/20 group-hover:bg-emerald-500 transition-colors" />
+                      <div className="min-w-0 pl-2">
+                        <p className="text-xs font-black text-foreground truncate">{p.company_name}</p>
+                        <p className="text-[10px] text-muted-foreground font-medium truncate">₹{p.deal_value?.toLocaleString() || 0}</p>
+                      </div>
+                      <Link href={`/crm/${p.id}`}>
+                        <Button className="h-8 px-3 rounded-lg font-bold text-[10px] bg-emerald-500/10 text-emerald-600 hover:bg-emerald-600 hover:text-white shadow-none border border-emerald-500/20 hover:border-transparent transition-all">Review</Button>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
